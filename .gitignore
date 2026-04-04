@@ -1,0 +1,28 @@
+# Data (too large for git)
+data/
+*.pkl
+*.7z
+*.tar.gz
+*.zip
+*.fna
+*.fna.gz
+*.gbk
+
+# BGC-Prophet (cloned repo, not our code)
+BGC-Prophet/
+
+# NCBI datasets CLI binary
+datasets
+
+# Python
+__pycache__/
+*.pyc
+.DS_Store
+
+# Logs
+*.log
+extract_log*.txt
+
+# IDE
+.vscode/
+.idea/
