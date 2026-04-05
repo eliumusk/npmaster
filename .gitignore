@@ -8,6 +8,10 @@ data/
 *.fna.gz
 *.gbk
 
+# External files (samples, figshare data)
+samples/
+external/
+
 # BGC-Prophet (cloned repo, not our code)
 BGC-Prophet/
 
