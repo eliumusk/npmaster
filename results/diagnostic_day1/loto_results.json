@@ -1,0 +1,69 @@
+{
+  "baseline": {
+    "Alkaloid": 0.8666666666666667,
+    "NRP": 0.8382352941176471,
+    "Polyketide": 0.9156794425087107,
+    "RiPP": 0.6971428571428571,
+    "Saccharide": 0.92,
+    "Terpene": 0.6545454545454547,
+    "Other": 0.7864864864864866
+  },
+  "loto": {
+    "Alkaloid": {
+      "n": 9,
+      "hit_rate_after_loto": 0.8666666666666667,
+      "hit_rate_baseline": 0.8666666666666667,
+      "lib_prior": 0.32462854570013505,
+      "enrichment_loto": 2.669717984281091,
+      "retention_ratio": 1.0
+    },
+    "NRP": {
+      "n": 136,
+      "hit_rate_after_loto": 0.6058823529411765,
+      "hit_rate_baseline": 0.8382352941176471,
+      "lib_prior": 0.2836676217765043,
+      "enrichment_loto": 2.1358882947118243,
+      "retention_ratio": 0.7228070175438597
+    },
+    "Polyketide": {
+      "n": 287,
+      "hit_rate_after_loto": 0.7393728222996515,
+      "hit_rate_baseline": 0.9156794425087107,
+      "lib_prior": 0.22799794132784354,
+      "enrichment_loto": 3.2428925366325574,
+      "retention_ratio": 0.8074581430745814
+    },
+    "RiPP": {
+      "n": 35,
+      "hit_rate_after_loto": 0.44,
+      "hit_rate_baseline": 0.6971428571428571,
+      "lib_prior": 0.31662870159453305,
+      "enrichment_loto": 1.3896402877697842,
+      "retention_ratio": 0.6311475409836066
+    },
+    "Saccharide": {
+      "n": 30,
+      "hit_rate_after_loto": 0.8200000000000001,
+      "hit_rate_baseline": 0.92,
+      "lib_prior": 0.3181818181818182,
+      "enrichment_loto": 2.5771428571428574,
+      "retention_ratio": 0.891304347826087
+    },
+    "Terpene": {
+      "n": 11,
+      "hit_rate_after_loto": 0.5636363636363637,
+      "hit_rate_baseline": 0.6545454545454547,
+      "lib_prior": 0.32401982875168994,
+      "enrichment_loto": 1.7395119484132004,
+      "retention_ratio": 0.861111111111111
+    },
+    "Other": {
+      "n": 74,
+      "hit_rate_after_loto": 0.745945945945946,
+      "hit_rate_baseline": 0.7864864864864866,
+      "lib_prior": 0.3042671614100185,
+      "enrichment_loto": 2.4516150296638104,
+      "retention_ratio": 0.9484536082474226
+    }
+  }
+}

@@ -1,56 +1,36 @@
-# Wiki 目录
+# Wiki — GCD 阶段
 
-BGC 预测研究项目的知识库。入口：[[项目总览]] | 规范：[[CLAUDE]] | 时间线：[[log]]
+BGC 预测研究项目知识库(GCD 范式)。
 
-## 🧭 Overview
+> **历史记录**:RF/监督学习阶段的实验、方法、数据文档已归档到 `archive/wiki/`。当前阶段从 GCD 范式重新开始。
 
-- [[项目总览]] — 项目目标、pipeline、当前状态、核心结果
+## 📍 当前阶段:Generalized Category Discovery (GCD)
 
-## 📚 Concepts（概念）
+**核心问题**:用 Evo2 DNA 基础模型 + GCD 框架,对已知 BGC 类型(MIBiG 7 类)保持检测能力的同时,从基因组中发现新类型 BGC。
 
-- [[concepts/BGC]] — 生物合成基因簇：定义、7大类、检测挑战
-- [[concepts/Evo2]] — DNA基础模型：层选择、pooling、使用方式
-- [[concepts/GC偏差]] — 负样本构造的首要陷阱，本项目的核心教训
-- [[concepts/数据泄露]] — 三类泄露（BGC级/基因组级/窗口重叠）及检测
-- [[concepts/Cluster-Bootstrap]] — BGC级置信区间的正确计算方式
-- [[concepts/Leave-One-Class-Out]] — 诊断类型依赖vs通用特征的实验方法
+**策略与决策**:`refine-logs/FINAL_PROPOSAL.md`, `refine-logs/REFINEMENT_REPORT.md`
+**诊断结果**:`results/diagnostic_day1/REPORT.md`
 
-## 💾 Data（数据）
+## 📚 概念(保留)
 
-- [[data/MIBiG数据库]] — 2502个实验验证BGC，正样本唯一来源
-- [[data/参考基因组]] — 306+个NCBI基因组，负样本来源
-- [[data/antiSMASH]] — BGC标注工具（只标cluster内CDS功能）
-- [[data/数据集演进]] — v1→v2→v3→clean→clean_strep→expanded_strep 的迭代
-- [[data/expanded-strep]] — **当前主数据集**（105 Strep genomes, 402 BGCs）
-- [[data/多属数据集]] — Micro/Amyco/Pseudo 跨属测试集
+- [[concepts/BGC]] — 生物合成基因簇:定义、7大类、检测挑战
+- [[concepts/Evo2]] — DNA 基础模型:架构、层选择、likelihood scoring
+- [[concepts/GC偏差]] — 负样本构造的首要陷阱
+- [[concepts/数据泄露]] — 三类泄露(BGC级/基因组级/窗口重叠)
 
-## 🔬 Methods（方法）
 
-- [[methods/pipeline]] — 端到端流程概览
-- [[methods/embedding提取]] — Evo2推理代码、性能、环境配置
-- [[methods/分类器]] — RF/LR/GBT/MLP 对比，为什么选RF
-- [[methods/评估方法]] — AUROC/F1指标 + cluster bootstrap CI + sanity checks
+## 📄 参考论文
 
-## 🧪 Experiments（实验）
+- [[refs/BGC-Prophet]] — 原论文,architecture reference
+- [[refs/BGC-Prophet总结]] — 要点摘要
 
-- [[experiments/首次验证实验]] — 2026-04-04 Evo2 vs k-mer, AUROC=0.940
-- [[experiments/Strep扩充]] — 2026-04-05 负样本25→105基因组扩充
-- [[experiments/多属扩展]] — 2026-04-05 跨属泛化, Strep→Pseudo=0.950
-- [[experiments/窗口消融]] — 2026-04-05 w=16k > 8k > 4k
-- [[experiments/leave-one-class-out]] — 2026-04-05 类型依赖诊断，PK依赖真实存在
-- [[experiments/来源偏差诊断]] — 进行中 🚧 Phase 1完成，等GPU跑Phase 2
-- [[experiments/全基因组扫描]] — 2026-04-05 ⚠️ 核心实验，暴露类型偏差，**当前方法未达成核心目标**
+## 🗂 归档内容(`archive/wiki/`)
 
-## 📄 References（外部参考）
+RF 阶段的以下内容已归档,**不再作为当前指导**:
+- `experiments/` — 首次验证、多属扩展、窗口消融、Strep扩充、全基因组扫描、leave-one-class-out、来源偏差诊断
+- `methods/` — pipeline、embedding提取、分类器、评估方法
+- `concepts/` — Cluster-Bootstrap、Leave-One-Class-Out
+- `data/` — 数据集演进、多属数据集、expanded-strep
+- 项目总览(RF 阶段版本)、log.md
 
-- [[refs/BGC-Prophet论文]] — Lai Q. et al. 2025 NAR，本项目的主要对照方法
-
-## 🗺️ 快速导航
-
-**新人入门**：[[项目总览]] → [[concepts/BGC]] → [[concepts/Evo2]] → [[methods/pipeline]]
-
-**跑实验**：[[data/expanded-strep]] → [[methods/pipeline]] → [[methods/评估方法]]
-
-**理解数据**：[[data/数据集演进]] → [[concepts/GC偏差]] → [[concepts/数据泄露]]
-
-**诊断问题**：[[experiments/leave-one-class-out]] + [[experiments/来源偏差诊断]]
+如需查阅历史判断,去 `archive/wiki/` 翻。
