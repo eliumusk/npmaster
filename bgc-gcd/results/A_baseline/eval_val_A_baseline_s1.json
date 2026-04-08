@@ -1,0 +1,39 @@
+{
+  "n_samples": 937,
+  "per_type_auroc": {
+    "Polyketide": 0.8956668625146885,
+    "NRP": 0.846388348727921,
+    "Terpene": 0.9989316239316239,
+    "RiPP": NaN,
+    "Saccharide": 0.8238403451995685,
+    "Alkaloid": 0.66009009009009,
+    "Other": 0.659243611931182
+  },
+  "per_type_ap": {
+    "Polyketide": 0.8523469182314172,
+    "NRP": 0.5863267410294563,
+    "Terpene": 0.5,
+    "RiPP": NaN,
+    "Saccharide": 0.040108537609638444,
+    "Alkaloid": 0.020787667551301757,
+    "Other": 0.13403718821458752
+  },
+  "per_type_f1_at_05": {
+    "Polyketide": 0.7073170731707317,
+    "NRP": 0.4918032786885246,
+    "Terpene": 0.2222222222222222,
+    "RiPP": NaN,
+    "Saccharide": 0.1,
+    "Alkaloid": 0.0,
+    "Other": 0.19801980198019803
+  },
+  "mean_auroc": 0.8140268137325123,
+  "bgc_binary_auroc": 0.913343005483927,
+  "bgc_binary_prauc": 0.8972278559210269,
+  "per_phylum_auroc": {
+    "Background_src": NaN,
+    "MIBiG_src": NaN
+  },
+  "dann_phylum_accuracy": 0.5186766275346851,
+  "split": "val"
+}

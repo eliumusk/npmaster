@@ -4,25 +4,38 @@ BGC 预测研究项目知识库(GCD 范式)。
 
 > **历史记录**:RF/监督学习阶段的实验、方法、数据文档已归档到 `archive/wiki/`。当前阶段从 GCD 范式重新开始。
 
-## 📍 当前阶段:Generalized Category Discovery (GCD)
+## 📍 当前状态 (2026-04-07)
 
-**核心问题**:用 Evo2 DNA 基础模型 + GCD 框架,对已知 BGC 类型(MIBiG 7 类)保持检测能力的同时,从基因组中发现新类型 BGC。
+- Stage 1 数据基座 ✅ | Stage 2 Embedding 🔄 | Stage 3 代码 ✅ | 文献调研 ✅
+- 详见 [[项目总览_GCD]]
 
-**策略与决策**:`refine-logs/FINAL_PROPOSAL.md`, `refine-logs/REFINEMENT_REPORT.md`
-**诊断结果**:`results/diagnostic_day1/REPORT.md`
+## 📋 执行手册 & 报告
 
-## 📚 概念(保留)
+- `stage1_detailed.md` — 数据基座构建 (基因组panel + antiSMASH + 窗口切片)
+- `results/STAGE1_REPORT.md` — Stage 1 完成报告 (1996 genomes, 19,762 BGCs, 948k windows)
+- `stage2_detailed.md` — Evo2 embedding 提取 (node7 运行中)
+- `stage3_detailed.md` — 训练 pipeline 设计 (projector + classifier + DANN + SupCon)
+- `bgc-gcd/README.md` — Stage 3 代码使用说明 + diagnostic ablation 结果
+- `related_work_survey.md` — 文献调研 (~30篇, BGC工具/GCD/DNA-FM)
+
+## 📚 概念
 
 - [[concepts/BGC]] — 生物合成基因簇:定义、7大类、检测挑战
 - [[concepts/Evo2]] — DNA 基础模型:架构、层选择、likelihood scoring
 - [[concepts/GC偏差]] — 负样本构造的首要陷阱
 - [[concepts/数据泄露]] — 三类泄露(BGC级/基因组级/窗口重叠)
 
+## 📊 数据
+
+- [[data/MIBiG数据库]] — MIBiG v3.1, 2502 BGCs, 7类
+- [[data/参考基因组]] — GTDB v226 采样策略
+- [[data/antiSMASH]] — antiSMASH 标注流程和类型映射
 
 ## 📄 参考论文
 
-- [[refs/BGC-Prophet]] — 原论文,architecture reference
+- [[refs/BGC-Prophet]] — 原论文, architecture reference
 - [[refs/BGC-Prophet总结]] — 要点摘要
+- `related_work_survey.md` — 完整文献调研 (BGC检测 + GCD + DNA-FM)
 
 ## 🗂 归档内容(`archive/wiki/`)
 

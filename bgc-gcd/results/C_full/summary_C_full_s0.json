@@ -1,0 +1,10 @@
+{
+  "seed": 0,
+  "best_val_mean_auroc": 0.8395458738000882,
+  "val_mean_auroc": 0.8395458738000882,
+  "val_bgc_auroc": 0.9035613588459117,
+  "val_dann_acc": 0.8922091782283885,
+  "test_id_mean_auroc": 0.8040231544451496,
+  "test_id_bgc_auroc": 0.8967601055020549,
+  "test_id_dann_acc": 0.86640625
+}
