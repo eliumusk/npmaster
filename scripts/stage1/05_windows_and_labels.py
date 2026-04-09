@@ -5,7 +5,9 @@ Stage 1.3a+b: slice windows + label (multi-label, 8-dim)
 Window: W=16384, S=8192, 50% overlap. No padding at contig end (drop short tail).
 Labels:
   - positive: window has max_overlap_ratio (with any BGC) >= 0.5
+      OR window captures >= 80% of a short BGC (length-adaptive threshold, WS3-MVP)
       → bgc_types = union of classes from BGCs with overlap_ratio >= 0.3
+         (or overlap/bgc_length >= 0.8 for short BGCs)
       → is_negative = 0
   - negative: no overlap AND min distance to any BGC >= 10000 bp
   - ambiguous: otherwise
@@ -48,6 +50,9 @@ def main():
     ap.add_argument("--buffer", type=int, default=10000)
     ap.add_argument("--overlap-pos", type=float, default=0.5)
     ap.add_argument("--overlap-type", type=float, default=0.3)
+    ap.add_argument("--short-bgc-capture", type=float, default=0.8,
+                    help="WS3-MVP: if window captures >= this fraction of a BGC, mark positive "
+                         "(enables short BGC supervision). Set to 0 to disable.")
     ap.add_argument("--out", required=True, help="windows_metadata.csv")
     args = ap.parse_args()
 
@@ -94,6 +99,7 @@ def main():
 
     W = args.window; S = args.step; BUF = args.buffer
     OP = args.overlap_pos; OT = args.overlap_type
+    SHORT_CAP = args.short_bgc_capture  # WS3-MVP: fraction of BGC that must be captured
 
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)
     n_pos=n_neg=n_amb=0
@@ -122,19 +128,25 @@ def main():
                     for b in contig_bgcs:
                         ov = max(0, min(w_end, b["end"]) - max(w_start, b["start"]))
                         if ov > 0:
-                            overlaps.append((ov/W, b))
+                            bgc_len = b["end"] - b["start"]
+                            bgc_capture = ov / bgc_len if bgc_len > 0 else 0
+                            overlaps.append((ov/W, bgc_capture, b))
                             if b["truncated"]:
                                 overlaps_trunc = True
                         else:
                             d = min(abs(w_end-b["start"]), abs(w_start-b["end"]))
                             if min_dist is None or d < min_dist: min_dist = d
                     if overlaps:
-                        max_or = max(o for o,_ in overlaps)
-                        if max_or >= OP:
+                        max_or = max(o for o,_,_ in overlaps)
+                        # WS3-MVP: also check if window captures most of a short BGC
+                        max_bgc_cap = max(bc for _,bc,_ in overlaps)
+                        is_positive = (max_or >= OP) or (SHORT_CAP > 0 and max_bgc_cap >= SHORT_CAP)
+                        if is_positive:
                             label = "positive"
                             classes = set()
-                            for o,b in overlaps:
-                                if o >= OT:
+                            for o,bc,b in overlaps:
+                                # type assignment: original threshold OR short-BGC capture
+                                if o >= OT or (SHORT_CAP > 0 and bc >= SHORT_CAP):
                                     classes.update(b["classes"])
                             vec = [1 if c in classes else 0 for c in CLASSES]
                             writer.writerow([f"w{wid:09d}",acc,contig_id,w_start,w_end,"positive"]+vec+[0,

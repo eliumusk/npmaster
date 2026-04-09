@@ -20,8 +20,10 @@ from evaluate import evaluate_model
 from utils import load_config, set_seed, dann_lambda, autodetect_device, save_json
 
 
-def _build_train_loader(ds: BGCDataset, batch_size: int, seed: int, workers: int):
-    sampler = BalancedBatchSampler(ds.labels, batch_size=batch_size, seed=seed)
+def _build_train_loader(ds: BGCDataset, batch_size: int, seed: int, workers: int,
+                         pos_ratio: float = 0.5):
+    sampler = BalancedBatchSampler(ds.labels, batch_size=batch_size, seed=seed,
+                                   pos_ratio=pos_ratio)
     loader = DataLoader(ds, batch_sampler=sampler, num_workers=workers,
                         pin_memory=True)
     return loader, sampler
@@ -47,9 +49,12 @@ def train(cfg: dict, seed: int = 0, log_tag: str = "run"):
     print(f"[{log_tag}] device={device} n_phyla={n_phyla} "
           f"train={len(train_ds)} val={len(val_ds)} input_dim={input_dim}")
 
+    pos_ratio = cfg["data"].get("pos_ratio", 0.5)
     train_loader, sampler = _build_train_loader(
         train_ds, cfg["data"]["batch_size"], seed,
-        cfg["data"]["num_workers"])
+        cfg["data"]["num_workers"], pos_ratio=pos_ratio)
+    print(f"[{log_tag}] pos_ratio={pos_ratio} "
+          f"(n_pos={sampler.n_pos}, n_neg={sampler.n_neg} per batch)")
 
     model = BGCModel(
         n_phyla=n_phyla, input_dim=input_dim,
@@ -105,6 +110,10 @@ def train(cfg: dict, seed: int = 0, log_tag: str = "run"):
         csv.DictWriter(f, fieldnames=fieldnames).writeheader()
 
     debug_epochs = set(cfg["log"].get("debug_pair_stats_epochs", []))
+
+    # Checkpoint selection metric: deployment-facing by default
+    ckpt_metric = cfg["train"].get("checkpoint_metric", "bgc_binary_auroc")
+    print(f"[{log_tag}] checkpoint_metric={ckpt_metric}")
 
     best_val = -1.0
     for epoch in range(n_epochs):
@@ -202,16 +211,20 @@ def train(cfg: dict, seed: int = 0, log_tag: str = "run"):
                   f"({pair_stat_dump['frac_pos']:.3f}); "
                   f"combos={pair_stat_dump['type_combo_counts']}")
 
-        # checkpoint
+        # checkpoint — select by deployment-facing metric
         ckpt = {"model": model.state_dict(), "epoch": epoch,
-                "config": cfg, "val": val_metrics}
+                "config": cfg, "val": val_metrics,
+                "checkpoint_metric": ckpt_metric}
         torch.save(ckpt, out_dir / f"last_{log_tag}.pt")
-        if val_metrics["mean_auroc"] > best_val:
-            best_val = val_metrics["mean_auroc"]
+        current_metric = val_metrics.get(ckpt_metric, val_metrics["mean_auroc"])
+        if current_metric > best_val:
+            best_val = current_metric
             torch.save(ckpt, out_dir / f"best_{log_tag}.pt")
+            print(f"[{log_tag} ep{epoch:03d}] ★ new best {ckpt_metric}={current_metric:.4f}")
 
     # final eval across all splits
-    results = {"seed": seed, "best_val_mean_auroc": best_val}
+    results = {"seed": seed, f"best_val_{ckpt_metric}": best_val,
+               "checkpoint_metric": ckpt_metric}
     best = torch.load(out_dir / f"best_{log_tag}.pt", map_location=device)
     model.load_state_dict(best["model"])
     for split in ("val", "test_id", "test_ood"):
