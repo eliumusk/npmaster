@@ -7,12 +7,18 @@ data/
 *.fna
 *.fna.gz
 *.gbk
+*.npy
 
-# External files (samples, figshare data)
+# Archive (old experiments, diagnostics, superseded configs)
+_archive/
+archive/
+docs/_archive/
+scripts/_archive/
+bgc-gcd/configs/_archive/
+
+# External
 samples/
 external/
-
-# BGC-Prophet (cloned repo, not our code)
 BGC-Prophet/
 
 # NCBI datasets CLI binary

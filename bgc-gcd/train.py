@@ -21,9 +21,12 @@ from utils import load_config, set_seed, dann_lambda, autodetect_device, save_js
 
 
 def _build_train_loader(ds: BGCDataset, batch_size: int, seed: int, workers: int,
-                         pos_ratio: float = 0.5):
+                         pos_ratio: float = 0.5,
+                         hard_neg_indices=None, hard_neg_ratio: float = 0.0):
     sampler = BalancedBatchSampler(ds.labels, batch_size=batch_size, seed=seed,
-                                   pos_ratio=pos_ratio)
+                                   pos_ratio=pos_ratio,
+                                   hard_neg_indices=hard_neg_indices,
+                                   hard_neg_ratio=hard_neg_ratio)
     loader = DataLoader(ds, batch_sampler=sampler, num_workers=workers,
                         pin_memory=True)
     return loader, sampler
@@ -50,9 +53,17 @@ def train(cfg: dict, seed: int = 0, log_tag: str = "run"):
           f"train={len(train_ds)} val={len(val_ds)} input_dim={input_dim}")
 
     pos_ratio = cfg["data"].get("pos_ratio", 0.5)
+    # Hard-negative upsampling: load indices from metadata if configured
+    hard_neg_indices = None
+    hard_neg_ratio = cfg["data"].get("hard_neg_ratio", 0.0)
+    if hard_neg_ratio > 0 and "hard_negative" in train_ds.df.columns:
+        hard_neg_indices = np.where(train_ds.df["hard_negative"].values.astype(str) == "1")[0]
+        print(f"[{log_tag}] Hard negatives: {len(hard_neg_indices)} flagged, "
+              f"ratio={hard_neg_ratio}")
     train_loader, sampler = _build_train_loader(
         train_ds, cfg["data"]["batch_size"], seed,
-        cfg["data"]["num_workers"], pos_ratio=pos_ratio)
+        cfg["data"]["num_workers"], pos_ratio=pos_ratio,
+        hard_neg_indices=hard_neg_indices, hard_neg_ratio=hard_neg_ratio)
     print(f"[{log_tag}] pos_ratio={pos_ratio} "
           f"(n_pos={sampler.n_pos}, n_neg={sampler.n_neg} per batch)")
 

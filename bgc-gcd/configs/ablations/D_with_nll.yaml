@@ -1,8 +1,0 @@
-name: D_with_nll
-data:
-  input_dim: 4104   # 4096 Evo2 + 8 NLL stats
-train:
-  alpha: 1.0
-  beta: 0.35
-  gamma: 0.1
-  augmentation: true
