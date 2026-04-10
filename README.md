@@ -2,16 +2,22 @@
 
 DNA foundation model (Evo2 7B) for bacterial biosynthetic gene cluster detection and novel BGC discovery.
 
-## Current Mainline: H_hardneg_r10
+## Current Mainline: Phase 3 Route B (context model)
 
 | | test_id | test_ood |
 |---|---------|----------|
-| Recall | 0.731 +/- 0.012 | 0.566 +/- 0.041 |
-| Precision | 0.650 +/- 0.032 | 0.531 +/- 0.080 |
+| Recall | **0.820 +/- 0.001** | **0.594 +/- 0.006** |
+| Precision | **0.857 +/- 0.002** | **0.653 +/- 0.009** |
+| <5kb recall | **0.751 +/- 0.004** | **0.556 +/- 0.012** |
+| 5-10kb recall | **0.706 +/- 0.003** | **0.651 +/- 0.007** |
 
-Sig precision@20: 90%, diversity@50: 38 unique profiles. Zero architecture changes from baseline.
+Sig precision@20: 90%, sig precision@50: 92%, diversity@50: 45 unique profiles.
 
-For full context read `docs/mainline.md`.
+End-to-end model: ProjectionHead (warm-started, trainable) + Dilated 1D CNN + GatedResidual + Classifier. Trained on contig chunks (L=32, overlap stride=16) with center-region masked BCE loss.
+
+Previous mainline H_hardneg_r10 (archived): test_id recall 0.731, test_ood recall 0.566.
+
+For full context read `docs/mainline.md` and `docs/phase3-route-b-results.md`.
 
 ## Repo Structure
 

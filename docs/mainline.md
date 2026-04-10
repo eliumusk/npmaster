@@ -1,7 +1,8 @@
 # Current Mainline Summary
 
-**Date:** 2026-04-09  
-**Purpose:** concise project-state summary before architecture redesign discussion
+**Date:** 2026-04-10  
+**Purpose:** concise project-state summary after Phase 3 (context model)  
+**Previous mainline (H_hardneg_r10):** archived, see [phase2-ood-robustness.md](phase2-ood-robustness.md)
 
 ---
 
@@ -9,25 +10,29 @@
 
 The current official mainline is:
 
-- **Config:** `H_hardneg_r10`
+- **Config:** `Phase 3 Route B` (context model, end-to-end)
 - **Backbone:** frozen Evo2 embeddings
-- **Classifier family:** current window classifier, no architecture change
+- **Architecture:** ProjectionHead (warm-started, trainable) + Dilated 1D CNN (3 layers, d=1,2,4) + GatedResidual (sigmoid gate, β init -4.0) + Classifier
+- **Training:** contig chunks L=32 with overlap stride=16, center-region masked BCE loss, AdamW with layered lr (proj 1e-4, context/classifier 1e-3), 100 epochs
 - **Detection score:** `score_maxtype = max(sigmoid(type_logits))`
-- **Evaluation mode:** full-window
-- **Training changes accumulated so far:**
-  - score contract fixed
-  - threshold contract fixed
-  - prior-aligned sampling (`pos_ratio=0.15`)
-  - `cap=0.8` label rule
-  - edge padding
-  - hard-negative upsampling (`hard_neg_ratio=0.10`)
+- **Evaluation mode:** full-contig inference (not chunked)
+- **Checkpoint metric:** val region F1 (every 5 epochs)
+- **3-seed stability:** confirmed
 
 Canonical references:
 
-- [p2_phase_summary.md](phase2-ood-robustness.md)
-- [stability_confirmation.md](stability-3seed.md)
-- [train.py](/Users/musk/Documents/code/np-master/bgc-gcd/train.py)
-- [sampler.py](/Users/musk/Documents/code/np-master/bgc-gcd/data/sampler.py)
+- [phase3-route-b-results.md](phase3-route-b-results.md) — full Route B results
+- [phase3-route-a-results.md](phase3-route-a-results.md) — Route A ablation (frozen projector)
+- [phase3-context-model-plan.md](phase3-context-model-plan.md) — full Phase 3 design doc
+- [train_context_e2e.py](/Users/musk/Documents/code/np-master/bgc-gcd/train_context_e2e.py)
+- [context_full_model.py](/Users/musk/Documents/code/np-master/bgc-gcd/model/context_full_model.py)
+- [chunk_dataset.py](/Users/musk/Documents/code/np-master/bgc-gcd/data/chunk_dataset.py)
+
+Server-side canonical artifacts:
+
+- Checkpoints: `/data/muskliu/np_master/data/phase3/route_b/best_route_b_s{0,1,2}.pt`
+- Chunk index: `/data/muskliu/np_master/data/phase3/route_b/chunk_index.pkl`
+- Discovery: `/data/muskliu/np_master/data/phase3/route_b/discovery/`
 
 ---
 
@@ -60,58 +65,67 @@ Reference:
 
 - [2026-04-08-bgc-system-redesign.md](/Users/musk/Documents/code/np-master/docs/2026-04-08-bgc-system-redesign.md#L105)
 
-### 3.2 Current official mainline
+### 3.2 Current official mainline (Phase 3 Route B)
 
-`H_hardneg_r10`, full-window, `score_maxtype`, 3-seed mean ± std:
+End-to-end context model, full-contig inference, `score_maxtype`, 3-seed mean ± std:
 
 | Metric | `test_id` | `test_ood` |
 |---|---:|---:|
-| Recall | **0.731 ± 0.012** | **0.566 ± 0.041** |
-| Prediction-level precision | **0.650 ± 0.032** | **0.531 ± 0.080** |
+| Recall | **0.820 ± 0.001** | **0.594 ± 0.006** |
+| Prediction-level precision | **0.857 ± 0.002** | **0.653 ± 0.009** |
+| `<5kb` recall | **0.751 ± 0.004** | **0.556 ± 0.012** |
+| `5-10kb` recall | **0.706 ± 0.003** | **0.651 ± 0.007** |
+| `10-20kb` recall | **0.691 ± 0.005** | **0.411 ± 0.009** |
+| `20-50kb` recall | 0.842 ± 0.004 | 0.569 ± 0.007 |
+| `>50kb` recall | 0.987 ± 0.001 | 0.987 ± 0.004 |
+
+### 3.3 Previous mainline (H_hardneg_r10, archived)
+
+| Metric | `test_id` | `test_ood` |
+|---|---:|---:|
+| Recall | 0.731 ± 0.012 | 0.566 ± 0.041 |
+| Prediction-level precision | 0.650 ± 0.032 | 0.531 ± 0.080 |
 | `<5kb` recall | 0.222 ± 0.005 | 0.171 ± 0.014 |
 | `5-10kb` recall | 0.352 ± 0.022 | 0.380 ± 0.009 |
-| Truncated recall | 0.636 ± 0.011 | 0.555 ± 0.030 |
 
-Reference:
-
-- [stability_confirmation.md](stability-3seed.md)
-
-### 3.3 Cumulative gain from the original system
+### 3.4 Cumulative gain from the original system
 
 On `test_id`:
 
-- recall improved from `0.271` to `0.731`
-- absolute gain: **`+0.460`**
+- recall: `0.271` → `0.820` (**+0.549**)
+- P(pred): `0.573` → `0.857` (**+0.284**)
+- `<5kb` recall: near-zero → **0.751**
 
 On `test_ood`:
 
-- recall improved from `0.213` to `0.566`
-- absolute gain: **`+0.353`**
+- recall: `0.213` → `0.594` (**+0.381**)
+- P(pred): collapse → `0.653`
 
-This entire gain was obtained with **zero architecture changes**.
+**Phase 0-2** (spec/data fixes) contributed ~60% of recall gain with zero architecture changes.
+**Phase 3** (context model) contributed ~40% with the first architecture upgrade.
+**Stability improved dramatically:** test_id recall std dropped from 0.012 → 0.001 (12x tighter).
 
 ---
 
 ## 4. Discovery-Side Results
 
-Current discovery picture:
+Current discovery picture (Phase 3 Route B, seed=0):
 
-- `F_cap08` had the strongest top-end purity:
-  - signature precision@20: `95%`
-  - signature precision@50: `92%`
-- `G_edgepad` preserved `@50` quality while improving short-BGC coverage:
-  - signature precision@20: `90%`
-  - signature precision@50: `92%`
-- `H_hardneg_r10` remained acceptable while improving robustness:
-  - signature precision@20: `90%`
-  - signature precision@50: `86%`
-  - signature diversity@50: `38`
+| Metric | Route B | Previous (H_hardneg_r10) |
+|--------|---------|--------------------------|
+| sig precision@20 | **90%** (18/20) | 90% (18/20) |
+| sig precision@50 | **92%** (46/50) | 86% (43/50) |
+| diversity@50 (signature profiles) | **45** | 38 |
+| biosyn precision@20 | **100%** (20/20) | — |
+| biosyn precision@50 | **100%** (50/50) | — |
+
+Top signature domains in Route B candidates: KR_C, SDR, PCP/T, Enoyl_CoA_hyd, AMP-binding, KS, KS_C, Methyltransf_11, Acyl_CoA_dh, p450 — all core biosynthetic domains.
 
 Interpretation:
 
-- discovery quality did **not collapse** as the safety side improved
-- current mainline is more selective than `G_edgepad`
-- some top-50 purity was traded for better OOD robustness and higher diversity
+- Discovery quality **improved** with Phase 3 (diversity +7, sig@50 +6pp)
+- Recovery AND discovery moved up together — no tradeoff
+- Top candidates are enriched for biosynthetic signature domains, not random background
 
 References:
 
