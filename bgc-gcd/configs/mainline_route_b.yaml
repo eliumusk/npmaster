@@ -1,0 +1,58 @@
+# Phase 3 Route B: Current Official Mainline (confirmed 2026-04-10)
+#
+# End-to-end context model:
+#   ProjectionHead (warm-started from H_hardneg_r10) +
+#   Dilated 1D CNN (3 layers, d=1,2,4, receptive field 15 windows = 120kb) +
+#   GatedResidual (sigmoid gate, β init -4.0 → α ≈ 0.018) +
+#   Classifier (warm-started from H_hardneg_r10)
+#
+# 3-seed mean ± std:
+#   test_id recall 0.820 ± 0.001, P(pred) 0.857 ± 0.002
+#   test_ood recall 0.594 ± 0.006, P(pred) 0.653 ± 0.009
+#   <5kb recall 0.751, 5-10kb recall 0.706, 10-20kb recall 0.691
+#   sig@20=90%, sig@50=92%, diversity@50=45 profiles
+
+name: route_b
+
+data:
+  embeddings_path: /data/muskliu/np_master/data/embeddings/edge_padding/embeddings_merged.npy
+  projections_path: /data/muskliu/np_master/data/phase3/route_a/projections_256.npy
+  chunk_index_path: /data/muskliu/np_master/data/phase3/route_b/chunk_index.pkl
+  meta_arrays_path: /data/muskliu/np_master/data/phase3/route_a/meta_arrays.pkl
+  contig_index_path: /data/muskliu/np_master/data/phase3/route_a/contig_index.pkl
+  labels_path: /data/muskliu/np_master/data/stage4_results/p2_t2_hard_neg/windows_metadata_hardneg.csv
+  bgc_csv_path: /data/muskliu/np_master/data/bgc_annotations.csv
+  input_dim: 4096
+  batch_size: 64
+  L_chunk: 32
+  chunk_overlap_stride: 16
+
+model:
+  proj_hidden: 2048
+  proj_out: 256
+  proj_dropout: 0.3
+  cnn_dropout: 0.1
+  init_beta: -4.0
+  n_labels: 8
+
+train:
+  n_epochs: 100
+  warmup_epochs: 5
+  lr_proj: 1.0e-4
+  lr_context: 1.0e-3
+  lr_classifier: 1.0e-3
+  weight_decay: 1.0e-4
+  grad_clip: 10.0
+  checkpoint_metric: val_region_f1
+  checkpoint_eval_every: 5
+
+warm_start:
+  ckpt: /data/muskliu/np_master/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt
+
+log:
+  out_dir: /data/muskliu/np_master/data/phase3/route_b
+
+# Canonical 3-seed checkpoints:
+#   best_route_b_s0.pt  (epoch 94, val region F1 = 0.9049)
+#   best_route_b_s1.pt  (epoch 94, val region F1 = 0.9069)
+#   best_route_b_s2.pt  (epoch 94, val region F1 = 0.9037)

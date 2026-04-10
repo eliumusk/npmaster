@@ -1,5 +1,5 @@
-# Data (too large for git)
-data/
+# Data (too large for git) — root-level data/ only, NOT bgc-gcd/data/ (source code)
+/data/
 *.pkl
 *.7z
 *.tar.gz
