@@ -9,12 +9,9 @@
 *.gbk
 *.npy
 
-# Archive (old experiments, diagnostics, superseded configs)
-_archive/
-archive/
-docs/_archive/
-scripts/_archive/
-bgc-gcd/configs/_archive/
+# Archive — kept in repo for reproducibility, except large binaries
+_archive/bgc_gcd_results/
+_archive/data/
 
 # External
 samples/

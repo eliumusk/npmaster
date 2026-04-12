@@ -1,0 +1,24 @@
+{
+  "knn_enrichment": {
+    "global_enrichment": 1.383,
+    "global_pos_hit_rate": 0.6913,
+    "global_prior": 0.5,
+    "actino_enrichment": 1.409,
+    "actino_pos_hit_rate": 0.7043,
+    "actino_prior": 0.5
+  },
+  "distance_distributions": {
+    "same_type_median": 0.023185163736343384,
+    "diff_type_median": 0.023281127214431763,
+    "bgc_bg_median": 0.023045092821121216,
+    "bg_bg_median": 0.02256414294242859
+  },
+  "source_bias_check": {
+    "intra_genome_bgc_vs_bg_median": 0.0132,
+    "inter_genome_bgc_vs_bg_median": 0.0237,
+    "intra_n_pairs": 17920,
+    "inter_n_pairs": 1993,
+    "bias_eliminated": false,
+    "interpretation": "FAIL: intra < inter, source bias still present"
+  }
+}

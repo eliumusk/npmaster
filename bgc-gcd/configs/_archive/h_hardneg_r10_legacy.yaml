@@ -1,0 +1,48 @@
+# H_hardneg_r10: Current mainline config (confirmed 2026-04-09)
+#
+# Frozen Evo2 7B embeddings + MLP classifier
+# Edge-padded windows + hard-negative upsampling
+# 3-seed confirmed: test_id recall 0.731±0.012, P(pred) 0.650±0.032
+#
+# History: B → E (prior-aligned) → F_cap08 → G_edgepad → H_hardneg_r10
+
+seed: 0
+device: cuda
+
+data:
+  embeddings_path: /data/muskliu/np_master/data/embeddings/edge_padding/embeddings_merged.npy
+  labels_path: /data/muskliu/np_master/data/stage4_results/p2_t2_hard_neg/windows_metadata_hardneg.csv
+  batch_size: 256
+  num_workers: 4
+  input_dim: 4096
+  pos_ratio: 0.15
+  hard_neg_ratio: 0.10
+
+model:
+  proj_hidden: 2048
+  proj_out: 256
+  dropout: 0.3
+  dann_hidden: 128
+
+train:
+  n_epochs: 100
+  lr: 0.1
+  momentum: 0.9
+  weight_decay: 1.0e-5
+  alpha: 1.0
+  beta: 0.35
+  gamma: 0.1
+  tau: 0.07
+  dann_warmup_epochs: 20
+  cross_phylum_weight: 1.5
+  augmentation: true
+  noise_std: 0.05
+  dropout_rate: 0.1
+  use_class_weight: true
+  grad_clip: 10.0
+  checkpoint_metric: bgc_binary_auroc
+
+log:
+  print_every: 20
+  debug_pair_stats_epochs: [0, 1, 5, 20]
+  out_dir: /data/muskliu/np_master/data/stage3_results/H_hardneg_r10
