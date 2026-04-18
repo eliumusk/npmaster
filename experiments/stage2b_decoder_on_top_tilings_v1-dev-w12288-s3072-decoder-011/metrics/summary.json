@@ -1,0 +1,246 @@
+{
+  "operating_point": null,
+  "params": {
+    "score": "fused",
+    "stride": null,
+    "checkpoint": null,
+    "start_threshold": 0.99,
+    "extend_threshold": 0.92,
+    "max_gap": 0,
+    "length_cap": 50000,
+    "min_support_windows": 1,
+    "valley_threshold": null,
+    "valley_min_windows": 1
+  },
+  "expected_metrics": null,
+  "summary": {
+    "bench": {
+      "recall": 0.5470588235294118,
+      "precision": 0.27232142857142855,
+      "f1": 0.36363053650407023,
+      "tp_recall": 93,
+      "tp_precision": 61,
+      "n_gt": 170,
+      "n_pred": 224
+    },
+    "loose": {
+      "recall": 0.5705882352941176,
+      "precision": 0.5401785714285714,
+      "f1": 0.554967137926143,
+      "tp_recall": 97,
+      "tp_precision": 121,
+      "n_gt": 170,
+      "n_pred": 224
+    },
+    "strict": {
+      "recall": 0.18235294117647058,
+      "precision": 0.14732142857142858,
+      "f1": 0.16297594392225584,
+      "tp_recall": 31,
+      "tp_precision": 33,
+      "n_gt": 170,
+      "n_pred": 224
+    },
+    "iou": {
+      "recall": 0.18235294117647058,
+      "precision": 0.13839285714285715,
+      "f1": 0.15736040609137059,
+      "tp_recall": 31,
+      "tp_precision": 31,
+      "n_gt": 170,
+      "n_pred": 224
+    }
+  },
+  "per_genome": {
+    "GCA_000154945.1": {
+      "bench": {
+        "recall": 0.029411764705882353,
+        "precision": 0.02702702702702703,
+        "f1": 0.028169014084507043,
+        "tp_recall": 1,
+        "tp_precision": 1,
+        "n_gt": 34,
+        "n_pred": 37
+      },
+      "loose": {
+        "recall": 0.029411764705882353,
+        "precision": 0.02702702702702703,
+        "f1": 0.028169014084507043,
+        "tp_recall": 1,
+        "tp_precision": 1,
+        "n_gt": 34,
+        "n_pred": 37
+      },
+      "strict": {
+        "recall": 0.029411764705882353,
+        "precision": 0.02702702702702703,
+        "f1": 0.028169014084507043,
+        "tp_recall": 1,
+        "tp_precision": 1,
+        "n_gt": 34,
+        "n_pred": 37
+      },
+      "iou": {
+        "recall": 0.029411764705882353,
+        "precision": 0.02702702702702703,
+        "f1": 0.028169014084507043,
+        "tp_recall": 1,
+        "tp_precision": 1,
+        "n_gt": 34,
+        "n_pred": 37
+      }
+    },
+    "GCA_000156475.1": {
+      "bench": {
+        "recall": 0.6923076923076923,
+        "precision": 0.35294117647058826,
+        "f1": 0.4675324675324675,
+        "tp_recall": 18,
+        "tp_precision": 12,
+        "n_gt": 26,
+        "n_pred": 34
+      },
+      "loose": {
+        "recall": 0.7307692307692307,
+        "precision": 0.7647058823529411,
+        "f1": 0.7473524962178516,
+        "tp_recall": 19,
+        "tp_precision": 26,
+        "n_gt": 26,
+        "n_pred": 34
+      },
+      "strict": {
+        "recall": 0.19230769230769232,
+        "precision": 0.14705882352941177,
+        "f1": 0.16666666666666669,
+        "tp_recall": 5,
+        "tp_precision": 5,
+        "n_gt": 26,
+        "n_pred": 34
+      },
+      "iou": {
+        "recall": 0.19230769230769232,
+        "precision": 0.14705882352941177,
+        "f1": 0.16666666666666669,
+        "tp_recall": 5,
+        "tp_precision": 5,
+        "n_gt": 26,
+        "n_pred": 34
+      }
+    },
+    "GCA_000158875.1": {
+      "bench": {
+        "recall": 0.65625,
+        "precision": 0.175,
+        "f1": 0.2763157894736842,
+        "tp_recall": 21,
+        "tp_precision": 7,
+        "n_gt": 32,
+        "n_pred": 40
+      },
+      "loose": {
+        "recall": 0.65625,
+        "precision": 0.575,
+        "f1": 0.6129441624365483,
+        "tp_recall": 21,
+        "tp_precision": 23,
+        "n_gt": 32,
+        "n_pred": 40
+      },
+      "strict": {
+        "recall": 0.15625,
+        "precision": 0.125,
+        "f1": 0.1388888888888889,
+        "tp_recall": 5,
+        "tp_precision": 5,
+        "n_gt": 32,
+        "n_pred": 40
+      },
+      "iou": {
+        "recall": 0.15625,
+        "precision": 0.125,
+        "f1": 0.1388888888888889,
+        "tp_recall": 5,
+        "tp_precision": 5,
+        "n_gt": 32,
+        "n_pred": 40
+      }
+    },
+    "GCA_000158915.1": {
+      "bench": {
+        "recall": 0.7872340425531915,
+        "precision": 0.42857142857142855,
+        "f1": 0.555,
+        "tp_recall": 37,
+        "tp_precision": 33,
+        "n_gt": 47,
+        "n_pred": 77
+      },
+      "loose": {
+        "recall": 0.851063829787234,
+        "precision": 0.7142857142857143,
+        "f1": 0.7766990291262136,
+        "tp_recall": 40,
+        "tp_precision": 55,
+        "n_gt": 47,
+        "n_pred": 77
+      },
+      "strict": {
+        "recall": 0.2765957446808511,
+        "precision": 0.19480519480519481,
+        "f1": 0.22860492379835876,
+        "tp_recall": 13,
+        "tp_precision": 15,
+        "n_gt": 47,
+        "n_pred": 77
+      },
+      "iou": {
+        "recall": 0.2765957446808511,
+        "precision": 0.16883116883116883,
+        "f1": 0.20967741935483872,
+        "tp_recall": 13,
+        "tp_precision": 13,
+        "n_gt": 47,
+        "n_pred": 77
+      }
+    },
+    "GCA_000568915.1": {
+      "bench": {
+        "recall": 0.5161290322580645,
+        "precision": 0.2222222222222222,
+        "f1": 0.3106796116504854,
+        "tp_recall": 16,
+        "tp_precision": 8,
+        "n_gt": 31,
+        "n_pred": 36
+      },
+      "loose": {
+        "recall": 0.5161290322580645,
+        "precision": 0.4444444444444444,
+        "f1": 0.4776119402985074,
+        "tp_recall": 16,
+        "tp_precision": 16,
+        "n_gt": 31,
+        "n_pred": 36
+      },
+      "strict": {
+        "recall": 0.22580645161290322,
+        "precision": 0.19444444444444445,
+        "f1": 0.208955223880597,
+        "tp_recall": 7,
+        "tp_precision": 7,
+        "n_gt": 31,
+        "n_pred": 36
+      },
+      "iou": {
+        "recall": 0.22580645161290322,
+        "precision": 0.19444444444444445,
+        "f1": 0.208955223880597,
+        "tp_recall": 7,
+        "tp_precision": 7,
+        "n_gt": 31,
+        "n_pred": 36
+      }
+    }
+  }
+}

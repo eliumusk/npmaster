@@ -1,0 +1,74 @@
+{
+  "checkpoint": "best_route_b_s0",
+  "command": "bash experiments/stage2b_decoder_on_top_tilings_v1-dev-w12288-s3072-decoder-030/command.txt",
+  "command_specs": {
+    "evaluate": {
+      "argv": [
+        "python",
+        "scripts/evaluate_nine_genome.py",
+        "--base",
+        "tmp/stage2b_predictions/benchmark",
+        "--results-dir",
+        "tmp/stage2b_predictions/w12288-s3072",
+        "--genome-ids",
+        "GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1",
+        "--start-threshold",
+        "0.99",
+        "--extend-threshold",
+        "0.95",
+        "--max-gap",
+        "0",
+        "--min-support-windows",
+        "2",
+        "--out",
+        "experiments/stage2b_decoder_on_top_tilings_v1-dev-w12288-s3072-decoder-030/metrics/summary.json",
+        "--length-cap",
+        "50000"
+      ],
+      "outputs": {
+        "summary_json": "experiments/stage2b_decoder_on_top_tilings_v1-dev-w12288-s3072-decoder-030/metrics/summary.json"
+      },
+      "shell": "python scripts/evaluate_nine_genome.py --base tmp/stage2b_predictions/benchmark --results-dir tmp/stage2b_predictions/w12288-s3072 --genome-ids GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1 --start-threshold 0.99 --extend-threshold 0.95 --max-gap 0 --min-support-windows 2 --out experiments/stage2b_decoder_on_top_tilings_v1-dev-w12288-s3072-decoder-030/metrics/summary.json --length-cap 50000"
+    },
+    "score_family": "max_type"
+  },
+  "decoder_params": {
+    "extend_threshold": 0.95,
+    "min_support_windows": 2,
+    "score_family": "max_type",
+    "start_threshold": 0.99
+  },
+  "decoder_trial_id": "decoder-030",
+  "experiment_id": "stage2b_decoder_on_top_tilings_v1-dev-w12288-s3072-decoder-030",
+  "git_commit": "f66bdc8d4ce01ab0ec545ffce3043eb5a1d5b166",
+  "git_dirty": true,
+  "input_genome_ids": [
+    "GCA_000154945.1",
+    "GCA_000156475.1",
+    "GCA_000158875.1",
+    "GCA_000158915.1",
+    "GCA_000568915.1"
+  ],
+  "operating_point": null,
+  "predictions_dir": "tmp/stage2b_predictions/w12288-s3072",
+  "resolved_params": {
+    "extend_threshold": 0.95,
+    "length_cap": 50000,
+    "max_gap": 0,
+    "min_support_windows": 2,
+    "score": "max_type",
+    "start_threshold": 0.99,
+    "valley_min_windows": 1,
+    "valley_threshold": null
+  },
+  "server": "local_cpu",
+  "source_experiment": "stage2_tiling_v1-dev-w12288-s3072",
+  "split_part": "dev",
+  "split_version": "nine_genome_dev_lockbox_v1",
+  "stride": 3072,
+  "sweep_id": "stage2b_decoder_on_top_tilings_v1",
+  "task_id": "task5_stage2b_decoder_sweep",
+  "tiling_trial_id": "w12288-s3072",
+  "trial_id": "w12288-s3072-decoder-030",
+  "window": 12288
+}

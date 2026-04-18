@@ -1,0 +1,19 @@
+decoder:
+  decoder_id: decoder-029
+  fixed:
+    length_cap: 50000
+    max_gap: 0
+    valley_min_windows: 1
+    valley_threshold: null
+  params:
+    extend_threshold: 0.95
+    min_support_windows: 1
+    score_family: max_type
+    start_threshold: 0.99
+split_part: dev
+sweep_id: stage2b_decoder_on_top_tilings_v1
+tiling:
+  source_experiment: stage2_tiling_v1-dev-w12288-s3072
+  stride: 3072
+  trial_id: w12288-s3072
+  window: 12288
