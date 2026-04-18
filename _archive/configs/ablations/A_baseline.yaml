@@ -1,6 +1,0 @@
-name: A_baseline
-train:
-  alpha: 1.0
-  beta: 0.0
-  gamma: 0.0
-  augmentation: false

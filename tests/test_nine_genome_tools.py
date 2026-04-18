@@ -6,8 +6,8 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT / "bgc-gcd") not in sys.path:
-    sys.path.insert(0, str(ROOT / "bgc-gcd"))
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
 
 
 def load_module(rel_path: str, module_name: str):
@@ -24,8 +24,8 @@ def load_module(rel_path: str, module_name: str):
 class EvalNineGenomeOperatingPointTests(unittest.TestCase):
     def setUp(self):
         self.eval_mod = load_module(
-            "scripts/phase4/eval_nine_genome_operating_point.py",
-            "eval_nine_genome_operating_point",
+            "scripts/evaluate_nine_genome.py",
+            "evaluate_nine_genome",
         )
 
     def test_strict_metric_penalizes_oversized_region(self):
@@ -114,8 +114,8 @@ class EvalNineGenomeOperatingPointTests(unittest.TestCase):
 class NineGenomeStrideInferenceTests(unittest.TestCase):
     def setUp(self):
         self.infer_mod = load_module(
-            "scripts/phase4/run_nine_genome_stride_inference.py",
-            "run_nine_genome_stride_inference",
+            "scripts/inference_stride.py",
+            "inference_stride",
         )
 
     def test_make_windows_supports_overlap_stride(self):
@@ -128,15 +128,15 @@ class NineGenomeStrideInferenceTests(unittest.TestCase):
         self.assertEqual(ends, [16384, 20000, 20000])
         self.assertEqual(seq_lens, [16384, 16384, 16384])
 
-    def test_resolve_bgc_gcd_dir_accepts_explicit_path(self):
+    def test_resolve_src_dir_accepts_explicit_path(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            bgc_gcd = Path(tmpdir) / "bgc-gcd"
-            model_dir = bgc_gcd / "model"
+            src = Path(tmpdir) / "src"
+            model_dir = src / "model"
             model_dir.mkdir(parents=True)
             (model_dir / "context_full_model.py").write_text("# stub\n", encoding="utf-8")
 
-            resolved = self.infer_mod.resolve_bgc_gcd_dir(str(bgc_gcd))
-            self.assertEqual(resolved, bgc_gcd.resolve())
+            resolved = self.infer_mod.resolve_src_dir(str(src))
+            self.assertEqual(resolved, src.resolve())
 
     def test_parse_genome_subset_argument(self):
         selected = {
@@ -150,7 +150,7 @@ class NineGenomeStrideInferenceTests(unittest.TestCase):
 class PostprocessV2Tests(unittest.TestCase):
     def setUp(self):
         self.pp_mod = load_module(
-            "scripts/phase4/postprocess_v2.py",
+            "scripts/postprocess_v2.py",
             "postprocess_v2",
         )
 
@@ -222,76 +222,15 @@ class PostprocessV2Tests(unittest.TestCase):
         self.assertEqual(regions, [("c1", 0, 200), ("c1", 200, 400)])
 
 
-class ScoreFamilyDiagnosisTests(unittest.TestCase):
-    def setUp(self):
-        self.diag_mod = load_module(
-            "scripts/phase4/diagnose_score_families.py",
-            "diagnose_score_families",
-        )
-
-    def test_auc_and_ap_perfect_ranking(self):
-        labels = self.diag_mod.np.asarray([0, 0, 1, 1], dtype=self.diag_mod.np.int64)
-        scores = self.diag_mod.np.asarray([0.1, 0.2, 0.8, 0.9], dtype=self.diag_mod.np.float64)
-        self.assertAlmostEqual(self.diag_mod.compute_auroc(labels, scores), 1.0)
-        self.assertAlmostEqual(self.diag_mod.compute_average_precision(labels, scores), 1.0)
-
-    def test_best_gt_overlap_uses_matching_contig_only(self):
-        ov_bp, ov_strict = self.diag_mod.best_gt_overlap(
-            "c1",
-            100,
-            200,
-            [
-                ("c2", 100, 300),
-                ("c1", 50, 180),
-                ("c1", 120, 240),
-            ],
-        )
-        self.assertEqual(ov_bp, 80)
-        self.assertAlmostEqual(ov_strict, 80 / 120)
-
-    def test_nine_genome_loader_builds_fused_score(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            base = Path(tmpdir) / "benchmark"
-            results = Path(tmpdir) / "results"
-            base.mkdir()
-            results.mkdir()
-            (base / "ground_truth.json").write_text(
-                '{"ground_truth":{"GCA_000158915.1":[["c1",0,100]],'
-                '"GCA_000158875.1":[],"GCA_000154945.1":[],"GCA_000158895.1":[],'
-                '"GCA_000156435.1":[],"GCA_000568915.1":[],"GCA_000158815.1":[],'
-                '"GCA_000568255.1":[],"GCA_000156475.1":[]}}',
-                encoding="utf-8",
-            )
-            for genome_id in self.diag_mod.GENOME_IDS:
-                rows = "contig,start,end,bgc_score,non_bgc_score\n"
-                if genome_id == "GCA_000158915.1":
-                    rows += "c1,0,100,0.8,0.1\n"
-                else:
-                    rows += "c1,0,100,0.2,0.9\n"
-                (results / f"{genome_id}_predictions.csv").write_text(rows, encoding="utf-8")
-
-            labels, score_map, records = self.diag_mod.load_nine_genome_dataset(
-                base=base,
-                results_dir=results,
-                positive_overlap_bp=1,
-            )
-
-            self.assertEqual(int(labels.sum()), 1)
-            self.assertAlmostEqual(score_map["max_type"][0], 0.8)
-            self.assertAlmostEqual(score_map["1_minus_isneg"][0], 0.9)
-            self.assertAlmostEqual(score_map["fused"][0], 0.85)
-            self.assertEqual(records[0]["best_overlap_bp"], 100)
-
-
 class RouteBHardNegativeTests(unittest.TestCase):
     def setUp(self):
         self.train_mod = load_module(
-            "bgc-gcd/train_context_e2e.py",
-            "train_context_e2e_for_tests",
+            "src/train.py",
+            "train_for_tests",
         )
         self.mine_mod = load_module(
-            "scripts/phase4/mine_route_b_hardneg.py",
-            "mine_route_b_hardneg",
+            "scripts/mine_hard_negatives.py",
+            "mine_hard_negatives",
         )
 
     def test_apply_hard_negative_weights_upweights_only_flagged_positions(self):

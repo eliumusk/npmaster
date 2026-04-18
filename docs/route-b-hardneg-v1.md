@@ -26,22 +26,15 @@ Interpretation:
 Two changes only:
 
 1. **Fresh Route B hard-negative mining**
-   - script:
-     [mine_route_b_hardneg.py](/Users/musk/Documents/code/np-master/scripts/phase4/mine_route_b_hardneg.py)
-   - source:
-     current Route B checkpoint scores on `train` windows labeled `negative`
-   - default score family:
-     `fused`
-   - default selection:
-     `top_k=5000`, `min_score=0.95`
+   - script: `scripts/mine_hard_negatives.py`
+   - source: current Route B checkpoint scores on `train` windows labeled `negative`
+   - default score family: `fused`
+   - default selection: `top_k=5000`, `min_score=0.95`
 
 2. **Route B loss-side hard-negative weighting**
-   - dataset:
-     [chunk_dataset.py](/Users/musk/Documents/code/np-master/bgc-gcd/data/chunk_dataset.py)
-   - trainer:
-     [train_context_e2e.py](/Users/musk/Documents/code/np-master/bgc-gcd/train_context_e2e.py)
-   - mechanism:
-     keep the same chunk traversal, but assign extra loss weight to flagged
+   - dataset: `src/data/chunk_dataset.py`
+   - trainer: `src/train.py`
+   - mechanism: keep the same chunk traversal, but assign extra loss weight to flagged
      hard-negative positions inside `loss_mask`
 
 This avoids changing:
@@ -77,8 +70,7 @@ so we can verify the run is actually seeing flagged windows.
 Recommended first run:
 
 - mine from:
-  - checkpoint:
-    `/data/muskliu/np_master/data/phase3/route_b/best_route_b_s0.pt`
+  - checkpoint: `data/phase3/route_b/best_route_b_s0.pt` (server)
 - train:
   - seed `0`
   - same Route B settings as mainline

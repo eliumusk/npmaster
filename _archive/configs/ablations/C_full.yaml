@@ -1,6 +1,0 @@
-name: C_full
-train:
-  alpha: 1.0
-  beta: 0.35
-  gamma: 0.1
-  augmentation: true

@@ -1,35 +1,36 @@
-# Data (too large for git) — root-level data/ only, NOT bgc-gcd/data/ (source code)
+# Server-side artifacts (never in git)
 /data/
+/checkpoints/
+/wandb/
+/results/
+/analysis/
+*.pt
+*.npy
+*.npz
 *.pkl
-*.7z
-*.tar.gz
-*.zip
 *.fna
 *.fna.gz
 *.gbk
-*.npy
+*.7z
+*.tar.gz
+*.zip
 
-# Archive — kept in repo for reproducibility, except large binaries
-_archive/bgc_gcd_results/
-_archive/data/
-
-# External
-samples/
-external/
+# External tools / binaries
 BGC-Prophet/
-
-# NCBI datasets CLI binary
+external/
+samples/
 datasets
 
 # Python
 __pycache__/
 *.pyc
+.pytest_cache/
+
+# IDE / macOS
 .DS_Store
+.vscode/
+.idea/
 
 # Logs
 *.log
 extract_log*.txt
-
-# IDE
-.vscode/
-.idea/
