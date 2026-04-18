@@ -12,7 +12,7 @@ import pandas as pd
 
 # Load antiSMASH annotations
 as_bgcs = defaultdict(list)
-with open("/data/muskliu/np_master/data/bgc_annotations.csv") as f:
+with open("/data/muskliu/npmaster/data/bgc_annotations.csv") as f:
     for row in csv.DictReader(f):
         as_bgcs[(row["genome_id"], row["contig_id"])].append({
             "genome_id": row["genome_id"],
@@ -23,18 +23,18 @@ with open("/data/muskliu/np_master/data/bgc_annotations.csv") as f:
         })
 
 # Load test split info
-df = pd.read_csv("/data/muskliu/np_master/data/stage4_results/p2_t2_hard_neg/windows_metadata_hardneg.csv")
+df = pd.read_csv("/data/muskliu/npmaster/data/stage4_results/p2_t2_hard_neg/windows_metadata_hardneg.csv")
 test_split = {}
 for _, row in df[["genome_id", "split", "phylum"]].drop_duplicates("genome_id").iterrows():
     test_split[row["genome_id"]] = {"split": row["split"], "phylum": row["phylum"]}
 
 # Load GECCO predictions
-with open("/data/muskliu/np_master/data/phase4/baselines/gecco_predictions.json") as f:
+with open("/data/muskliu/npmaster/data/phase4/baselines/gecco_predictions.json") as f:
     gecco_data = json.load(f)
 gecco_preds = gecco_data["predictions"]
 
 # Load Route B predictions (from score_swap_s0)
-with open("/data/muskliu/np_master/data/phase3/route_b/eval/score_swap_s0.json") as f:
+with open("/data/muskliu/npmaster/data/phase3/route_b/eval/score_swap_s0.json") as f:
     rb_data = json.load(f)
 
 # Extract Route B regions per genome
@@ -50,7 +50,7 @@ for split in ["test_id", "test_ood"]:
 # Actually we need to re-run Route B region calling to get predictions
 # Use the existing predict file if available, or approximate from the scored windows
 # For now, load Route B predictions from eval/results.json (3-seed aggregated)
-with open("/data/muskliu/np_master/data/phase3/route_b/eval/3seed_results.json") as f:
+with open("/data/muskliu/npmaster/data/phase3/route_b/eval/3seed_results.json") as f:
     rb_3seed = json.load(f)
 
 # For per-seed comparison use s0
@@ -153,6 +153,6 @@ out = {
     "route_b": {split: rb_s0[split] for split in ["test_id", "test_ood"]},
     "gecco": gecco_results,
 }
-with open("/data/muskliu/np_master/data/phase4/p3_comparison.json", "w") as f:
+with open("/data/muskliu/npmaster/data/phase4/p3_comparison.json", "w") as f:
     json.dump(out, f, indent=2)
-print(f"\nSaved to /data/muskliu/np_master/data/phase4/p3_comparison.json")
+print(f"\nSaved to /data/muskliu/npmaster/data/phase4/p3_comparison.json")

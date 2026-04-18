@@ -4,8 +4,8 @@ import csv
 from collections import defaultdict
 from pathlib import Path
 
-DEEPBGC_DIR = "/data/muskliu/np_master/data/phase4/baselines/deepbgc"
-OUT = "/data/muskliu/np_master/data/phase4/baselines/deepbgc_predictions.json"
+DEEPBGC_DIR = "/data/muskliu/npmaster/data/phase4/baselines/deepbgc"
+OUT = "/data/muskliu/npmaster/data/phase4/baselines/deepbgc_predictions.json"
 
 predictions = defaultdict(list)
 n_total = 0

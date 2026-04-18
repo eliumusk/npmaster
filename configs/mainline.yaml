@@ -15,13 +15,13 @@
 name: route_b
 
 data:
-  embeddings_path: /data/muskliu/np_master/data/embeddings/edge_padding/embeddings_merged.npy
-  projections_path: /data/muskliu/np_master/data/phase3/route_a/projections_256.npy
-  chunk_index_path: /data/muskliu/np_master/data/phase3/route_b/chunk_index.pkl
-  meta_arrays_path: /data/muskliu/np_master/data/phase3/route_a/meta_arrays.pkl
-  contig_index_path: /data/muskliu/np_master/data/phase3/route_a/contig_index.pkl
-  labels_path: /data/muskliu/np_master/data/stage4_results/p2_t2_hard_neg/windows_metadata_hardneg.csv
-  bgc_csv_path: /data/muskliu/np_master/data/bgc_annotations.csv
+  embeddings_path: /data/muskliu/npmaster/data/embeddings/edge_padding/embeddings_merged.npy
+  projections_path: /data/muskliu/npmaster/data/phase3/route_a/projections_256.npy
+  chunk_index_path: /data/muskliu/npmaster/data/phase3/route_b/chunk_index.pkl
+  meta_arrays_path: /data/muskliu/npmaster/data/phase3/route_a/meta_arrays.pkl
+  contig_index_path: /data/muskliu/npmaster/data/phase3/route_a/contig_index.pkl
+  labels_path: /data/muskliu/npmaster/data/stage4_results/p2_t2_hard_neg/windows_metadata_hardneg.csv
+  bgc_csv_path: /data/muskliu/npmaster/data/bgc_annotations.csv
   input_dim: 4096
   batch_size: 64
   L_chunk: 32
@@ -47,10 +47,10 @@ train:
   checkpoint_eval_every: 5
 
 warm_start:
-  ckpt: /data/muskliu/np_master/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt
+  ckpt: /data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt
 
 log:
-  out_dir: /data/muskliu/np_master/data/phase3/route_b
+  out_dir: /data/muskliu/npmaster/data/phase3/route_b
 
 # Canonical 3-seed checkpoints:
 #   best_route_b_s0.pt  (epoch 94, val region F1 = 0.9049)

@@ -3,8 +3,8 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-GECCO_DIR = "/data/muskliu/np_master/data/phase4/baselines/gecco"
-OUT = "/data/muskliu/np_master/data/phase4/baselines/gecco_predictions.json"
+GECCO_DIR = "/data/muskliu/npmaster/data/phase4/baselines/gecco"
+OUT = "/data/muskliu/npmaster/data/phase4/baselines/gecco_predictions.json"
 
 predictions = defaultdict(list)
 n_total = 0
