@@ -27,6 +27,7 @@ import csv
 import json
 import sys
 from collections import defaultdict
+from collections.abc import Sequence
 from pathlib import Path
 
 import yaml
@@ -69,6 +70,20 @@ def select_genome_ids(genome_ids_arg: str | None) -> list[str]:
         return GENOME_IDS
     selected = {part.strip() for part in genome_ids_arg.split(",") if part.strip()}
     return [genome_id for genome_id in GENOME_IDS if genome_id in selected]
+
+
+def load_genome_subset(split_path: Path, split_part: str) -> list[str]:
+    with split_path.open() as f:
+        split_data = json.load(f)
+    if split_part not in split_data:
+        raise ValueError(
+            f"Split part {split_part!r} not found in {split_path}. "
+            f"Available keys: {sorted(split_data)}"
+        )
+    subset = split_data[split_part]
+    if not isinstance(subset, list) or not all(isinstance(genome_id, str) for genome_id in subset):
+        raise ValueError(f"Split part {split_part!r} in {split_path} must be a list of genome IDs.")
+    return subset
 
 
 def load_operating_point(name: str, path: Path) -> dict:
@@ -271,45 +286,13 @@ def resolve_params(args: argparse.Namespace) -> dict:
     return params
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--base", default="/data/syh/benchmark/nine_genome")
-    parser.add_argument("--results-dir", default=None, help="Defaults to <base>/results/npmaster")
-    parser.add_argument(
-        "--genome-ids",
-        default=None,
-        help="Optional comma-separated subset of genome IDs (without .fna) to score.",
-    )
-    parser.add_argument(
-        "--operating-point",
-        default=None,
-        help="Name of a frozen operating point in operating_points.yaml "
-        "(e.g. val_frozen_fused, tuned_v2).",
-    )
-    parser.add_argument(
-        "--operating-points-file",
-        default=str(DEFAULT_OPERATING_POINTS),
-        help="Path to operating_points.yaml (defaults to configs/operating_points.yaml).",
-    )
-    parser.add_argument("--threshold", type=float, default=None,
-                        help="Legacy single-threshold shortcut (sets both start and extend).")
-    parser.add_argument("--start-threshold", type=float, default=None)
-    parser.add_argument("--extend-threshold", type=float, default=None)
-    parser.add_argument("--max-gap", type=int, default=None)
-    parser.add_argument("--length-cap", type=int, default=None)
-    parser.add_argument("--min-support-windows", type=int, default=None)
-    parser.add_argument("--valley-threshold", type=float, default=None)
-    parser.add_argument("--valley-min-windows", type=int, default=None)
-    parser.add_argument("--out", default=None)
-    args = parser.parse_args()
-
-    params = resolve_params(args)
-
-    base = Path(args.base)
-    results_dir = Path(args.results_dir) if args.results_dir else base / "results" / "npmaster"
+def evaluate_results_dir(
+    base: Path,
+    results_dir: Path,
+    genome_ids: Sequence[str],
+    params: dict,
+) -> dict:
     gt = load_ground_truth(base / "ground_truth.json")
-    genome_ids = select_genome_ids(args.genome_ids)
-
     modes = ["bench", "loose", "strict", "iou"]
     per_genome: dict[str, dict[str, dict[str, float | int]]] = {}
     aggregate = {
@@ -352,7 +335,7 @@ def main() -> None:
             "n_pred": a["n_pred"],
         }
 
-    out = {
+    return {
         "operating_point": params["operating_point"],
         "params": {
             "score": params["score"],
@@ -370,6 +353,46 @@ def main() -> None:
         "summary": summary,
         "per_genome": per_genome,
     }
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--base", default="/data/syh/benchmark/nine_genome")
+    parser.add_argument("--results-dir", default=None, help="Defaults to <base>/results/npmaster")
+    parser.add_argument(
+        "--genome-ids",
+        default=None,
+        help="Optional comma-separated subset of genome IDs (without .fna) to score.",
+    )
+    parser.add_argument(
+        "--operating-point",
+        default=None,
+        help="Name of a frozen operating point in operating_points.yaml "
+        "(e.g. val_frozen_fused, tuned_v2).",
+    )
+    parser.add_argument(
+        "--operating-points-file",
+        default=str(DEFAULT_OPERATING_POINTS),
+        help="Path to operating_points.yaml (defaults to configs/operating_points.yaml).",
+    )
+    parser.add_argument("--threshold", type=float, default=None,
+                        help="Legacy single-threshold shortcut (sets both start and extend).")
+    parser.add_argument("--start-threshold", type=float, default=None)
+    parser.add_argument("--extend-threshold", type=float, default=None)
+    parser.add_argument("--max-gap", type=int, default=None)
+    parser.add_argument("--length-cap", type=int, default=None)
+    parser.add_argument("--min-support-windows", type=int, default=None)
+    parser.add_argument("--valley-threshold", type=float, default=None)
+    parser.add_argument("--valley-min-windows", type=int, default=None)
+    parser.add_argument("--out", default=None)
+    args = parser.parse_args()
+
+    params = resolve_params(args)
+
+    base = Path(args.base)
+    results_dir = Path(args.results_dir) if args.results_dir else base / "results" / "npmaster"
+    genome_ids = select_genome_ids(args.genome_ids)
+    out = evaluate_results_dir(base, results_dir, genome_ids, params)
 
     if args.out:
         out_path = Path(args.out)

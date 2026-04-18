@@ -34,3 +34,8 @@ __pycache__/
 # Logs
 *.log
 extract_log*.txt
+
+# Transient planner + rsync staging outputs
+tmp/stage2_*plan*.json
+tmp/stage2b_predictions/
+tmp/nine_genome_case_studies.*

@@ -62,6 +62,17 @@ def make_windows(seq: str, window: int, stride: int) -> list[tuple[int, int, str
     return windows
 
 
+def validate_window_stride(window: int, stride: int) -> tuple[int, int]:
+    """Reject invalid tiling specs early so planner-generated commands fail fast."""
+    if window <= 0:
+        raise ValueError("window must be positive")
+    if stride <= 0:
+        raise ValueError("stride must be positive")
+    if stride > window:
+        raise ValueError("stride must be less than or equal to window")
+    return window, stride
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--fna-dir", default="/data/syh/benchmark/nine_genome/fna")
@@ -77,7 +88,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--stride", type=int, default=16384)
     parser.add_argument("--layer", default="blocks.20.mlp.l3")
     parser.add_argument("--evo-model", default="evo2_7b")
-    parser.add_argument("--cuda-visible-devices", default="0")
+    parser.add_argument("--cuda-visible-devices", default=None)
     parser.add_argument("--cache-dir", default="/data/public_models/hub")
     return parser.parse_args()
 
@@ -145,6 +156,7 @@ def resolve_src_dir(cli_value: str | None) -> Path:
 
 def main() -> None:
     args = parse_args()
+    validate_window_stride(args.window, args.stride)
 
     selected_genomes = None
     if args.genome_ids:
@@ -152,7 +164,8 @@ def main() -> None:
 
     os.environ["HF_HUB_CACHE"] = args.cache_dir
     os.environ["HF_HUB_OFFLINE"] = "1"
-    os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda_visible_devices
+    if args.cuda_visible_devices:
+        os.environ["CUDA_VISIBLE_DEVICES"] = args.cuda_visible_devices
 
     import torch
 

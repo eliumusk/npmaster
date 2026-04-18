@@ -1,0 +1,12 @@
+{
+  "genome_ids": [
+    "GCA_000154945.1",
+    "GCA_000156475.1",
+    "GCA_000158875.1",
+    "GCA_000158915.1",
+    "GCA_000568915.1"
+  ],
+  "split_part": "dev",
+  "split_path": "/Users/musk/Documents/code/npmaster/configs/splits/nine_genome_dev_lockbox_v1.json",
+  "split_version": "nine_genome_dev_lockbox_v1"
+}

@@ -1,0 +1,32 @@
+{
+  "hosts": [
+    {
+      "name": "voc_gpu_node7_a800",
+      "ssh_target": "Voc_gpu_node7_a800",
+      "workspace_root": "/data/muskliu/npmaster_exec",
+      "snapshot_dirname": "snapshots",
+      "conda_root": "/root/miniconda3",
+      "conda_env": "bgc",
+      "pythonpath_prepend": "/root/miniconda3/envs/bgc/lib/python3.11/site-packages/vortex/ops/depr_attn",
+      "gpus": [0, 1, 2, 3, 4, 5, 6, 7]
+    },
+    {
+      "name": "voc_gpu_node8_a800",
+      "ssh_target": "Voc_gpu_node8_a800",
+      "workspace_root": "/data/muskliu/npmaster_exec",
+      "snapshot_dirname": "snapshots",
+      "conda_root": "/root/miniconda3",
+      "conda_env": "bgc",
+      "pythonpath_prepend": "/root/miniconda3/envs/bgc/lib/python3.11/site-packages/vortex/ops/depr_attn",
+      "gpus": [0, 1, 2, 3, 4, 5, 6, 7]
+    }
+  ],
+  "rsync_excludes": [
+    ".git",
+    "__pycache__",
+    ".pytest_cache",
+    ".mypy_cache",
+    ".DS_Store",
+    "tmp"
+  ]
+}

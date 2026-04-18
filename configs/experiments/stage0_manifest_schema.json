@@ -1,0 +1,28 @@
+{
+  "type": "object",
+  "required": [
+    "experiment_id",
+    "git_commit",
+    "server",
+    "command"
+  ],
+  "properties": {
+    "experiment_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "git_commit": {
+      "type": "string",
+      "minLength": 1
+    },
+    "server": {
+      "type": "string",
+      "minLength": 1
+    },
+    "command": {
+      "type": "string",
+      "minLength": 1
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,75 @@
+{
+  "checkpoint": "/data/muskliu/npmaster/data/phase3/route_b/best_route_b_s0.pt",
+  "command": "bash experiments/stage2_tiling_v1-dev-w12288-s2048/command.txt",
+  "command_specs": {
+    "evaluate": {
+      "argv": [
+        "python",
+        "scripts/evaluate_nine_genome.py",
+        "--base",
+        "/data/syh/benchmark/nine_genome",
+        "--results-dir",
+        "experiments/stage2_tiling_v1-dev-w12288-s2048/artifacts/predictions",
+        "--genome-ids",
+        "GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1",
+        "--operating-point",
+        "val_frozen_fused",
+        "--out",
+        "experiments/stage2_tiling_v1-dev-w12288-s2048/metrics/summary.json"
+      ],
+      "outputs": {
+        "summary_json": "experiments/stage2_tiling_v1-dev-w12288-s2048/metrics/summary.json"
+      },
+      "shell": "python scripts/evaluate_nine_genome.py --base /data/syh/benchmark/nine_genome --results-dir experiments/stage2_tiling_v1-dev-w12288-s2048/artifacts/predictions --genome-ids GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1 --operating-point val_frozen_fused --out experiments/stage2_tiling_v1-dev-w12288-s2048/metrics/summary.json"
+    },
+    "inference": {
+      "argv": [
+        "python",
+        "scripts/inference_stride.py",
+        "--fna-dir",
+        "/data/syh/benchmark/nine_genome/fna",
+        "--out-dir",
+        "experiments/stage2_tiling_v1-dev-w12288-s2048/artifacts/predictions",
+        "--ckpt",
+        "/data/muskliu/npmaster/data/phase3/route_b/best_route_b_s0.pt",
+        "--src-dir",
+        "src",
+        "--genome-ids",
+        "GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1",
+        "--window",
+        "12288",
+        "--stride",
+        "2048",
+        "--layer",
+        "blocks.20.mlp.l3",
+        "--evo-model",
+        "evo2_7b",
+        "--cache-dir",
+        "/data/public_models/hub"
+      ],
+      "outputs": {
+        "predictions_dir": "experiments/stage2_tiling_v1-dev-w12288-s2048/artifacts/predictions"
+      },
+      "shell": "python scripts/inference_stride.py --fna-dir /data/syh/benchmark/nine_genome/fna --out-dir experiments/stage2_tiling_v1-dev-w12288-s2048/artifacts/predictions --ckpt /data/muskliu/npmaster/data/phase3/route_b/best_route_b_s0.pt --src-dir src --genome-ids GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1 --window 12288 --stride 2048 --layer blocks.20.mlp.l3 --evo-model evo2_7b --cache-dir /data/public_models/hub"
+    }
+  },
+  "experiment_id": "stage2_tiling_v1-dev-w12288-s2048",
+  "git_commit": "f66bdc8d4ce01ab0ec545ffce3043eb5a1d5b166",
+  "git_dirty": true,
+  "input_genome_ids": [
+    "GCA_000154945.1",
+    "GCA_000156475.1",
+    "GCA_000158875.1",
+    "GCA_000158915.1",
+    "GCA_000568915.1"
+  ],
+  "operating_point": "val_frozen_fused",
+  "server": "voc_gpu_node8_a800",
+  "split_part": "dev",
+  "split_version": "nine_genome_dev_lockbox_v1",
+  "stride": 2048,
+  "sweep_id": "stage2_tiling_v1",
+  "task_id": "task4_stage2_tiling_sweep",
+  "trial_id": "w12288-s2048",
+  "window": 12288
+}
