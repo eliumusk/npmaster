@@ -1,0 +1,57 @@
+sweep_id: stage3_hardneg_v1
+
+# Stage 3a hardneg-only sweep. Mining rebuilds meta_arrays.pkl per trial; all
+# other artifacts (embeddings, chunk_index, contig_index, projections) are
+# shared across trials and reused. Training warm-starts from the mainline
+# H_hardneg_r10 checkpoint (same as best_route_b_s0) so Route B is reproduced
+# exactly except for the hardneg patch + loss-weight change.
+#
+# Flag surfaces verified against:
+#   scripts/mine_hard_negatives.py:171-183 (argparse)
+#   src/train.py:333-358            (argparse)
+#   scripts/inference_stride.py:77-92 (argparse)
+#   scripts/evaluate_nine_genome.py:358-388 (argparse)
+#
+# NOTE: train.py uses --ckpt for warm start (NOT --warm-start) and derives
+# the output checkpoint / log CSV path from --out-dir + --tag, so the runner
+# lets those land under <experiment_dir>/artifacts/checkpoints.
+defaults:
+  # --- warm start (reproduce route_b mainline) ---
+  base_checkpoint: /data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt
+  mining_seed_checkpoint: /data/muskliu/npmaster/data/phase3/route_b/best_route_b_s0.pt
+
+  # --- inputs reused across trials ---
+  base_meta_arrays: /data/muskliu/npmaster/data/phase3/route_a/meta_arrays.pkl
+  chunk_index: /data/muskliu/npmaster/data/phase3/route_b/chunk_index.pkl
+  contig_index: /data/muskliu/npmaster/data/phase3/route_a/contig_index.pkl
+  embeddings: /data/muskliu/npmaster/data/embeddings/edge_padding/embeddings_merged.npy
+  projections: /data/muskliu/npmaster/data/phase3/route_a/projections_256.npy
+  bgc_csv: /data/muskliu/npmaster/data/bgc_annotations.csv
+
+  # --- mining / training hyperparams (mainline defaults) ---
+  score_name: fused
+  seed: 0
+  epochs: 100
+  batch_size: 64
+
+  # --- eval / tiling (matches Stage 2 top tiling w8192/s2048 fused) ---
+  benchmark_base: /data/syh/benchmark/nine_genome
+  fna_dir: /data/syh/benchmark/nine_genome/fna
+  src_dir: src
+  operating_point: val_frozen_fused
+  window: 8192
+  stride: 2048
+  layer: blocks.20.mlp.l3
+  evo_model: evo2_7b
+  cache_dir: /data/public_models/hub
+
+  # --- server ---
+  server: voc_gpu_node7_a800
+
+# Trials: scan (top_k, min_score, hard_neg_weight). Only one placeholder
+# entry here; main agent will populate the rest once the hardneg-score
+# histogram subagent returns a sane min_score band.
+trials:
+  - top_k: 5000
+    min_score: 0.80
+    hard_neg_weight: 1.0
