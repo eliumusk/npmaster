@@ -36,6 +36,10 @@ class ChunkDataset(Dataset):
             meta = pickle.load(f)
         self.all_labels = meta["labels"]
         self.all_phyla = meta["phylum"]
+        self.all_hard_negative = meta.get(
+            "hard_negative",
+            np.zeros(len(self.all_labels), dtype=np.int32),
+        )
 
         # Build phylum encoding
         all_phyla_unique = sorted(set(str(p) for p in self.all_phyla))
@@ -44,16 +48,19 @@ class ChunkDataset(Dataset):
         # Compute class statistics for pos_weight
         n_pos = np.zeros(8)
         n_total = 0
+        n_hard = 0
         for chunk in self.chunks:
             for pos, has_loss in enumerate(chunk["loss_mask"]):
                 if has_loss:
                     g_idx = chunk["global_indices"][pos]
                     n_pos += self.all_labels[g_idx]
                     n_total += 1
+                    n_hard += int(self.all_hard_negative[g_idx] != 0)
         self.n_loss_windows = n_total
         self.n_pos_per_class = n_pos
+        self.n_hard_loss_windows = n_hard
         print(f"  ChunkDataset: {len(self.chunks)} chunks, {n_total} loss windows, "
-              f"pos/class: {n_pos.astype(int).tolist()}")
+              f"hard_neg={n_hard}, pos/class: {n_pos.astype(int).tolist()}")
 
     def __len__(self):
         return len(self.chunks)
@@ -65,6 +72,7 @@ class ChunkDataset(Dataset):
 
         emb = np.zeros((L, D), dtype=np.float32)
         labels = np.zeros((L, 8), dtype=np.float32)
+        hard_neg = np.zeros(L, dtype=bool)
         valid_mask = np.array(chunk["valid_mask"], dtype=bool)
         loss_mask = np.array(chunk["loss_mask"], dtype=bool)
 
@@ -73,10 +81,12 @@ class ChunkDataset(Dataset):
                 continue
             emb[pos] = self.embeddings[g_idx]
             labels[pos] = self.all_labels[g_idx]
+            hard_neg[pos] = bool(self.all_hard_negative[g_idx])
 
         return (
             torch.from_numpy(emb),          # (L, 4096)
             torch.from_numpy(valid_mask),    # (L,) bool
             torch.from_numpy(loss_mask),     # (L,) bool
+            torch.from_numpy(hard_neg),      # (L,) bool
             torch.from_numpy(labels),        # (L, 8)
         )

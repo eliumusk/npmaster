@@ -27,6 +27,26 @@ from evaluate_context import evaluate_context_model, evaluate_region_level
 from utils import set_seed, save_json
 
 
+def apply_hard_negative_weights(
+    per_pos_loss: torch.Tensor,
+    loss_mask: torch.Tensor,
+    hard_neg_mask: torch.Tensor,
+    hard_neg_weight: float,
+) -> tuple[torch.Tensor, int]:
+    """Average masked loss with optional extra weight on flagged hard negatives."""
+    masked = loss_mask.bool()
+    n_hard = int((masked & hard_neg_mask.bool()).sum().item())
+    if hard_neg_weight <= 1.0:
+        denom = masked.float().sum().clamp_min(1.0)
+        return (per_pos_loss * masked.float()).sum() / denom, n_hard
+
+    weight = torch.ones_like(per_pos_loss)
+    weight = torch.where(masked & hard_neg_mask.bool(), hard_neg_weight, weight)
+    weight = weight * masked.float()
+    denom = weight.sum().clamp_min(1.0)
+    return (per_pos_loss * weight).sum() / denom, n_hard
+
+
 def train(args):
     set_seed(args.seed)
     device = "cuda" if torch.cuda.is_available() else "cpu"
@@ -54,6 +74,8 @@ def train(args):
     )
     print(f"[{tag}] train chunks={len(train_ds)} val={len(val_ds)} "
           f"L_chunk={train_ds.L_chunk} loss_windows={train_ds.n_loss_windows}")
+    print(f"[{tag}] hard_neg_loss_windows={train_ds.n_hard_loss_windows} "
+          f"hard_neg_weight={args.hard_neg_weight}")
 
     # --- Model ---
     model = ContextFullModel(
@@ -84,6 +106,8 @@ def train(args):
         for k, v in ckpt["model"].items():
             if k.startswith("classifier.fc."):
                 cls_state[k.replace("classifier.fc.", "")] = v
+            elif k.startswith("classifier."):
+                cls_state[k.replace("classifier.", "")] = v
         model.classifier.load_state_dict(cls_state)
         print(f"[{tag}]   Classifier loaded")
 
@@ -123,9 +147,36 @@ def train(args):
     # --- Training log ---
     log_csv = out_dir / f"train_log_{tag}.csv"
     fieldnames = ["epoch", "L_bce", "val_bgc_auroc", "val_region_f1",
-                  "alpha", "lr_proj", "lr_ctx", "sec"]
+                  "alpha", "lr_proj", "lr_ctx", "hard_neg_frac", "sec"]
     with open(log_csv, "w", newline="") as f:
         csv.DictWriter(f, fieldnames=fieldnames).writeheader()
+    save_json({
+        "tag": tag,
+        "seed": args.seed,
+        "embeddings": args.embeddings,
+        "projections": args.projections,
+        "chunk_index": args.chunk_index,
+        "meta_arrays": args.meta_arrays,
+        "contig_index": args.contig_index,
+        "bgc_csv": args.bgc_csv,
+        "ckpt": args.ckpt,
+        "batch_size": args.batch_size,
+        "epochs": args.epochs,
+        "lr_proj": args.lr_proj,
+        "lr_context": args.lr_context,
+        "lr_classifier": args.lr_classifier,
+        "wd": args.wd,
+        "warmup_epochs": args.warmup_epochs,
+        "proj_hidden": args.proj_hidden,
+        "proj_out": args.proj_out,
+        "proj_dropout": args.proj_dropout,
+        "cnn_dropout": args.cnn_dropout,
+        "init_beta": args.init_beta,
+        "hard_neg_weight": args.hard_neg_weight,
+        "n_train_chunks": len(train_ds),
+        "n_train_loss_windows": train_ds.n_loss_windows,
+        "n_train_hard_neg_loss_windows": train_ds.n_hard_loss_windows,
+    }, out_dir / f"config_{tag}.json")
 
     # For val eval, load contig index and metadata
     with open(args.contig_index, "rb") as f:
@@ -140,12 +191,14 @@ def train(args):
         model.train()
         total_loss = 0.0
         n_loss_positions = 0
+        n_hard_positions = 0
         t0 = time.time()
 
-        for emb, valid_mask, loss_mask, labels in train_loader:
+        for emb, valid_mask, loss_mask, hard_neg_mask, labels in train_loader:
             emb = emb.to(device, non_blocking=True)            # (B, L, 4096)
             valid_mask = valid_mask.to(device, non_blocking=True)  # (B, L)
             loss_mask = loss_mask.to(device, non_blocking=True)    # (B, L)
+            hard_neg_mask = hard_neg_mask.to(device, non_blocking=True)  # (B, L)
             labels = labels.to(device, non_blocking=True)          # (B, L, 8)
 
             _, logits = model(emb, valid_mask)  # (B, L, 8)
@@ -154,13 +207,13 @@ def train(args):
             per_pos_loss = loss_fn(logits, labels)  # (B, L, 8)
             # Average over 8 classes per position, then mask
             per_pos_loss = per_pos_loss.mean(dim=-1)  # (B, L)
-            masked_loss = per_pos_loss * loss_mask.float()
-
-            n_valid = loss_mask.sum().item()
-            if n_valid > 0:
-                loss = masked_loss.sum() / n_valid
-            else:
-                loss = masked_loss.sum() * 0.0  # no valid positions
+            n_valid = int(loss_mask.sum().item())
+            loss, n_hard = apply_hard_negative_weights(
+                per_pos_loss,
+                loss_mask,
+                hard_neg_mask,
+                hard_neg_weight=args.hard_neg_weight,
+            )
 
             optimizer.zero_grad()
             loss.backward()
@@ -169,6 +222,7 @@ def train(args):
 
             total_loss += loss.item() * n_valid
             n_loss_positions += n_valid
+            n_hard_positions += n_hard
 
         scheduler.step()
         dt = time.time() - t0
@@ -190,6 +244,7 @@ def train(args):
             "val_region_f1": round(val_region_f1, 4) if not np.isnan(val_region_f1) else "",
             "alpha": round(alpha_val, 6),
             "lr_proj": f"{lr_p:.2e}", "lr_ctx": f"{lr_c:.2e}",
+            "hard_neg_frac": round(n_hard_positions / max(n_loss_positions, 1), 4),
             "sec": round(dt, 1),
         }
         with open(log_csv, "a", newline="") as f:
@@ -207,7 +262,8 @@ def train(args):
 
         print(f"[{tag} ep{epoch:03d}] L={avg_loss:.4f} "
               f"auroc={val_auroc:.4f} rf1={val_region_f1:.4f} "
-              f"a={alpha_val:.4f} lr_p={lr_p:.2e} ({dt:.1f}s)")
+              f"a={alpha_val:.4f} lr_p={lr_p:.2e} "
+              f"hard={n_hard_positions/max(n_loss_positions,1):.4f} ({dt:.1f}s)")
 
         torch.save({
             "model": model.state_dict(), "epoch": epoch,
@@ -298,6 +354,7 @@ def main():
     p.add_argument("--proj-dropout", type=float, default=0.3)
     p.add_argument("--cnn-dropout", type=float, default=0.1)
     p.add_argument("--init-beta", type=float, default=-4.0)
+    p.add_argument("--hard-neg-weight", type=float, default=1.0)
     args = p.parse_args()
     train(args)
 
