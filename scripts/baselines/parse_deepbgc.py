@@ -1,66 +1,85 @@
-"""Parse DeepBGC batch output to unified format."""
-import json
+"""Parse DeepBGC per-genome output directory into a unified region format."""
+from __future__ import annotations
+
+import argparse
 import csv
+import json
 from collections import defaultdict
 from pathlib import Path
 
-DEEPBGC_DIR = "/data/muskliu/npmaster/data/phase4/baselines/deepbgc"
-OUT = "/data/muskliu/npmaster/data/phase4/baselines/deepbgc_predictions.json"
 
-predictions = defaultdict(list)
-n_total = 0
-n_bgcs = 0
-n_with_any = 0
+def parse_deepbgc_dir(
+    results_dir: Path,
+    genome_ids: list[str] | None = None,
+) -> dict[str, list[dict]]:
+    """Read a DeepBGC batch output dir and return {genome_id: [region_dict, ...]}.
 
-for gdir in sorted(Path(DEEPBGC_DIR).iterdir()):
-    if not gdir.is_dir(): continue
-    gid = gdir.name
-    # Output filename is {gid}.bgc.tsv
-    tsv = gdir / f"{gid}.bgc.tsv"
-    if not tsv.exists():
-        # fallback check
-        tsv_alt = list(gdir.glob("*.bgc.tsv"))
-        if tsv_alt:
-            tsv = tsv_alt[0]
-        else:
+    Layout expected: ``results_dir/<genome_id>/<genome_id>.bgc.tsv``.
+    """
+    predictions: dict[str, list[dict]] = defaultdict(list)
+    for gdir in sorted(Path(results_dir).iterdir()):
+        if not gdir.is_dir():
             continue
-    n_total += 1
-    
-    with open(tsv) as f:
-        reader = csv.DictReader(f, delimiter="\t")
-        had_any = False
-        for row in reader:
-            try:
-                bgc = {
+        gid = gdir.name
+        if genome_ids is not None and gid not in genome_ids:
+            continue
+        tsv = gdir / f"{gid}.bgc.tsv"
+        if not tsv.exists():
+            alt = list(gdir.glob("*.bgc.tsv"))
+            if not alt:
+                predictions[gid] = []
+                continue
+            tsv = alt[0]
+        with tsv.open() as f:
+            for row in csv.DictReader(f, delimiter="\t"):
+                try:
+                    start = int(row.get("nucl_start", 0)) - 1
+                    end = int(row.get("nucl_end", 0))
+                except ValueError:
+                    continue
+                if end <= start:
+                    continue
+                predictions[gid].append({
                     "genome_id": gid,
                     "contig_id": row.get("sequence_id", ""),
-                    "start_bp": int(row.get("nucl_start", 0)) - 1,
-                    "end_bp": int(row.get("nucl_end", 0)),
+                    "start_bp": start,
+                    "end_bp": end,
                     "predicted_type": row.get("product_activity", ""),
-                    "score": float(row.get("deepbgc_score", 0)),
+                    "score": float(row.get("deepbgc_score", 0) or 0),
                     "bgc_candidate_id": row.get("bgc_candidate_id", ""),
-                }
-                predictions[gid].append(bgc)
-                n_bgcs += 1
-                had_any = True
-            except ValueError:
-                continue
-        if had_any: n_with_any += 1
+                })
+    return dict(predictions)
 
-print(f"Genomes processed: {n_total}")
-print(f"Genomes with >=1 BGC: {n_with_any}")
-print(f"Total DeepBGC BGCs: {n_bgcs}")
 
-with open(OUT, "w") as f:
-    json.dump({"tool": "deepbgc", "version": "0.1.31",
-               "n_genomes": n_total, "n_genomes_with_bgc": n_with_any,
-               "n_predictions": n_bgcs, "predictions": dict(predictions)}, f, indent=2)
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--results-dir", required=True, type=Path)
+    parser.add_argument("--genome-ids", default=None,
+                        help="Optional comma-separated subset.")
+    parser.add_argument("--out", required=True, type=Path)
+    parser.add_argument("--version", default="unknown")
+    args = parser.parse_args()
 
-import numpy as np
-lens = [b["end_bp"] - b["start_bp"] for bgcs in predictions.values() for b in bgcs]
-if lens:
-    print(f"Length dist: median={int(np.median(lens))} mean={int(np.mean(lens))}")
-    for lo, hi, name in [(0, 5000, "<5kb"), (5000, 10000, "5-10kb"), (10000, 20000, "10-20kb"),
-                         (20000, 50000, "20-50kb"), (50000, 10**10, ">50kb")]:
-        n = sum(1 for l in lens if lo <= l < hi)
-        print(f"  {name}: {n}")
+    genome_ids = None
+    if args.genome_ids:
+        genome_ids = [g.strip() for g in args.genome_ids.split(",") if g.strip()]
+
+    preds = parse_deepbgc_dir(args.results_dir, genome_ids=genome_ids)
+    n_pred = sum(len(v) for v in preds.values())
+    n_with = sum(1 for v in preds.values() if v)
+
+    args.out.parent.mkdir(parents=True, exist_ok=True)
+    with args.out.open("w") as f:
+        json.dump({
+            "tool": "deepbgc",
+            "version": args.version,
+            "n_genomes": len(preds),
+            "n_genomes_with_bgc": n_with,
+            "n_predictions": n_pred,
+            "predictions": preds,
+        }, f, indent=2)
+    print(f"deepbgc: {len(preds)} genomes, {n_with} with BGC, {n_pred} regions -> {args.out}")
+
+
+if __name__ == "__main__":
+    main()

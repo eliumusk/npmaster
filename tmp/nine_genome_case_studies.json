@@ -1,0 +1,40 @@
+{
+  "selected_genomes": [
+    {
+      "genome_id": "GCA_000158875.1",
+      "contig": "GG657746.1",
+      "locus": {
+        "start": 5117965,
+        "end": 5128580
+      },
+      "plot_window": {
+        "start": 5066560,
+        "end": 5214390
+      }
+    },
+    {
+      "genome_id": "GCA_000568915.1",
+      "contig": "KK037233.1",
+      "locus": {
+        "start": 454105,
+        "end": 467004
+      },
+      "plot_window": {
+        "start": 417368,
+        "end": 578805
+      }
+    },
+    {
+      "genome_id": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "locus": {
+        "start": 6602425,
+        "end": 6611608
+      },
+      "plot_window": {
+        "start": 6528600,
+        "end": 6671224
+      }
+    }
+  ]
+}

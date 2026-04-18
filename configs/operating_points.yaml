@@ -1,5 +1,7 @@
 # Frozen operating points for 9-genome region-level evaluation.
-# All points assume checkpoint: H_hardneg_r10_s1 under stride=8192 inference.
+# All points assume checkpoint: best_route_b_s0 under stride=8192 inference
+# (Phase 3 Route B context model, seed 0). Only seed 0 has stride-8192 CSVs
+# on disk today; s1/s2 regeneration is pending.
 #
 # Two points are deliberately kept:
 #   - val_frozen_fused: selected on internal val (generalization-safe), used for formal reporting
@@ -19,7 +21,7 @@
 
 val_frozen_fused:
   description: "internal val tuned, generalization-safe — use for formal reporting"
-  checkpoint: H_hardneg_r10_s1
+  checkpoint: best_route_b_s0
   stride: 8192
   score: fused          # fused = 0.5 * max_type + 0.5 * (1 - is_negative)
   start_threshold: 0.98
@@ -38,7 +40,7 @@ val_frozen_fused:
 
 tuned_v2:
   description: "9-genome tuned, diagnostic upper bound only — NOT for formal claims"
-  checkpoint: H_hardneg_r10_s1
+  checkpoint: best_route_b_s0
   stride: 8192
   score: max_type       # max_type = max(probs[:7])
   start_threshold: 0.95

@@ -1,6 +1,6 @@
 # Operating Points
 
-Two frozen region-decoding operating points. Parameters in `configs/operating_points.yaml`. Metrics reported under `bench` mode (asymmetric 50% overlap, see `evaluation-protocol.md`). Both assume `H_hardneg_r10_s1` checkpoint and `stride=8192` inference.
+Two frozen region-decoding operating points. Parameters in `configs/operating_points.yaml`. Metrics reported under `bench` mode (asymmetric 50% overlap, see `evaluation-protocol.md`). Both assume the Phase 3 Route B checkpoint `best_route_b_s0.pt` (seed 0) and `stride=8192` inference. Seeds 1 and 2 have not been re-inferred at stride 8192 yet.
 
 ## `val_frozen_fused` — formal reporting
 
@@ -52,13 +52,18 @@ python scripts/evaluate_nine_genome.py \
 
 ## Context — Baselines on Same Metric
 
-| Tool | R | P | F1 |
-|---|---:|---:|---:|
-| NP-Master (orig default) | 0.6361 | 0.0171 | 0.0334 |
-| DeepBGC | 0.7213 | 0.0636 | 0.1169 |
-| antiSMASH | 0.5574 | 0.1661 | 0.2559 |
-| **NP-Master val_frozen_fused** | 0.5934 | 0.1649 | 0.2580 |
-| **NP-Master tuned_v2** | 0.5311 | 0.2513 | 0.3412 |
-| BGC-Prophet | 0.3475 | 0.4529 | 0.3933 |
+| Tool | R | P | F1 | median pred len |
+|---|---:|---:|---:|---:|
+| DeepBGC | 0.7213 | 0.0636 | 0.1169 | 4.9 kb |
+| antiSMASH | 0.5574 | 0.1661 | 0.2559 | 29.8 kb |
+| **NP-Master val_frozen_fused** | 0.5934 | 0.1649 | 0.2580 | — |
+| NP-Master tuned_v2 *(diagnostic)* | 0.5311 | 0.2513 | 0.3412 | — |
+| BGC-Prophet | 0.3475 | 0.4529 | 0.3933 | 22.7 kb |
 
-Decoder work is ~done. The remaining precision gap vs BGC-Prophet is expected to close via training-side work, not further decoder tuning — see `next-phase.md`.
+Reproduce with `scripts/evaluate_nine_genome_baselines.py` (see README Quick Start).
+
+Caveats when reading this table:
+
+- GT comes from the BGC-Prophet 9-genome test set, gene-level "tight core" convention. Median GT length ≈ 10.9 kb, no flanks. Tools whose native output includes flanking regions (antiSMASH ≈ 30 kb median) are mechanically penalised on precision by the asymmetric 50% rule — low antiSMASH precision is largely a length-convention artifact, not detection quality.
+- BGC-Prophet's top F1 is partly explained by convention alignment between its output and the GT it authored.
+- Decoder work is ~done. The remaining precision gap vs BGC-Prophet is expected to close via training-side work, not further decoder tuning — see `next-phase.md`.
