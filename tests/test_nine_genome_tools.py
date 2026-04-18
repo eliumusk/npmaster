@@ -43,7 +43,7 @@ class EvalNineGenomeOperatingPointTests(unittest.TestCase):
         self.assertEqual(iou["recall"], 0.0)
         self.assertEqual(iou["precision"], 0.0)
 
-    def test_region_loading_merges_by_gap(self):
+    def test_window_loading_then_decode_merges_by_gap(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             csv_path = Path(tmpdir) / "preds.csv"
             csv_path.write_text(
@@ -53,28 +53,58 @@ class EvalNineGenomeOperatingPointTests(unittest.TestCase):
                 "c1,500,600,0.91\n",
                 encoding="utf-8",
             )
-
-            merged = self.eval_mod.load_regions_from_csv(csv_path, threshold=0.8, max_gap=32)
+            windows = self.eval_mod.load_windows_from_csv(csv_path)
+            merged = self.eval_mod.decode_regions_hysteresis(
+                windows,
+                start_threshold=0.8,
+                extend_threshold=0.8,
+                max_gap=32,
+            )
             self.assertEqual(merged, [("c1", 0, 220), ("c1", 500, 600)])
 
-    def test_region_loading_respects_length_cap(self):
+    def test_bench_mode_uses_asymmetric_50pct_rule(self):
+        gt = [("c1", 100, 200)]          # gt_len = 100
+        pred = [("c1", 150, 450)]        # pred_len = 300, overlap = 50
+
+        bench = self.eval_mod.eval_regions(gt, pred, "bench")
+        # recall: overlap/gt_len = 50/100 = 0.5 -> TP
+        # precision: overlap/pred_len = 50/300 ~ 0.17 -> not TP
+        self.assertEqual(bench["recall"], 1.0)
+        self.assertEqual(bench["precision"], 0.0)
+
+    def test_bench_mode_recall_requires_50pct_gt_coverage(self):
+        gt = [("c1", 0, 1000)]           # gt_len = 1000
+        pred = [("c1", 0, 400)]          # pred_len = 400, overlap = 400
+        # recall: 400/1000 = 0.4 -> not TP
+        # precision: 400/400 = 1.0 -> TP
+        bench = self.eval_mod.eval_regions(gt, pred, "bench")
+        self.assertEqual(bench["recall"], 0.0)
+        self.assertEqual(bench["precision"], 1.0)
+
+    def test_fused_score_computed_from_csv(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             csv_path = Path(tmpdir) / "preds.csv"
             csv_path.write_text(
-                "contig,start,end,bgc_score\n"
-                "c1,0,100,0.9\n"
-                "c1,100,200,0.95\n"
-                "c1,200,300,0.91\n",
+                "contig,start,end,bgc_score,non_bgc_score\n"
+                "c1,0,100,0.80,0.10\n",
                 encoding="utf-8",
             )
+            maxtype = self.eval_mod.load_windows_from_csv(csv_path, score_family="max_type")
+            fused = self.eval_mod.load_windows_from_csv(csv_path, score_family="fused")
+            self.assertAlmostEqual(maxtype[0].score, 0.80)
+            # fused = 0.5*0.80 + 0.5*(1-0.10) = 0.40 + 0.45 = 0.85
+            self.assertAlmostEqual(fused[0].score, 0.85)
 
-            merged = self.eval_mod.load_regions_from_csv(
-                csv_path,
-                threshold=0.8,
-                max_gap=0,
-                length_cap=150,
-            )
-            self.assertEqual(merged, [("c1", 0, 100), ("c1", 100, 200), ("c1", 200, 300)])
+    def test_operating_point_loader_reads_yaml(self):
+        op = self.eval_mod.load_operating_point(
+            "val_frozen_fused", self.eval_mod.DEFAULT_OPERATING_POINTS
+        )
+        self.assertEqual(op["start_threshold"], 0.98)
+        self.assertEqual(op["extend_threshold"], 0.95)
+        self.assertEqual(op["max_gap"], 0)
+        self.assertEqual(op["length_cap"], 50000)
+        self.assertEqual(op["min_support_windows"], 1)
+        self.assertEqual(op["score"], "fused")
 
     def test_select_genome_ids_preserves_benchmark_order(self):
         selected = self.eval_mod.select_genome_ids("GCA_000154945.1,GCA_000158915.1")

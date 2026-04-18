@@ -1,0 +1,54 @@
+# Frozen operating points for 9-genome region-level evaluation.
+# All points assume checkpoint: H_hardneg_r10_s1 under stride=8192 inference.
+#
+# Two points are deliberately kept:
+#   - val_frozen_fused: selected on internal val (generalization-safe), used for formal reporting
+#   - tuned_v2: selected directly on 9-genome (diagnostic upper bound), NOT for formal claims
+#
+# Metric definition (applies to `metrics` below):
+#   mode = bench (non-symmetric 50% overlap)
+#     recall TP    : overlap / gt_len   >= 0.5  (how well a pred covers the GT)
+#     precision TP : overlap / pred_len >= 0.5  (how well a pred stays inside GT)
+#   This matches muskliu/run_nine_genome_eval.sh. The older syh evaluate.py
+#   used any-overlap precision and is known to be too permissive; do not use.
+#
+# Score family note: the per-window CSV has `bgc_score` (=max_type) plus
+# `non_bgc_score`, so `fused = 0.5*bgc_score + 0.5*(1 - non_bgc_score)` can be
+# derived at eval time from the same CSV — no re-inference required when
+# switching between max_type and fused.
+
+val_frozen_fused:
+  description: "internal val tuned, generalization-safe — use for formal reporting"
+  checkpoint: H_hardneg_r10_s1
+  stride: 8192
+  score: fused          # fused = 0.5 * max_type + 0.5 * (1 - is_negative)
+  start_threshold: 0.98
+  extend_threshold: 0.95
+  max_gap: 0
+  length_cap: 50000
+  min_support_windows: 1
+  valley_threshold: null
+  valley_min_windows: 1
+  # Reference metrics (50% overlap aggregate across 9 genomes). Treat as expected
+  # values for reproduction; regenerate from a clean run before paper-level claims.
+  metrics:
+    recall: 0.5934
+    precision: 0.1649
+    f1: 0.2580
+
+tuned_v2:
+  description: "9-genome tuned, diagnostic upper bound only — NOT for formal claims"
+  checkpoint: H_hardneg_r10_s1
+  stride: 8192
+  score: max_type       # max_type = max(probs[:7])
+  start_threshold: 0.95
+  extend_threshold: 0.95
+  max_gap: 0
+  length_cap: 30000
+  min_support_windows: 3
+  valley_threshold: null
+  valley_min_windows: 1
+  metrics:
+    recall: 0.5311
+    precision: 0.2513
+    f1: 0.3412
