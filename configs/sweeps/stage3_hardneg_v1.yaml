@@ -48,10 +48,28 @@ defaults:
   # --- server ---
   server: voc_gpu_node7_a800
 
-# Trials: scan (top_k, min_score, hard_neg_weight). Only one placeholder
-# entry here; main agent will populate the rest once the hardneg-score
-# histogram subagent returns a sane min_score band.
+# Trials: 4 top_k tiers × 2 hard_neg_weight values = 8 configs.
+#
+# top_k tiers chosen from the histogram (tmp/stage3_hardneg_histogram.md):
+#   k=100  → floor 0.997 (ultra-hard, 100 samples). Label-noise risk (R1).
+#   k=368  → floor 0.950 (matches current mine_s0_fused95 operating point).
+#   k=900  → ~"all with score ≥ 0.5", the shoulder of the distribution.
+#   k=2000 → floor 0.064, adds "ambiguously hard" mid-score negatives.
+# Beyond k≥5000 the floor collapses below 0.01 — that's easy-negative
+# territory, omitted to keep the axis informative.
+#
+# min_score fixed at 0.0 across all trials so top_k alone controls the pool
+# size (with min_score=0.80 the k=900/k=2000 cells collapse to the 563
+# samples above 0.80).
+#
+# hard_neg_weight ∈ {1.0, 4.0}: 1.0 isolates pure mining effect (loss
+# side is a no-op); 4.0 matches docs/route-b-hardneg-v1.md.
 trials:
-  - top_k: 5000
-    min_score: 0.80
-    hard_neg_weight: 1.0
+  - { top_k: 100,  min_score: 0.0, hard_neg_weight: 1.0 }
+  - { top_k: 368,  min_score: 0.0, hard_neg_weight: 1.0 }
+  - { top_k: 900,  min_score: 0.0, hard_neg_weight: 1.0 }
+  - { top_k: 2000, min_score: 0.0, hard_neg_weight: 1.0 }
+  - { top_k: 100,  min_score: 0.0, hard_neg_weight: 4.0 }
+  - { top_k: 368,  min_score: 0.0, hard_neg_weight: 4.0 }
+  - { top_k: 900,  min_score: 0.0, hard_neg_weight: 4.0 }
+  - { top_k: 2000, min_score: 0.0, hard_neg_weight: 4.0 }

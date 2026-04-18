@@ -1,0 +1,19 @@
+{
+  "base_checkpoint": "/data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt",
+  "base_meta_arrays": "/data/muskliu/npmaster/data/phase3/route_a/meta_arrays.pkl",
+  "chunk_index": "/data/muskliu/npmaster/data/phase3/route_b/chunk_index.pkl",
+  "contig_index": "/data/muskliu/npmaster/data/phase3/route_a/contig_index.pkl",
+  "embeddings": "/data/muskliu/npmaster/data/embeddings/edge_padding/embeddings_merged.npy",
+  "genome_ids": [
+    "GCA_000154945.1",
+    "GCA_000156475.1",
+    "GCA_000158875.1",
+    "GCA_000158915.1",
+    "GCA_000568915.1"
+  ],
+  "mining_seed_checkpoint": "/data/muskliu/npmaster/data/phase3/route_b/best_route_b_s0.pt",
+  "projections": "/data/muskliu/npmaster/data/phase3/route_a/projections_256.npy",
+  "split_part": "dev",
+  "split_path": "/Users/musk/Documents/code/npmaster/configs/splits/nine_genome_dev_lockbox_v1.json",
+  "split_version": "nine_genome_dev_lockbox_v1"
+}
