@@ -100,10 +100,28 @@ def _tight_pos_075_v1(
     return _tight_threshold(df, 0.75)
 
 
+def _tight_pos_085_v1(
+    df: pd.DataFrame, **_: object
+) -> tuple[pd.Series, pd.Series]:
+    return _tight_threshold(df, 0.85)
+
+
 def _tight_pos_090_v1(
     df: pd.DataFrame, **_: object
 ) -> tuple[pd.Series, pd.Series]:
     return _tight_threshold(df, 0.90)
+
+
+def _tight_pos_095_v1(
+    df: pd.DataFrame, **_: object
+) -> tuple[pd.Series, pd.Series]:
+    return _tight_threshold(df, 0.95)
+
+
+def _tight_pos_099_v1(
+    df: pd.DataFrame, **_: object
+) -> tuple[pd.Series, pd.Series]:
+    return _tight_threshold(df, 0.99)
 
 
 def _short_bgc_upweight_v1(
@@ -166,7 +184,10 @@ def _hardpos_hardneg_v2(
 VARIANTS: dict[str, Callable[..., tuple[pd.Series, pd.Series]]] = {
     "baseline_v1": _baseline_v1,
     "tight_pos_075_v1": _tight_pos_075_v1,
+    "tight_pos_085_v1": _tight_pos_085_v1,
     "tight_pos_090_v1": _tight_pos_090_v1,
+    "tight_pos_095_v1": _tight_pos_095_v1,
+    "tight_pos_099_v1": _tight_pos_099_v1,
     "short_bgc_upweight_v1": _short_bgc_upweight_v1,
     "truncated_exclude_v1": _truncated_exclude_v1,
     "hardpos_hardneg_v2": _hardpos_hardneg_v2,

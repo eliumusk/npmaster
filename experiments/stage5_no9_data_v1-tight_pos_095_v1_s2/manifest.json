@@ -1,0 +1,29 @@
+{
+  "epochs": 60,
+  "experiment_id": "stage5_no9_data_v1-tight_pos_095_v1_s2",
+  "frozen": true,
+  "git_commit": "bd32369121ba58856d73b6a1450885f11c591b1c",
+  "git_dirty": true,
+  "inputs": {
+    "base_checkpoint": "/data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt",
+    "base_meta_arrays": "/data/muskliu/npmaster/data/phase3/route_a/meta_arrays.pkl",
+    "bgc_csv": "/data/muskliu/npmaster/data/bgc_annotations.csv",
+    "embargo_config": "configs/splits/nine_genome_embargo_v1.json",
+    "windows_csv": "/data/muskliu/npmaster/data/stage4_results/p2_t2_hard_neg/windows_metadata_hardneg.csv"
+  },
+  "nine_genome_policy": "final_report_only",
+  "per_trial_artefacts": {
+    "best_checkpoint": "/Users/musk/Documents/code/npmaster/experiments/stage5_no9_data_v1-tight_pos_095_v1_s2/artifacts/checkpoints/best_tight_pos_095_v1_s2.pt",
+    "labels_csv": "/Users/musk/Documents/code/npmaster/experiments/stage5_no9_data_v1-tight_pos_095_v1_s2/inputs/labels_tight_pos_095_v1.csv",
+    "meta_arrays_pkl": "/Users/musk/Documents/code/npmaster/experiments/stage5_no9_data_v1-tight_pos_095_v1_s2/inputs/meta_arrays_tight_pos_095_v1.pkl",
+    "train_log_csv": "/Users/musk/Documents/code/npmaster/experiments/stage5_no9_data_v1-tight_pos_095_v1_s2/artifacts/checkpoints/train_log_tight_pos_095_v1_s2.csv",
+    "train_out_dir": "/Users/musk/Documents/code/npmaster/experiments/stage5_no9_data_v1-tight_pos_095_v1_s2/artifacts/checkpoints"
+  },
+  "seed": 2,
+  "server": null,
+  "sweep_id": "stage5_no9_data_v1",
+  "tag": "tight_pos_095_v1_s2",
+  "trial_id": "tight_pos_095_v1_s2",
+  "uses_nine_genome_for_selection": false,
+  "variant": "tight_pos_095_v1"
+}

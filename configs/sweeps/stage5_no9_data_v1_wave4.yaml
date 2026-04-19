@@ -1,0 +1,49 @@
+sweep_id: stage5_no9_data_v1
+
+# Wave-4 expands the tight-threshold axis beyond 0.75 and 0.90, now
+# that wave-1 data shows tight_pos_090 leads on internal val. Queues
+# 0.85 / 0.95 / 0.99 at 2 seeds each, plus an extra tight_pos_090 run
+# with 120 epochs to check whether 60 is leaving training on the table.
+
+defaults:
+  input_windows_csv: /data/muskliu/npmaster/data/stage4_results/p2_t2_hard_neg/windows_metadata_hardneg.csv
+  base_meta_arrays: /data/muskliu/npmaster/data/phase3/route_a/meta_arrays.pkl
+  bgc_csv: /data/muskliu/npmaster/data/bgc_annotations.csv
+  embargo_config: configs/splits/nine_genome_embargo_v1.json
+  base_checkpoint: /data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt
+  chunk_index: /data/muskliu/npmaster/data/phase3/route_b/chunk_index.pkl
+  contig_index: /data/muskliu/npmaster/data/phase3/route_a/contig_index.pkl
+  embeddings: /data/muskliu/npmaster/data/embeddings/edge_padding/embeddings_merged.npy
+  projections: /data/muskliu/npmaster/data/phase3/route_a/projections_256.npy
+  hard_neg_weight: 4.0
+  seed: 0
+  epochs: 60
+  batch_size: 64
+  stage5_data_root: /data/muskliu/npmaster/data/stage5/no9_labels
+
+trials:
+  tight_pos_085_v1_s0:
+    variant: tight_pos_085_v1
+    seed: 0
+  tight_pos_085_v1_s1:
+    variant: tight_pos_085_v1
+    seed: 1
+  tight_pos_095_v1_s0:
+    variant: tight_pos_095_v1
+    seed: 0
+  tight_pos_095_v1_s1:
+    variant: tight_pos_095_v1
+    seed: 1
+  tight_pos_095_v1_s2:
+    variant: tight_pos_095_v1
+    seed: 2
+  tight_pos_099_v1_s0:
+    variant: tight_pos_099_v1
+    seed: 0
+  tight_pos_099_v1_s1:
+    variant: tight_pos_099_v1
+    seed: 1
+  tight_pos_090_v1_long_s0:
+    variant: tight_pos_090_v1
+    seed: 3
+    epochs: 120

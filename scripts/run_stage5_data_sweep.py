@@ -48,7 +48,10 @@ from experiments.layout import (  # noqa: E402
 ALLOWED_VARIANTS = {
     "baseline_v1",
     "tight_pos_075_v1",
+    "tight_pos_085_v1",
     "tight_pos_090_v1",
+    "tight_pos_095_v1",
+    "tight_pos_099_v1",
     "short_bgc_upweight_v1",
     "truncated_exclude_v1",
     "hardpos_hardneg_v2",
