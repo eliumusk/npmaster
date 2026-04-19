@@ -1,0 +1,29 @@
+{
+  "epochs": 60,
+  "experiment_id": "stage5_no9_data_v1-hardpos_hardneg_v2_s1",
+  "frozen": true,
+  "git_commit": "0ed1bf888134d56f0a0c623377a5e0e0e0dc0d03",
+  "git_dirty": true,
+  "inputs": {
+    "base_checkpoint": "/data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt",
+    "base_meta_arrays": "/data/muskliu/npmaster/data/phase3/route_a/meta_arrays.pkl",
+    "bgc_csv": "/data/muskliu/npmaster/data/bgc_annotations.csv",
+    "embargo_config": "configs/splits/nine_genome_embargo_v1.json",
+    "windows_csv": "/data/muskliu/npmaster/data/stage4_results/p2_t2_hard_neg/windows_metadata_hardneg.csv"
+  },
+  "nine_genome_policy": "final_report_only",
+  "per_trial_artefacts": {
+    "best_checkpoint": "/Users/musk/Documents/code/npmaster/experiments/stage5_no9_data_v1-hardpos_hardneg_v2_s1/artifacts/checkpoints/best_hardpos_hardneg_v2_s1.pt",
+    "labels_csv": "/Users/musk/Documents/code/npmaster/experiments/stage5_no9_data_v1-hardpos_hardneg_v2_s1/inputs/labels_hardpos_hardneg_v2.csv",
+    "meta_arrays_pkl": "/Users/musk/Documents/code/npmaster/experiments/stage5_no9_data_v1-hardpos_hardneg_v2_s1/inputs/meta_arrays_hardpos_hardneg_v2.pkl",
+    "train_log_csv": "/Users/musk/Documents/code/npmaster/experiments/stage5_no9_data_v1-hardpos_hardneg_v2_s1/artifacts/checkpoints/train_log_hardpos_hardneg_v2_s1.csv",
+    "train_out_dir": "/Users/musk/Documents/code/npmaster/experiments/stage5_no9_data_v1-hardpos_hardneg_v2_s1/artifacts/checkpoints"
+  },
+  "seed": 1,
+  "server": null,
+  "sweep_id": "stage5_no9_data_v1",
+  "tag": "hardpos_hardneg_v2_s1",
+  "trial_id": "hardpos_hardneg_v2_s1",
+  "uses_nine_genome_for_selection": false,
+  "variant": "hardpos_hardneg_v2"
+}
