@@ -43,6 +43,20 @@ This is the `bench` mode in `scripts/evaluate_nine_genome.py`. The old `/data/sy
 
 For reviewer-facing tables, `bench` is the only precision number quoted. `loose / strict / iou` modes are also computed by the script but are for internal diagnosis.
 
+### 4.1 Fragmentation Diagnostics
+
+`bench` precision can be inflated if one true BGC is split into many short predictions. Therefore `scripts/evaluate_nine_genome.py` also reports a diagnostic `fragmentation` block:
+
+- `unique_gt_precision_tp`: number of unique GT BGCs covered by precision-TP predictions
+- `duplicate_precision_tp`: extra precision TPs caused by multiple predictions hitting the same GT
+- `max_preds_per_gt`: worst-case number of precision-TP predictions assigned to one GT
+- `dedup_precision = unique_gt_precision_tp / n_pred`
+- `dedup_f1`: F1 using normal recall and `dedup_precision`
+
+These diagnostics are not a replacement for the published `bench` metric, but any decoder/model sweep must report them. A configuration that improves raw precision while lowering `dedup_f1` is treated as fragmentation, not a real boundary-quality improvement.
+
+Operational rule (2026-04-19): decoder sweeps must rank by `dedup_f1` (primary) with `bench_f1` as a tiebreaker, and the sweep CSV must include `dedup_precision`, `dedup_f1`, `unique_gt_precision_tp`, `duplicate_precision_tp`, `max_preds_per_gt`, and `median_pred_len`. Sweep CSVs must additionally honor `ranking.min_recall` / `ranking.max_n_pred` gates in their sort order (eligible trials first, ineligible follow). See `scripts/run_precision_constrained_decoder_sweep.py` for the reference implementation. Gating candidate operating points by `dedup_p / bench_p >= 0.75` catches the short-core hack; candidates that fail this gate are diagnostic upper bounds only, never formal operating points.
+
 ## 5. Evaluation Flow
 
 1. Train on internal training split.

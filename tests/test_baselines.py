@@ -158,6 +158,28 @@ class NineGenomeBaselineAggregatorTests(unittest.TestCase):
         self.assertAlmostEqual(b["recall"], 1 / 3)
         self.assertAlmostEqual(b["precision"], 1.0)
 
+    def test_aggregates_fragmentation_metrics_across_genomes(self):
+        mod = load_module(
+            "scripts/evaluate_nine_genome_baselines.py",
+            "evaluate_nine_genome_baselines_frag",
+        )
+        gt = {
+            "G1": [("c1", 0, 1000)],
+            "G2": [("c1", 0, 1000)],
+        }
+        pred = {
+            "G1": [("c1", 0, 600), ("c1", 100, 700)],  # duplicate precision hit
+            "G2": [("c1", 0, 600), ("c1", 2000, 2600)],
+        }
+
+        result = mod.aggregate_over_genomes(gt, pred, ["G1", "G2"], modes=("bench",))
+        frag = result["summary"]["bench"]["fragmentation"]
+
+        self.assertEqual(frag["unique_gt_precision_tp"], 2)
+        self.assertEqual(frag["duplicate_precision_tp"], 1)
+        self.assertEqual(frag["max_preds_per_gt"], 2)
+        self.assertAlmostEqual(frag["dedup_precision"], 0.5)
+
     def test_region_length_stats_empty(self):
         mod = load_module(
             "scripts/evaluate_nine_genome_baselines.py",
@@ -174,12 +196,14 @@ class NineGenomeBaselineAggregatorTests(unittest.TestCase):
         rows = [{
             "label": "Foo",
             "summary": {"bench": {"recall": 0.5, "precision": 0.3, "f1": 0.375,
-                                  "n_pred": 42, "tp_recall": 10, "tp_precision": 10, "n_gt": 20}},
+                                  "n_pred": 42, "tp_recall": 10, "tp_precision": 10, "n_gt": 20,
+                                  "fragmentation": {"dedup_precision": 0.2, "dedup_f1": 0.2857}}},
             "length_stats": {"n": 42, "median": 12345, "min": 10, "max": 99999, "mean": 5000},
         }]
         md = mod.format_markdown_table(rows)
         self.assertIn("| Foo |", md)
         self.assertIn("0.3750", md)
+        self.assertIn("0.2857", md)
         self.assertIn("12,345 bp", md)
 
 

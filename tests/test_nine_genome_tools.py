@@ -3,6 +3,7 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -81,6 +82,25 @@ class EvalNineGenomeOperatingPointTests(unittest.TestCase):
         self.assertEqual(bench["recall"], 0.0)
         self.assertEqual(bench["precision"], 1.0)
 
+    def test_fragmentation_metrics_penalize_duplicate_precision_hits(self):
+        gt = [("c1", 100, 400)]
+        pred = [
+            ("c1", 100, 260),
+            ("c1", 160, 320),
+            ("c1", 240, 400),
+            ("c1", 700, 800),
+        ]
+
+        bench = self.eval_mod.eval_regions(gt, pred, "bench")
+        frag = bench["fragmentation"]
+
+        self.assertEqual(bench["tp_precision"], 3)
+        self.assertEqual(frag["unique_gt_precision_tp"], 1)
+        self.assertEqual(frag["duplicate_precision_tp"], 2)
+        self.assertEqual(frag["max_preds_per_gt"], 3)
+        self.assertAlmostEqual(frag["dedup_precision"], 0.25)
+        self.assertAlmostEqual(frag["dedup_f1"], 0.4)
+
     def test_fused_score_computed_from_csv(self):
         with tempfile.TemporaryDirectory() as tmpdir:
             csv_path = Path(tmpdir) / "preds.csv"
@@ -105,6 +125,26 @@ class EvalNineGenomeOperatingPointTests(unittest.TestCase):
         self.assertEqual(op["length_cap"], 50000)
         self.assertEqual(op["min_support_windows"], 1)
         self.assertEqual(op["score"], "fused")
+
+    def test_resolve_params_accepts_score_override_without_operating_point(self):
+        args = SimpleNamespace(
+            operating_point=None,
+            operating_points_file=self.eval_mod.DEFAULT_OPERATING_POINTS,
+            start_threshold=0.99,
+            extend_threshold=0.95,
+            max_gap=0,
+            length_cap=None,
+            min_support_windows=10,
+            valley_threshold=None,
+            valley_min_windows=None,
+            threshold=None,
+            score="fused",
+        )
+
+        params = self.eval_mod.resolve_params(args)
+
+        self.assertEqual(params["score"], "fused")
+        self.assertEqual(params["min_support_windows"], 10)
 
     def test_select_genome_ids_preserves_benchmark_order(self):
         selected = self.eval_mod.select_genome_ids("GCA_000154945.1,GCA_000158915.1")

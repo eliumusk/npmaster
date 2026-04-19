@@ -63,24 +63,59 @@ def aggregate_over_genomes(
     modes: tuple[str, ...] = ("bench", "loose", "strict", "iou"),
 ) -> dict:
     per_genome: dict[str, dict] = {}
-    agg = {m: {"tp_recall": 0, "tp_precision": 0, "n_gt": 0, "n_pred": 0} for m in modes}
+    agg = {
+        m: {
+            "tp_recall": 0,
+            "tp_precision": 0,
+            "n_gt": 0,
+            "n_pred": 0,
+            "unique_gt_precision_tp": 0,
+            "duplicate_precision_tp": 0,
+            "max_preds_per_gt": 0,
+        }
+        for m in modes
+    }
     for gid in genome_ids:
         per_genome[gid] = {}
         for mode in modes:
             m = eval_regions(gt.get(gid, []), pred.get(gid, []), mode)
             per_genome[gid][mode] = m
-            for key in agg[mode]:
+            for key in ("tp_recall", "tp_precision", "n_gt", "n_pred"):
                 agg[mode][key] += int(m[key])
+            frag = m["fragmentation"]
+            agg[mode]["unique_gt_precision_tp"] += int(frag["unique_gt_precision_tp"])
+            agg[mode]["duplicate_precision_tp"] += int(frag["duplicate_precision_tp"])
+            agg[mode]["max_preds_per_gt"] = max(
+                agg[mode]["max_preds_per_gt"],
+                int(frag["max_preds_per_gt"]),
+            )
     summary: dict[str, dict] = {}
     for mode, a in agg.items():
         recall = a["tp_recall"] / a["n_gt"] if a["n_gt"] else 0.0
         precision = a["tp_precision"] / a["n_pred"] if a["n_pred"] else 0.0
         f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+        dedup_precision = a["unique_gt_precision_tp"] / a["n_pred"] if a["n_pred"] else 0.0
+        dedup_f1 = (
+            2 * dedup_precision * recall / (dedup_precision + recall)
+            if (dedup_precision + recall)
+            else 0.0
+        )
         summary[mode] = {
             "recall": recall,
             "precision": precision,
             "f1": f1,
-            **a,
+            "tp_recall": a["tp_recall"],
+            "tp_precision": a["tp_precision"],
+            "n_gt": a["n_gt"],
+            "n_pred": a["n_pred"],
+            "fragmentation": {
+                "unique_gt_precision_tp": a["unique_gt_precision_tp"],
+                "duplicate_precision_tp": a["duplicate_precision_tp"],
+                "max_preds_per_gt": a["max_preds_per_gt"],
+                "pred_per_gt_ratio": a["n_pred"] / a["n_gt"] if a["n_gt"] else 0.0,
+                "dedup_precision": dedup_precision,
+                "dedup_f1": dedup_f1,
+            },
         }
     return {"summary": summary, "per_genome": per_genome}
 
@@ -120,17 +155,19 @@ def region_length_stats(pred: dict[str, list[tuple[str, int, int]]]) -> dict:
 
 def format_markdown_table(rows: list[dict]) -> str:
     header = (
-        "| Tool | R | P | F1 | n_pred | median pred len |\n"
-        "|---|---:|---:|---:|---:|---:|"
+        "| Tool | R | P | F1 | dedup P | dedup F1 | n_pred | median pred len |\n"
+        "|---|---:|---:|---:|---:|---:|---:|---:|"
     )
     lines = [header]
     for r in rows:
         b = r["summary"]["bench"]
+        frag = b.get("fragmentation", {})
         ll = r["length_stats"]
         median = f"{ll['median']:,} bp" if ll.get("n") else "—"
         lines.append(
             f"| {r['label']} | {b['recall']:.4f} | {b['precision']:.4f} | "
-            f"{b['f1']:.4f} | {b['n_pred']} | {median} |"
+            f"{b['f1']:.4f} | {frag.get('dedup_precision', 0.0):.4f} | "
+            f"{frag.get('dedup_f1', 0.0):.4f} | {b['n_pred']} | {median} |"
         )
     return "\n".join(lines) + "\n"
 

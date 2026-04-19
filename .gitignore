@@ -4,6 +4,7 @@
 /wandb/
 /results/
 /analysis/
+tmp/
 *.pt
 *.npy
 *.npz
@@ -35,7 +36,12 @@ __pycache__/
 *.log
 extract_log*.txt
 
-# Transient planner + rsync staging outputs
-tmp/stage2_*plan*.json
-tmp/stage2b_predictions/
-tmp/nine_genome_case_studies.*
+# Transient planner + rsync staging outputs live under tmp/
+
+# Superseded local diagnostic sweeps; keep the final CSV artifact only.
+configs/sweeps/stage3b_defrag_v1.yaml
+configs/sweeps/stage3b_precision_decoder_v1.yaml
+configs/sweeps/stage3b_precision_decoder_fast_v1.yaml
+experiments/stage3b_defrag_v1/
+experiments/stage3b_precision_decoder_fast_v1/
+experiments/**/summary.json

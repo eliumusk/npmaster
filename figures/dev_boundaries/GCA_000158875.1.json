@@ -1,0 +1,33 @@
+{
+  "genome_id": "GCA_000158875.1",
+  "out_png": "figures/dev_boundaries/GCA_000158875.1.png",
+  "tracks": [
+    "GT",
+    "BGC-Prophet",
+    "antiSMASH",
+    "DeepBGC",
+    "NP-Master ms10/s099",
+    "NP-Master ms10/s0995"
+  ],
+  "contigs": [
+    "GG657746.1"
+  ],
+  "region_counts": {
+    "GT": 32,
+    "BGC-Prophet": 16,
+    "antiSMASH": 35,
+    "DeepBGC": 158,
+    "NP-Master ms10/s099": 14,
+    "NP-Master ms10/s0995": 12
+  },
+  "contig_region_counts": {
+    "GG657746.1": {
+      "GT": 29,
+      "BGC-Prophet": 16,
+      "antiSMASH": 31,
+      "DeepBGC": 142,
+      "NP-Master ms10/s099": 13,
+      "NP-Master ms10/s0995": 11
+    }
+  }
+}

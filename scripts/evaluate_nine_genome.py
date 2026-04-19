@@ -25,8 +25,10 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import statistics
 import sys
 from collections import defaultdict
+from collections import Counter
 from collections.abc import Sequence
 from pathlib import Path
 
@@ -199,18 +201,37 @@ def eval_regions(
             tp_r += 1
 
     tp_p = 0
+    precision_gt_hits: list[int] = []
     for pred in pred_regions:
         best = 0.0
-        for gt in gt_by_contig.get(pred[0], []):
-            best = max(best, score_overlap_precision(pred, gt, mode))
+        best_gt_index = None
+        for gt_index, gt in enumerate(gt_regions):
+            if gt[0] != pred[0]:
+                continue
+            score = score_overlap_precision(pred, gt, mode)
+            if score > best:
+                best = score
+                best_gt_index = gt_index
         if best >= min_overlap:
             tp_p += 1
+            if best_gt_index is not None:
+                precision_gt_hits.append(best_gt_index)
 
     n_gt = len(gt_regions)
     n_pred = len(pred_regions)
     recall = tp_r / n_gt if n_gt else 0.0
     precision = tp_p / n_pred if n_pred else 0.0
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+    hit_counts = Counter(precision_gt_hits)
+    unique_gt_precision_tp = len(hit_counts)
+    duplicate_precision_tp = sum(count - 1 for count in hit_counts.values() if count > 1)
+    max_preds_per_gt = max(hit_counts.values()) if hit_counts else 0
+    dedup_precision = unique_gt_precision_tp / n_pred if n_pred else 0.0
+    dedup_f1 = (
+        2 * dedup_precision * recall / (dedup_precision + recall)
+        if (dedup_precision + recall)
+        else 0.0
+    )
     return {
         "recall": recall,
         "precision": precision,
@@ -219,6 +240,14 @@ def eval_regions(
         "tp_precision": tp_p,
         "n_gt": n_gt,
         "n_pred": n_pred,
+        "fragmentation": {
+            "unique_gt_precision_tp": unique_gt_precision_tp,
+            "duplicate_precision_tp": duplicate_precision_tp,
+            "max_preds_per_gt": max_preds_per_gt,
+            "pred_per_gt_ratio": n_pred / n_gt if n_gt else 0.0,
+            "dedup_precision": dedup_precision,
+            "dedup_f1": dedup_f1,
+        },
     }
 
 
@@ -269,6 +298,8 @@ def resolve_params(args: argparse.Namespace) -> dict:
         params["valley_threshold"] = args.valley_threshold
     if args.valley_min_windows is not None:
         params["valley_min_windows"] = args.valley_min_windows
+    if getattr(args, "score", None) is not None:
+        params["score"] = args.score
 
     # Legacy single-threshold shorthand.
     if args.threshold is not None:
@@ -296,8 +327,18 @@ def evaluate_results_dir(
     modes = ["bench", "loose", "strict", "iou"]
     per_genome: dict[str, dict[str, dict[str, float | int]]] = {}
     aggregate = {
-        m: {"tp_recall": 0, "tp_precision": 0, "n_gt": 0, "n_pred": 0} for m in modes
+        m: {
+            "tp_recall": 0,
+            "tp_precision": 0,
+            "n_gt": 0,
+            "n_pred": 0,
+            "unique_gt_precision_tp": 0,
+            "duplicate_precision_tp": 0,
+            "max_preds_per_gt": 0,
+        }
+        for m in modes
     }
+    pred_lengths: list[int] = []
 
     for genome_id in genome_ids:
         csv_path = results_dir / f"{genome_id}_predictions.csv"
@@ -312,12 +353,20 @@ def evaluate_results_dir(
             valley_threshold=params["valley_threshold"],
             valley_min_windows=params["valley_min_windows"],
         )
+        pred_lengths.extend(max(0, end - start) for _, start, end in pred_regions)
         genome_metrics = {}
         for mode in modes:
             m = eval_regions(gt.get(genome_id, []), pred_regions, mode)
             genome_metrics[mode] = m
-            for key in aggregate[mode]:
+            for key in ("tp_recall", "tp_precision", "n_gt", "n_pred"):
                 aggregate[mode][key] += int(m[key])
+            frag = m["fragmentation"]
+            aggregate[mode]["unique_gt_precision_tp"] += int(frag["unique_gt_precision_tp"])
+            aggregate[mode]["duplicate_precision_tp"] += int(frag["duplicate_precision_tp"])
+            aggregate[mode]["max_preds_per_gt"] = max(
+                aggregate[mode]["max_preds_per_gt"],
+                int(frag["max_preds_per_gt"]),
+            )
         per_genome[genome_id] = genome_metrics
 
     summary = {}
@@ -325,6 +374,12 @@ def evaluate_results_dir(
         recall = a["tp_recall"] / a["n_gt"] if a["n_gt"] else 0.0
         precision = a["tp_precision"] / a["n_pred"] if a["n_pred"] else 0.0
         f1 = 2 * precision * recall / (precision + recall) if (precision + recall) else 0.0
+        dedup_precision = a["unique_gt_precision_tp"] / a["n_pred"] if a["n_pred"] else 0.0
+        dedup_f1 = (
+            2 * dedup_precision * recall / (dedup_precision + recall)
+            if (dedup_precision + recall)
+            else 0.0
+        )
         summary[mode] = {
             "recall": recall,
             "precision": precision,
@@ -333,7 +388,29 @@ def evaluate_results_dir(
             "tp_precision": a["tp_precision"],
             "n_gt": a["n_gt"],
             "n_pred": a["n_pred"],
+            "fragmentation": {
+                "unique_gt_precision_tp": a["unique_gt_precision_tp"],
+                "duplicate_precision_tp": a["duplicate_precision_tp"],
+                "max_preds_per_gt": a["max_preds_per_gt"],
+                "pred_per_gt_ratio": a["n_pred"] / a["n_gt"] if a["n_gt"] else 0.0,
+                "dedup_precision": dedup_precision,
+                "dedup_f1": dedup_f1,
+            },
         }
+
+    if pred_lengths:
+        sorted_lengths = sorted(pred_lengths)
+        pred_length_stats = {
+            "n": len(sorted_lengths),
+            "min": int(sorted_lengths[0]),
+            "max": int(sorted_lengths[-1]),
+            "mean": float(statistics.mean(sorted_lengths)),
+            "median": float(statistics.median(sorted_lengths)),
+            "p25": float(sorted_lengths[len(sorted_lengths) // 4]),
+            "p75": float(sorted_lengths[(3 * len(sorted_lengths)) // 4]),
+        }
+    else:
+        pred_length_stats = {"n": 0, "min": 0, "max": 0, "mean": 0.0, "median": 0.0, "p25": 0.0, "p75": 0.0}
 
     return {
         "operating_point": params["operating_point"],
@@ -351,6 +428,7 @@ def evaluate_results_dir(
         },
         "expected_metrics": params["expected_metrics"],
         "summary": summary,
+        "pred_length_stats": pred_length_stats,
         "per_genome": per_genome,
     }
 
@@ -384,6 +462,12 @@ def main() -> None:
     parser.add_argument("--min-support-windows", type=int, default=None)
     parser.add_argument("--valley-threshold", type=float, default=None)
     parser.add_argument("--valley-min-windows", type=int, default=None)
+    parser.add_argument(
+        "--score",
+        choices=("max_type", "bgc_score", "fused", "1_minus_isneg"),
+        default=None,
+        help="Optional score-family override for diagnostic, not-yet-promoted points.",
+    )
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
 

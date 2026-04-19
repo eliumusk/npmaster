@@ -2,21 +2,49 @@
 
 Biosynthetic Gene Cluster (BGC) detection and discovery on bacterial genomes. Frozen Evo2 7B embeddings + a light context model (dilated CNN + gated residual). Trained against antiSMASH annotations, formally evaluated on the 9-genome external benchmark.
 
-## Current Status (9-genome, bench mode)
+## Current Status (5-genome dev split)
 
-| Tool | R | P | F1 | median pred len |
-|---|---:|---:|---:|---:|
-| DeepBGC | 0.7213 | 0.0636 | 0.1169 | 4.9 kb |
-| antiSMASH | 0.5574 | 0.1661 | 0.2559 | 29.8 kb |
-| **NP-Master `val_frozen_fused`** | 0.5934 | 0.1649 | 0.2580 | — |
-| NP-Master `tuned_v2` *(diagnostic only)* | 0.5311 | 0.2513 | 0.3412 | — |
-| BGC-Prophet | 0.3475 | 0.4529 | 0.3933 | 22.7 kb |
+Current best candidates are from the Stage 3 hard-negative checkpoint trained on antiSMASH-derived labels. The 5 dev genomes are used for decoder selection only; the 4-genome lockbox is still pending, so these are not final external-test claims.
 
-`bench` = asymmetric 50% overlap (both recall and precision sides; see `docs/evaluation-protocol.md`). GT comes from the BGC-Prophet 9-genome test set and uses a gene-level "tight core" convention (median GT length ≈ 10.9 kb, no flanks). Tools whose native output includes flanks (antiSMASH ≈ 3× GT length) are mechanically penalised on precision by this metric — antiSMASH's 0.17 precision is largely a length-convention artifact, not detection quality.
+Head-to-head against all three external BGC tools on the same dev split (170 GT regions across 5 genomes, stride-2048 inference, decoder frozen per operating point):
 
-`val_frozen_fused` = operating point selected on internal val (formal reporting). `tuned_v2` = selected directly on 9-genome, diagnostic upper bound only — do not quote.
+| Tool / candidate | bench R | bench P | **bench F1** | **loose F1** | strict F1 | dedup F1 | n_pred | median pred len |
+|---|---:|---:|---:|---:|---:|---:|---:|---:|
+| BGC-Prophet                    | 0.335 | 0.488 | 0.397 | 0.438 | **0.302** | 0.393 | 82  | 21.4 kb |
+| antiSMASH                      | 0.541 | 0.161 | 0.249 | 0.522 | 0.154     | 0.249 | 155 | 29.8 kb |
+| DeepBGC                        | 0.671 | 0.070 | 0.126 | 0.272 | 0.089     | 0.126 | 574 | 5.3 kb  |
+| NP-Master Stage3 default       | 0.541 | 0.282 | 0.371 | —     | —         | 0.271 | 255 | —       |
+| **NP-Master `defrag_v2_ms10_s099`**  | 0.388 | 0.473 | **0.426** | **0.519** | 0.287 | 0.426 | 74  | 36.9 kb |
+| **NP-Master `defrag_v2_ms10_s0995`** | 0.371 | 0.500 | **0.426** | 0.504     | 0.292 | 0.426 | 70  | 38.9 kb |
 
-Numbers above are single-seed (`best_route_b_s0.pt`). s1 / s2 stride-8192 inference not regenerated yet; 3-seed mean ± std on 9-genome is pending. To regenerate the whole row set locally from current artifacts, use `scripts/evaluate_nine_genome_baselines.py` (see Quick Start below).
+Reading, without cherry-picking:
+
+- **bench F1** (the BGC-Prophet paper's headline metric, asymmetric 50% overlap): NP-Master > BGC-Prophet > antiSMASH > DeepBGC. Both `defrag_v2_ms10_*` tie at 0.426.
+- **loose F1** (symmetric 50% with `min(pred,gt)` denominator): NP-Master ms10/s099 (0.519) ≈ antiSMASH (0.522) in a near tie, both clearly above BGC-Prophet (0.438) and DeepBGC (0.272).
+- **strict / IoU F1** (symmetric 50% with `max(pred,gt)` denominator): BGC-Prophet (0.302) narrowly beats NP-Master (0.287 / 0.292). NP-Master's predictions are wider than the tight-core GT, which is penalised harder here than under bench.
+- **recall**: DeepBGC (0.671) and antiSMASH (0.541) out-recall NP-Master (0.388) and BGC-Prophet (0.335), but their n_pred is 574 and 155 respectively versus our 74 — they pay for recall with precision that collapses under bench.
+
+`bench` = asymmetric 50% overlap (both recall and precision sides; see `docs/evaluation-protocol.md`). GT comes from the BGC-Prophet 9-genome test set and uses a gene-level "tight core" convention (median dev GT length ≈ 9.9 kb, 9-genome median ≈ 10.9 kb, no flanks). Tools whose native output includes flanks (antiSMASH, DeepBGC) are structurally penalised on bench precision — see the boundary plots below and the loose-F1 column for a length-normalised view.
+
+`dedup F1` de-duplicates multiple precision true positives assigned to the same GT BGC. This is now mandatory because an earlier strict-decoder sweep inflated raw precision by fragmenting regions. Both `defrag_v2_ms10_*` candidates have `duplicate_precision_tp=0` and `max_preds_per_gt=1` on dev, so the precision gain is not coming from repeated short fragments. The gain comes from requiring sustained evidence across `min_support_windows=10` at `window=8192 / stride=2048`, i.e. a minimum prediction span of 26,624 bp.
+
+**Honest caveats:**
+
+- This is dev-tuned. Do not promote either candidate into `configs/operating_points.yaml` until both frozen candidates are evaluated on the 4 lockbox genomes. One lockbox genome (`GCA_000156435.1`) has already been spot-checked and dropped to F1 ≈ 0.234 — potential overfit signal; full 4-genome lockbox still pending.
+- Strict / IoU F1 is slightly behind BGC-Prophet because NP-Master regions (median 36.9 kb) overshoot the tight-core GT (median ≈ 10 kb). This is a known geometry mismatch, not a decoder bug.
+- NP-Master misses `GCA_000154945.1` almost entirely (R ≈ 0.03) under every decoder setting, and BGC-Prophet misses it completely (R ≈ 0.03, F1 = 0). This genome is a shared model-domain blind spot, not a NP-Master-specific regression.
+
+### Boundary plots (dev split, longest contig per genome)
+
+Each strip is one tool's BGC calls along the longest contig, with GT in black. Source: `scripts/plot_genome_bgc_boundaries.py`. PNGs live under `figures/dev_boundaries/`.
+
+| Genome | Plot |
+|---|---|
+| GCA_000154945.1 (collapse — shared blind spot with BGC-Prophet) | [`figures/dev_boundaries/GCA_000154945.1.png`](figures/dev_boundaries/GCA_000154945.1.png) |
+| GCA_000156475.1 | [`figures/dev_boundaries/GCA_000156475.1.png`](figures/dev_boundaries/GCA_000156475.1.png) |
+| GCA_000158875.1 | [`figures/dev_boundaries/GCA_000158875.1.png`](figures/dev_boundaries/GCA_000158875.1.png) |
+| GCA_000158915.1 (most crowded GT) | [`figures/dev_boundaries/GCA_000158915.1.png`](figures/dev_boundaries/GCA_000158915.1.png) |
+| GCA_000568915.1 | [`figures/dev_boundaries/GCA_000568915.1.png`](figures/dev_boundaries/GCA_000568915.1.png) |
 
 ## Layout
 
@@ -61,26 +89,33 @@ python -u src/train.py --config configs/mainline.yaml --seed 0 \
     --data-dir data/mibig_v2 --out-dir data/phase3/route_b/s0
 ```
 
-**Run stride inference on a FASTA dir:**
+**Run stride inference on a FASTA dir for the current Stage 3/3b candidates:**
 
 ```bash
 python scripts/inference_stride.py \
     --fna-dir /data/syh/benchmark/nine_genome/fna \
-    --ckpt data/phase3/route_b/best_route_b_s0.pt \
-    --stride 8192 \
-    --out-dir /tmp/npmaster_stride8192_s0
+    --ckpt experiments/stage3_hardneg_v1-dev-tk100-ms0-hnw4/artifacts/checkpoints/best_tk100-ms0-hnw4.pt \
+    --window 8192 \
+    --stride 2048 \
+    --out-dir /tmp/npmaster_stage3_tk100_w8192_s2048
 ```
 
-**Evaluate against 9-genome under a frozen operating point:**
+**Evaluate the current dev F1 candidate:**
 
 ```bash
 python scripts/evaluate_nine_genome.py \
-    --operating-point val_frozen_fused \
-    --results-dir /tmp/npmaster_stride8192_s0 \
-    --out /tmp/val_frozen_fused.json
+    --base /data/syh/benchmark/nine_genome \
+    --results-dir /tmp/npmaster_stage3_tk100_w8192_s2048 \
+    --genome-ids GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1 \
+    --score fused \
+    --start-threshold 0.99 \
+    --extend-threshold 0.95 \
+    --max-gap 0 \
+    --min-support-windows 10 \
+    --out /tmp/defrag_v2_ms10_s099_dev.json
 ```
 
-`summary.bench` in the JSON matches `metrics` in `configs/operating_points.yaml`.
+Use `--start-threshold 0.995` for the precision candidate `defrag_v2_ms10_s0995`.
 
 **Regenerate the full baseline comparison table:**
 
@@ -99,4 +134,4 @@ External baseline directories are read-only inputs; all parsing logic lives in `
 
 ## Next Step
 
-Hard-negative mining + training-side precision work. See `docs/route-b-hardneg-v1.md` and `docs/next-phase.md`. Decoder tuning is considered closed.
+Finish the 4-genome lockbox evaluation for the two frozen `defrag_v2_ms10_*` candidates. If lockbox holds, promote exactly one candidate to `configs/operating_points.yaml`; if not, treat the dev result as overfit and return to data/training-side work. See `docs/route-b-hardneg-v1.md` and `docs/next-phase.md`.

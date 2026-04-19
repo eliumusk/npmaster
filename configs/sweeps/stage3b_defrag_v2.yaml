@@ -1,0 +1,64 @@
+sweep_id: stage3b_defrag_v2
+
+# v2 of the de-fragmentation sweep. v1 only scanned min_support_windows in {1,2}
+# and missed the ms>=5 region where dedup_f1 actually recovers. v2 covers the
+# full min_support grid and the high start_threshold region where precision
+# cleans up without introducing fragmentation.
+#
+# Window geometry on stage3 predictions: window=8192, stride=2048. So
+# min_support_windows=K forces region span >= (K-1)*2048 + 8192 bp:
+#   ms=6  -> 18432 bp
+#   ms=8  -> 22528 bp
+#   ms=10 -> 26624 bp
+#   ms=12 -> 30720 bp
+# These spans sit inside the typical 20-100 kb BGC range, so the decoder is
+# biological-size-matched, not length-cap hacking.
+#
+# Primary line: length_cap=None. `length_cap` in {60000, 100000} is kept only
+# as a diagnostic side axis (see the fragmentation audit in docs/next-phase.md
+# for why short length_caps can fake precision).
+benchmark:
+  base: tmp/stage2b_predictions/benchmark
+
+ranking:
+  # BGC-Prophet dev reaches R=0.3353; we want candidates that match or exceed
+  # that while keeping precision/dedup clean. 0.30 leaves some margin for the
+  # Pareto exploration without allowing R-floor collapses through the gate.
+  min_recall: 0.30
+  max_n_pred: 300
+
+prediction_sets:
+  - id: stage3-tk100-ms0-hnw4
+    results_dir: tmp/stage3_remote_predictions/tk100-ms0-hnw4
+
+decoder_grid:
+  score_family:
+    - fused
+  start_threshold:
+    - 0.99
+    - 0.995
+    - 0.998
+    - 0.999
+  extend_threshold:
+    - 0.90
+    - 0.95
+  max_gap:
+    - 0
+  min_support_windows:
+    - 5
+    - 6
+    - 7
+    - 8
+    - 9
+    - 10
+    - 11
+  length_cap:
+    - null
+    - 60000
+    - 100000
+  valley_threshold:
+    - null
+  valley_min_windows:
+    - 1
+
+decoder_fixed: {}
