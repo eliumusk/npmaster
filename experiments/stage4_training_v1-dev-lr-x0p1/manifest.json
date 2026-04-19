@@ -1,0 +1,125 @@
+{
+  "base_meta_arrays_path": "/data/muskliu/npmaster_exec/snapshots/f66bdc8d4ce01ab0ec545ffce3043eb5a1d5b166-dirty-gpuenvfix1/repo/experiments/stage3_hardneg_v1-dev-tk100-ms0-hnw4/artifacts/mining/meta_arrays.pkl",
+  "command": "bash experiments/stage4_training_v1-dev-lr-x0p1/command.txt",
+  "command_specs": {
+    "evaluate": {
+      "argv": [
+        "python",
+        "scripts/evaluate_nine_genome.py",
+        "--base",
+        "/data/syh/benchmark/nine_genome",
+        "--results-dir",
+        "experiments/stage4_training_v1-dev-lr-x0p1/artifacts/predictions",
+        "--genome-ids",
+        "GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1",
+        "--operating-point",
+        "val_frozen_fused",
+        "--out",
+        "experiments/stage4_training_v1-dev-lr-x0p1/metrics/summary.json"
+      ],
+      "outputs": {
+        "summary_json": "experiments/stage4_training_v1-dev-lr-x0p1/metrics/summary.json"
+      },
+      "shell": "python scripts/evaluate_nine_genome.py --base /data/syh/benchmark/nine_genome --results-dir experiments/stage4_training_v1-dev-lr-x0p1/artifacts/predictions --genome-ids GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1 --operating-point val_frozen_fused --out experiments/stage4_training_v1-dev-lr-x0p1/metrics/summary.json"
+    },
+    "inference": {
+      "argv": [
+        "python",
+        "scripts/inference_stride.py",
+        "--fna-dir",
+        "/data/syh/benchmark/nine_genome/fna",
+        "--out-dir",
+        "experiments/stage4_training_v1-dev-lr-x0p1/artifacts/predictions",
+        "--ckpt",
+        "experiments/stage4_training_v1-dev-lr-x0p1/artifacts/checkpoints/best_lr-x0p1.pt",
+        "--src-dir",
+        "src",
+        "--genome-ids",
+        "GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1",
+        "--window",
+        "8192",
+        "--stride",
+        "2048",
+        "--layer",
+        "blocks.20.mlp.l3",
+        "--evo-model",
+        "evo2_7b",
+        "--cache-dir",
+        "/data/public_models/hub"
+      ],
+      "outputs": {
+        "predictions_dir": "experiments/stage4_training_v1-dev-lr-x0p1/artifacts/predictions"
+      },
+      "shell": "python scripts/inference_stride.py --fna-dir /data/syh/benchmark/nine_genome/fna --out-dir experiments/stage4_training_v1-dev-lr-x0p1/artifacts/predictions --ckpt experiments/stage4_training_v1-dev-lr-x0p1/artifacts/checkpoints/best_lr-x0p1.pt --src-dir src --genome-ids GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1 --window 8192 --stride 2048 --layer blocks.20.mlp.l3 --evo-model evo2_7b --cache-dir /data/public_models/hub"
+    },
+    "train": {
+      "argv": [
+        "python",
+        "src/train.py",
+        "--embeddings",
+        "/data/muskliu/npmaster/data/embeddings/edge_padding/embeddings_merged.npy",
+        "--projections",
+        "/data/muskliu/npmaster/data/phase3/route_a/projections_256.npy",
+        "--chunk-index",
+        "/data/muskliu/npmaster/data/phase3/route_b/chunk_index.pkl",
+        "--meta-arrays",
+        "/data/muskliu/npmaster_exec/snapshots/f66bdc8d4ce01ab0ec545ffce3043eb5a1d5b166-dirty-gpuenvfix1/repo/experiments/stage3_hardneg_v1-dev-tk100-ms0-hnw4/artifacts/mining/meta_arrays.pkl",
+        "--contig-index",
+        "/data/muskliu/npmaster/data/phase3/route_a/contig_index.pkl",
+        "--bgc-csv",
+        "/data/muskliu/npmaster/data/bgc_annotations.csv",
+        "--ckpt",
+        "/data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt",
+        "--out-dir",
+        "experiments/stage4_training_v1-dev-lr-x0p1/artifacts/checkpoints",
+        "--seed",
+        "0",
+        "--tag",
+        "lr-x0p1",
+        "--batch-size",
+        "64",
+        "--epochs",
+        "100",
+        "--hard-neg-weight",
+        "4.0000",
+        "--lr-proj",
+        "1e-05",
+        "--lr-context",
+        "0.0001",
+        "--lr-classifier",
+        "0.0001"
+      ],
+      "outputs": {
+        "best_checkpoint": "experiments/stage4_training_v1-dev-lr-x0p1/artifacts/checkpoints/best_lr-x0p1.pt",
+        "train_out_dir": "experiments/stage4_training_v1-dev-lr-x0p1/artifacts/checkpoints"
+      },
+      "shell": "python src/train.py --embeddings /data/muskliu/npmaster/data/embeddings/edge_padding/embeddings_merged.npy --projections /data/muskliu/npmaster/data/phase3/route_a/projections_256.npy --chunk-index /data/muskliu/npmaster/data/phase3/route_b/chunk_index.pkl --meta-arrays /data/muskliu/npmaster_exec/snapshots/f66bdc8d4ce01ab0ec545ffce3043eb5a1d5b166-dirty-gpuenvfix1/repo/experiments/stage3_hardneg_v1-dev-tk100-ms0-hnw4/artifacts/mining/meta_arrays.pkl --contig-index /data/muskliu/npmaster/data/phase3/route_a/contig_index.pkl --bgc-csv /data/muskliu/npmaster/data/bgc_annotations.csv --ckpt /data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt --out-dir experiments/stage4_training_v1-dev-lr-x0p1/artifacts/checkpoints --seed 0 --tag lr-x0p1 --batch-size 64 --epochs 100 --hard-neg-weight 4.0000 --lr-proj 1e-05 --lr-context 0.0001 --lr-classifier 0.0001"
+    }
+  },
+  "experiment_id": "stage4_training_v1-dev-lr-x0p1",
+  "git_commit": "ce7d69378e80dbab26e3d5e5f6e88729f4b36de3",
+  "git_dirty": true,
+  "hard_neg_weight": 4.0,
+  "input_genome_ids": [
+    "GCA_000154945.1",
+    "GCA_000156475.1",
+    "GCA_000158875.1",
+    "GCA_000158915.1",
+    "GCA_000568915.1"
+  ],
+  "operating_point": "val_frozen_fused",
+  "overrides": {
+    "lr_classifier": 0.0001,
+    "lr_context": 0.0001,
+    "lr_proj": 1e-05
+  },
+  "server": "voc_gpu_node7_a800",
+  "split_part": "dev",
+  "split_version": "nine_genome_dev_lockbox_v1",
+  "stride": 2048,
+  "sweep_id": "stage4_training_v1",
+  "task_id": "task8_stage4_training_sweep",
+  "trial_id": "lr-x0p1",
+  "warm_start": "/data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt",
+  "window": 8192
+}
