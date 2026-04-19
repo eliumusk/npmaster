@@ -2,9 +2,25 @@
 
 Biosynthetic Gene Cluster (BGC) detection and discovery on bacterial genomes. Frozen Evo2 7B embeddings + a light context model (dilated CNN + gated residual). Trained against antiSMASH annotations, formally evaluated on the 9-genome external benchmark.
 
-## Current Status (5-genome dev split)
+## Current Status (9-genome, bench mode)
 
-Current best candidates are from the Stage 3 hard-negative checkpoint trained on antiSMASH-derived labels. The 5 dev genomes are used for decoder selection only; the 4-genome lockbox is still pending, so these are not final external-test claims.
+Current best candidates are from the Stage 3 hard-negative checkpoint trained on antiSMASH-derived labels. Decoder parameters were selected on the 5-genome dev split, then frozen and evaluated on the 4-genome lockbox. No lockbox retuning was done.
+
+Full 9-genome head-to-head:
+
+| Tool / candidate | bench R | bench P | **bench F1** | dedup P | dedup F1 | n_pred | median pred len |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| BGC-Prophet | 0.3475 | 0.4529 | 0.3933 | 0.4471 | 0.3911 | 170 | 22.7 kb |
+| **NP-Master `defrag_v2_ms10_s099`** | **0.4098** | 0.4714 | **0.4385** | 0.4714 | **0.4385** | 140 | 38.9 kb |
+| NP-Master `defrag_v2_ms10_s0995` | 0.3934 | **0.4851** | 0.4345 | **0.4851** | 0.4345 | 134 | 38.9 kb |
+
+Lockbox-only check:
+
+| Tool / candidate | bench R | bench P | **bench F1** | dedup F1 | n_pred |
+|---|---:|---:|---:|---:|---:|
+| BGC-Prophet | 0.3630 | 0.4205 | 0.3896 | 0.3896 | 88 |
+| **NP-Master `defrag_v2_ms10_s099`** | **0.4370** | **0.4697** | **0.4528** | **0.4528** | 66 |
+| NP-Master `defrag_v2_ms10_s0995` | 0.4222 | 0.4688 | 0.4443 | 0.4443 | 64 |
 
 Head-to-head against all three external BGC tools on the same dev split (170 GT regions across 5 genomes, stride-2048 inference, decoder frozen per operating point):
 
@@ -30,8 +46,8 @@ Reading, without cherry-picking:
 
 **Honest caveats:**
 
-- This is dev-tuned. Do not promote either candidate into `configs/operating_points.yaml` until both frozen candidates are evaluated on the 4 lockbox genomes. One lockbox genome (`GCA_000156435.1`) has already been spot-checked and dropped to F1 ≈ 0.234 — potential overfit signal; full 4-genome lockbox still pending.
-- Strict / IoU F1 is slightly behind BGC-Prophet because NP-Master regions (median 36.9 kb) overshoot the tight-core GT (median ≈ 10 kb). This is a known geometry mismatch, not a decoder bug.
+- `defrag_v2_ms10_s099` is now promoted to `configs/operating_points.yaml` because the frozen lockbox check held. `defrag_v2_ms10_s0995` remains a precision-oriented alternate, not the default, because it gives slightly lower recall/F1.
+- Boundary tightness is still the main weakness: although all-9 strict/IoU F1 is now slightly above BGC-Prophet, NP-Master regions remain wider (median ≈ 38.9 kb vs BGC-Prophet ≈ 22.7 kb) and dev strict/IoU was still slightly behind. Treat boundary refinement as the next quality target.
 - NP-Master misses `GCA_000154945.1` almost entirely (R ≈ 0.03) under every decoder setting, and BGC-Prophet misses it completely (R ≈ 0.03, F1 = 0). This genome is a shared model-domain blind spot, not a NP-Master-specific regression.
 
 ### Boundary plots (dev split, longest contig per genome)
@@ -100,22 +116,17 @@ python scripts/inference_stride.py \
     --out-dir /tmp/npmaster_stage3_tk100_w8192_s2048
 ```
 
-**Evaluate the current dev F1 candidate:**
+**Evaluate the promoted 9-genome operating point:**
 
 ```bash
 python scripts/evaluate_nine_genome.py \
     --base /data/syh/benchmark/nine_genome \
     --results-dir /tmp/npmaster_stage3_tk100_w8192_s2048 \
-    --genome-ids GCA_000154945.1,GCA_000156475.1,GCA_000158875.1,GCA_000158915.1,GCA_000568915.1 \
-    --score fused \
-    --start-threshold 0.99 \
-    --extend-threshold 0.95 \
-    --max-gap 0 \
-    --min-support-windows 10 \
-    --out /tmp/defrag_v2_ms10_s099_dev.json
+    --operating-point defrag_v2_ms10_s099 \
+    --out /tmp/defrag_v2_ms10_s099_all9.json
 ```
 
-Use `--start-threshold 0.995` for the precision candidate `defrag_v2_ms10_s0995`.
+Use explicit flags with `--start-threshold 0.995` only for the precision-oriented alternate `defrag_v2_ms10_s0995`.
 
 **Regenerate the full baseline comparison table:**
 
@@ -134,4 +145,4 @@ External baseline directories are read-only inputs; all parsing logic lives in `
 
 ## Next Step
 
-Finish the 4-genome lockbox evaluation for the two frozen `defrag_v2_ms10_*` candidates. If lockbox holds, promote exactly one candidate to `configs/operating_points.yaml`; if not, treat the dev result as overfit and return to data/training-side work. See `docs/route-b-hardneg-v1.md` and `docs/next-phase.md`.
+Next work should move back to training/data: fix the `GCA_000154945.1` domain miss and reduce boundary overshoot under strict/IoU. See `docs/route-b-hardneg-v1.md` and `docs/next-phase.md`.

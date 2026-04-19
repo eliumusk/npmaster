@@ -54,3 +54,24 @@ tuned_v2:
     recall: 0.5311
     precision: 0.2513
     f1: 0.3412
+
+defrag_v2_ms10_s099:
+  description: "dev-selected and lockbox-validated Stage3 hard-negative operating point"
+  checkpoint: best_tk100-ms0-hnw4
+  window: 8192
+  stride: 2048
+  score: fused
+  start_threshold: 0.99
+  extend_threshold: 0.95
+  max_gap: 0
+  length_cap: null
+  min_support_windows: 10
+  valley_threshold: null
+  valley_min_windows: 1
+  metrics:
+    recall: 0.4098
+    precision: 0.4714
+    f1: 0.4385
+    dedup_precision: 0.4714
+    dedup_f1: 0.4385
+    n_pred: 140

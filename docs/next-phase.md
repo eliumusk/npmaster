@@ -38,7 +38,7 @@ Decision: do not promote Stage3/Stage3b based on raw precision alone. Any next s
 ## 2026-04-19 De-fragmentation Sweep (Stage 3b v2)
 
 Follow-up to the audit. Infrastructure + reproducible sweep + pre-registered
-lockbox candidates. **Status: dev-only; not yet validated on lockbox.**
+lockbox candidates. **Status: lockbox-validated; `defrag_v2_ms10_s099` promoted.**
 
 ### Infrastructure changes
 
@@ -84,23 +84,38 @@ BGC-Prophet dev for head-to-head: bench R/P/F1 = 0.335 / **0.488** / **0.397**; 
 - BGC-Prophet still wins strict / iou F1 (0.302 vs 0.287) because NP-Master's predictions (median 36.9 kb at ms=10) overshoot GT boundaries (BGC-Prophet median 21.4 kb).
 - Per-genome at ms=10 / start=0.99, NP-Master beats BGC-Prophet on bench F1 on 4/5 dev genomes. `GCA_000154945.1` collapses to R=0.029 at every decoder setting — this is a model-domain miss, not a decoder issue, and survives all decoder settings including length_cap variants.
 
-### Pre-registered lockbox candidates
+### Lockbox validation
 
-Do **not** promote these to `configs/operating_points.yaml` yet. They were tuned on dev and need the 4-genome lockbox set to validate. To prevent lockbox-tuning, the two candidates below are frozen now; **no further parameter search is allowed on lockbox**.
+The two candidates below were tuned on dev, frozen, then evaluated on the 4-genome lockbox with no further parameter search.
 
 | candidate | score | start | extend | max_gap | length_cap | ms | dev R | dev bench_P | dev bench_F1 | dev dedup_F1 | rationale |
 |---|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
 | `defrag_v2_ms10_s099` | fused | 0.99 | 0.95 | 0 | null | 10 | 0.388 | 0.473 | 0.426 | 0.426 | peak dev bench/dedup_F1; higher recall than BGC-Prophet |
 | `defrag_v2_ms10_s0995` | fused | 0.995 | 0.95 | 0 | null | 10 | 0.371 | 0.500 | 0.426 | 0.426 | highest dev bench_P ≥ BGC-Prophet's 0.488; tied F1 |
 
-If lockbox dedup_F1 drops more than ~0.03 on both candidates, that is a tuning-on-dev overfit signal and `defrag_v2_ms8_*` (loose-F1 candidate) should be tried as a separate pre-registered third point before calling the decoder direction done.
+Lockbox results:
+
+| candidate | lockbox R | lockbox P | lockbox F1 | lockbox dedup_F1 | n_pred |
+|---|---:|---:|---:|---:|---:|
+| BGC-Prophet | 0.363 | 0.421 | 0.390 | 0.390 | 88 |
+| `defrag_v2_ms10_s099` | 0.437 | 0.470 | 0.453 | 0.453 | 66 |
+| `defrag_v2_ms10_s0995` | 0.422 | 0.469 | 0.444 | 0.444 | 64 |
+
+Full 9-genome results after merging dev + lockbox predictions:
+
+| candidate | all9 R | all9 P | all9 F1 | all9 dedup_F1 | n_pred |
+|---|---:|---:|---:|---:|---:|
+| BGC-Prophet | 0.348 | 0.453 | 0.393 | 0.391 | 170 |
+| `defrag_v2_ms10_s099` | 0.410 | 0.471 | 0.438 | 0.438 | 140 |
+| `defrag_v2_ms10_s0995` | 0.393 | 0.485 | 0.434 | 0.434 | 134 |
+
+Decision: promote `defrag_v2_ms10_s099` to `configs/operating_points.yaml`. `s0995` is a precision alternate but not the default because it gives lower recall and slightly lower all9/lockbox F1.
 
 ### Next actions
 
-1. Re-run Stage 3 inference for the 4 lockbox genomes (`GCA_000156435.1`, `GCA_000158815.1`, `GCA_000158895.1`, `GCA_000568255.1`) on the server, same checkpoint `best_route_b_s0`, same `window=8192 / stride=2048`.
-2. Apply both pre-registered candidates to lockbox via `evaluate_nine_genome.py`. Report head-to-head with BGC-Prophet lockbox.
-3. Only after lockbox passes, promote the winning candidate to `configs/operating_points.yaml` under a new name (e.g. `defrag_v2_ms10_s099`). Keep `val_frozen_fused` as the generalization-safe reference.
-4. Keep Route 1 (hard-negative mining) and Route 2 (data grid) going in parallel — the `GCA_000154945.1` collapse is not a decoder-fixable problem.
+1. Keep `defrag_v2_ms10_s099` as the frozen operating point for current 9-genome reporting.
+2. Keep Route 1 (hard-negative mining) and Route 2 (data grid) going in parallel — the `GCA_000154945.1` collapse is not a decoder-fixable problem.
+3. Investigate strict/IoU boundary overshoot separately; do not solve it by re-tuning on lockbox.
 
 ## Route 1: Hard-Negative Mining (active — `route-b-hardneg-v1.md`)
 
