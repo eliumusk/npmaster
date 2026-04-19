@@ -110,7 +110,7 @@ python -u src/train.py --config configs/mainline.yaml --seed 0 \
 ```bash
 python scripts/inference_stride.py \
     --fna-dir /data/syh/benchmark/nine_genome/fna \
-    --ckpt experiments/stage3_hardneg_v1-dev-tk100-ms0-hnw4/artifacts/checkpoints/best_tk100-ms0-hnw4.pt \
+    --ckpt /data/muskliu/npmaster/data/phase3/stage3_hardneg_v1/best/best_tk100-ms0-hnw4.pt \
     --window 8192 \
     --stride 2048 \
     --out-dir /tmp/npmaster_stage3_tk100_w8192_s2048
