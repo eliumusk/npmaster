@@ -14,28 +14,28 @@ That last bullet is the headline: most of our precision loss on this benchmark i
 
 ## 2026-04-19 Fragmentation Audit
 
-The Stage 3 hard-negative result and the Stage 3b strict-decoder sweep exposed a second issue: raw `bench` precision can be inflated by splitting one GT BGC into several short predictions.
+The `hardneg_v1` result and the strict-decoder sweep (predecessor to `defrag_v2`) exposed a second issue: raw `bench` precision can be inflated by splitting one GT BGC into several short predictions.
 
 Same dev split (`GCA_000154945.1`, `GCA_000156475.1`, `GCA_000158875.1`, `GCA_000158915.1`, `GCA_000568915.1`):
 
 | Candidate | R | raw P | raw F1 | n_pred | raw TPp | uniqGT TPp | dupTP | max/GT | dedup P | dedup F1 |
 |---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
 | BGC-Prophet dev | 0.3353 | 0.4878 | 0.3974 | 82 | 40 | 39 | 1 | 2 | 0.4756 | 0.3933 |
-| Stage2 baseline | 0.5471 | 0.2703 | 0.3618 | 259 | 70 | 45 | 25 | 6 | 0.1737 | 0.2637 |
-| Stage2b best | 0.5353 | 0.2834 | 0.3706 | 247 | 70 | 45 | 25 | 6 | 0.1822 | 0.2718 |
-| Stage3 default | 0.5412 | 0.2824 | 0.3711 | 255 | 72 | 46 | 26 | 6 | 0.1804 | 0.2706 |
-| Stage3 raw-P top | 0.4353 | 0.4390 | 0.4372 | 451 | 198 | 63 | 135 | 19 | 0.1397 | 0.2115 |
-| Stage3 raw-F1 top | 0.5059 | 0.4027 | 0.4485 | 293 | 118 | 51 | 67 | 11 | 0.1741 | 0.2590 |
+| tiling_v1 baseline | 0.5471 | 0.2703 | 0.3618 | 259 | 70 | 45 | 25 | 6 | 0.1737 | 0.2637 |
+| tiling_decoder_v1 best | 0.5353 | 0.2834 | 0.3706 | 247 | 70 | 45 | 25 | 6 | 0.1822 | 0.2718 |
+| hardneg_v1 default | 0.5412 | 0.2824 | 0.3711 | 255 | 72 | 46 | 26 | 6 | 0.1804 | 0.2706 |
+| hardneg_v1 raw-P top | 0.4353 | 0.4390 | 0.4372 | 451 | 198 | 63 | 135 | 19 | 0.1397 | 0.2115 |
+| hardneg_v1 raw-F1 top | 0.5059 | 0.4027 | 0.4485 | 293 | 118 | 51 | 67 | 11 | 0.1741 | 0.2590 |
 
 Reading:
 
 - BGC-Prophet's precision is stable after dedup (`0.4878 -> 0.4756`), so its precision is not mostly fragmentation.
-- Stage3 default only adds one unique GT precision hit over Stage2b and does not improve `dedup_f1`.
-- Strict Stage3b decoder points raise raw precision/F1 but lower `dedup_f1`; those are diagnostic upper bounds, not deployable operating points.
+- `hardneg_v1 default` only adds one unique GT precision hit over `tiling_decoder_v1 best` and does not improve `dedup_f1`.
+- Strict strict-decoder points raise raw precision/F1 but lower `dedup_f1`; those are diagnostic upper bounds, not deployable operating points.
 
-Decision: do not promote Stage3/Stage3b based on raw precision alone. Any next sweep must rank by `dedup_f1` / fragmentation diagnostics in addition to raw `bench`.
+Decision: do not promote `hardneg_v1` / strict decoder candidates based on raw precision alone. Any next sweep must rank by `dedup_f1` / fragmentation diagnostics in addition to raw `bench`.
 
-## 2026-04-19 De-fragmentation Sweep (Stage 3b v2)
+## 2026-04-19 De-fragmentation Sweep (`defrag_v2`)
 
 Follow-up to the audit. Infrastructure + reproducible sweep + pre-registered
 lockbox candidates. **Status: lockbox-validated; `defrag_v2_ms10_s099` promoted.**
@@ -44,11 +44,11 @@ lockbox candidates. **Status: lockbox-validated; `defrag_v2_ms10_s099` promoted.
 
 1. `scripts/run_precision_constrained_decoder_sweep.py` now emits `dedup_f1`, `dedup_precision`, `unique_gt_precision_tp`, `duplicate_precision_tp`, `max_preds_per_gt`, `median_pred_len`, `p75_pred_len`, and `max_gap` into `summary.csv`. Primary ranking is by `dedup_f1` (was `bench f1`). CSV sort now honors `ranking.min_recall` / `ranking.max_n_pred` gates: eligible trials appear first (dedup_f1-best), ineligible ones follow with a `False` in `meets_recall_floor` / `meets_n_pred_cap`. `resolve_params` now prefers `decoder_grid` values over `decoder_fixed` (previously `max_gap` grid values were silently dropped).
 2. `scripts/evaluate_nine_genome.py` reports a top-level `pred_length_stats` block (min / mean / median / p25 / p75 / max over all predicted region lengths).
-3. `configs/sweeps/stage3b_defrag_v1.yaml` is the first-pass config (only scans `min_support_windows` ∈ {1, 2}) and is **superseded** by `stage3b_defrag_v2.yaml` (scans `min_support_windows` ∈ {5..11} and `start_threshold` ∈ {0.99, 0.995, 0.998, 0.999}). The v2 artifact at `experiments/stage3b_defrag_v2/` is the reproducible source for the numbers in this section.
+3. `configs/sweeps/defrag_v2.yaml` (which supersedes a first-pass v1 that only scanned `min_support_windows` ∈ {1, 2}) scans `min_support_windows` ∈ {5..11} and `start_threshold` ∈ {0.99, 0.995, 0.998, 0.999}. The artifact at `experiments/defrag_v2/` is the reproducible source for the numbers in this section.
 
 ### Window geometry (easy to get wrong)
 
-Stage 3 remote prediction CSVs use `window=8192, stride=2048` — not stride 8192. A single window below `extend_threshold` closes a region (see `scripts/postprocess_v2.py::decode_regions_hysteresis`), so the knob that controls within-BGC splits is `min_support_windows`, not `max_gap`. At stride=2048, `min_support_windows=K` forces a region to span at least `(K-1)*2048 + 8192` bp:
+`hardneg_v1` remote prediction CSVs use `window=8192, stride=2048` — not stride 8192. A single window below `extend_threshold` closes a region (see `scripts/postprocess_v2.py::decode_regions_hysteresis`), so the knob that controls within-BGC splits is `min_support_windows`, not `max_gap`. At stride=2048, `min_support_windows=K` forces a region to span at least `(K-1)*2048 + 8192` bp:
 
 | ms | min span (bp) |
 |---:|---:|
@@ -61,7 +61,7 @@ These sizes sit in the middle of the typical 20–100 kb BGC range, so raising m
 
 ### Fine-grained min-support sweep
 
-On Stage 3 hardneg predictions, dev split, `fused / start=0.99 / extend=0.95 / max_gap=0 / length_cap=None`. Source: `experiments/stage3b_defrag_v2/summary.csv` for the start=0.99 slice.
+On `hardneg_v1` predictions, dev split, `fused / start=0.99 / extend=0.95 / max_gap=0 / length_cap=None`. Source: `experiments/defrag_v2/summary.csv` for the start=0.99 slice.
 
 | ms | R | bench P | bench F1 | loose F1 | strict F1 | dedup P | dedup F1 | n_pred | uniqGT | median len |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
@@ -114,8 +114,9 @@ Decision: promote `defrag_v2_ms10_s099` to `configs/operating_points.yaml`. `s09
 ### Next actions
 
 1. Keep `defrag_v2_ms10_s099` as the frozen operating point for current 9-genome reporting.
-2. Keep Route 1 (hard-negative mining) and Route 2 (data grid) going in parallel — the `GCA_000154945.1` collapse is not a decoder-fixable problem.
-3. Investigate strict/IoU boundary overshoot separately; do not solve it by re-tuning on lockbox.
+2. Start no_9gt_v1 no-9-genome-tuning work in `docs/no-9gt-v1.md`. The scientific target is to approach or exceed BGC-Prophet without using 9-genome for threshold/decoder/model selection.
+3. Keep Route 1 (hard-negative mining) and Route 2 (data grid) going in parallel — the `GCA_000154945.1` collapse is not a decoder-fixable problem.
+4. Investigate strict/IoU boundary overshoot separately; do not solve it by re-tuning on lockbox.
 
 ## Route 1: Hard-Negative Mining (active — `route-b-hardneg-v1.md`)
 

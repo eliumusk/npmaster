@@ -23,7 +23,7 @@ with open("/data/muskliu/npmaster/data/bgc_annotations.csv") as f:
         })
 
 # Load test split info
-df = pd.read_csv("/data/muskliu/npmaster/data/stage4_results/p2_t2_hard_neg/windows_metadata_hardneg.csv")
+df = pd.read_csv("/data/muskliu/npmaster/data/training_labels/p2_t2_hard_neg/windows_metadata_hardneg.csv")
 test_split = {}
 for _, row in df[["genome_id", "split", "phylum"]].drop_duplicates("genome_id").iterrows():
     test_split[row["genome_id"]] = {"split": row["split"], "phylum": row["phylum"]}

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Plan and execute Stage 1 decoder sweeps on frozen 9-genome predictions."""
+"""Plan and execute decoder_v1 sweeps on frozen 9-genome predictions."""
 from __future__ import annotations
 
 import argparse
@@ -19,7 +19,7 @@ import evaluate_nine_genome as eval_nine_genome  # noqa: E402
 
 
 DEFAULT_SPLIT = REPO_ROOT / "configs" / "splits" / "nine_genome_dev_lockbox_v1.json"
-DEFAULT_SWEEP = REPO_ROOT / "configs" / "sweeps" / "stage1_decoder_v1.yaml"
+DEFAULT_SWEEP = REPO_ROOT / "configs" / "sweeps" / "decoder_v1.yaml"
 
 
 def load_sweep_config(path: Path) -> dict:

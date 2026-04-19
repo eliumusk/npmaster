@@ -28,14 +28,14 @@ def load_module(rel_path: str, module_name: str):
 class Stage2TilingSweepTests(unittest.TestCase):
     def setUp(self):
         self.runner = load_module(
-            "scripts/run_stage2_tiling_sweep.py",
-            "run_stage2_tiling_sweep",
+            "scripts/run_tiling_sweep.py",
+            "run_tiling_sweep",
         )
 
     def test_repo_sweep_config_defines_multiple_trials(self):
-        config = self.runner.load_sweep_config(ROOT / "configs" / "sweeps" / "stage2_tiling_v1.yaml")
+        config = self.runner.load_sweep_config(ROOT / "configs" / "sweeps" / "tiling_v1.yaml")
 
-        self.assertEqual(config["sweep_id"], "stage2_tiling_v1")
+        self.assertEqual(config["sweep_id"], "tiling_v1")
         self.assertGreaterEqual(len(config["trials"]), 2)
         self.assertTrue(all(isinstance(trial["window"], int) for trial in config["trials"]))
         self.assertTrue(all(isinstance(trial["stride"], int) for trial in config["trials"]))
@@ -55,7 +55,7 @@ class Stage2TilingSweepTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             split_path = tmp / "split.json"
-            sweep_path = tmp / "stage2.yaml"
+            sweep_path = tmp / "sweep.yaml"
             experiments_root = tmp / "experiments"
 
             split_path.write_text(
@@ -82,7 +82,7 @@ class Stage2TilingSweepTests(unittest.TestCase):
             sweep_path.write_text(
                 "\n".join(
                     [
-                        "sweep_id: stage2_tiling_tmp",
+                        "sweep_id: tiling_tmp",
                         "defaults:",
                         "  checkpoint: ckpts/best.pt",
                         "  base_results_dir: /srv/nine/results",
@@ -185,13 +185,13 @@ class Stage2TilingSweepTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             split_path = tmp / "split.json"
-            sweep_path = tmp / "stage2.yaml"
+            sweep_path = tmp / "sweep.yaml"
             experiments_root = tmp / "experiments"
             self._write_split(split_path)
 
             initial_yaml = "\n".join(
                 [
-                    "sweep_id: stage2_tiling_tmp",
+                    "sweep_id: tiling_tmp",
                     "defaults:",
                     "  checkpoint: ckpts/best.pt",
                     "  base_results_dir: /srv/nine/results",
@@ -282,14 +282,14 @@ class Stage2TilingSweepTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             split_path = tmp / "split.json"
-            sweep_path = tmp / "stage2.yaml"
+            sweep_path = tmp / "sweep.yaml"
             experiments_root = tmp / "experiments"
             self._write_split(split_path)
 
             sweep_path.write_text(
                 "\n".join(
                     [
-                        "sweep_id: stage2_tiling_tmp",
+                        "sweep_id: tiling_tmp",
                         "defaults:",
                         "  checkpoint: ckpts/best.pt",
                         "  base_results_dir: /srv/nine/results",

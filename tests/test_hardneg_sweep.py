@@ -67,17 +67,17 @@ def _split_payload() -> dict:
 class Stage3HardnegSweepTests(unittest.TestCase):
     def setUp(self):
         self.runner = load_module(
-            "scripts/run_stage3_hardneg_sweep.py",
-            "run_stage3_hardneg_sweep",
+            "scripts/run_hardneg_sweep.py",
+            "run_hardneg_sweep",
         )
 
     # ---------- yaml / trial parsing ----------
 
     def test_repo_sweep_config_loads_with_defaults_and_trials(self):
         config = self.runner.load_sweep_config(
-            ROOT / "configs" / "sweeps" / "stage3_hardneg_v1.yaml"
+            ROOT / "configs" / "sweeps" / "hardneg_v1.yaml"
         )
-        self.assertEqual(config["sweep_id"], "stage3_hardneg_v1")
+        self.assertEqual(config["sweep_id"], "hardneg_v1")
         self.assertGreaterEqual(len(config["trials"]), 1)
         trial = config["trials"][0]
         self.assertIsInstance(trial["top_k"], int)
@@ -157,7 +157,7 @@ class Stage3HardnegSweepTests(unittest.TestCase):
 
     def _write_sweep(self, path: Path, extra_trials: list[str] | None = None) -> None:
         lines = [
-            "sweep_id: stage3_hardneg_tmp",
+            "sweep_id: hardneg_tmp",
             "defaults:",
             *MINIMAL_DEFAULTS,
             "trials:",
@@ -176,7 +176,7 @@ class Stage3HardnegSweepTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             split_path = tmp / "split.json"
-            sweep_path = tmp / "stage3.yaml"
+            sweep_path = tmp / "sweep.yaml"
             experiments_root = tmp / "experiments"
             self._write_split(split_path)
             self._write_sweep(sweep_path)
@@ -194,7 +194,7 @@ class Stage3HardnegSweepTests(unittest.TestCase):
 
             # Manifest has required + task-specific fields.
             manifest = first["manifest"]
-            self.assertEqual(manifest["task_id"], "task7_stage3_hardneg_sweep")
+            self.assertEqual(manifest["task_id"], "task7_hardneg_sweep")
             self.assertEqual(manifest["warm_start"], "/warm/H_hardneg_r10.pt")
             self.assertEqual(
                 manifest["mining_seed_checkpoint"], "/seed/best_route_b_s0.pt"
@@ -332,7 +332,7 @@ class Stage3HardnegSweepTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             split_path = tmp / "split.json"
-            sweep_path = tmp / "stage3.yaml"
+            sweep_path = tmp / "sweep.yaml"
             experiments_root = tmp / "experiments"
             self._write_split(split_path)
             self._write_sweep(sweep_path)
@@ -408,14 +408,14 @@ class Stage3HardnegSweepTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             split_path = tmp / "split.json"
-            sweep_path = tmp / "stage3.yaml"
+            sweep_path = tmp / "sweep.yaml"
             experiments_root = tmp / "experiments"
             self._write_split(split_path)
 
             sweep_path.write_text(
                 "\n".join(
                     [
-                        "sweep_id: stage3_hardneg_tmp",
+                        "sweep_id: hardneg_tmp",
                         "defaults:",
                         *MINIMAL_DEFAULTS,
                         "trials:",

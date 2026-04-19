@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Stage 2b: decoder micro-sweep applied to top Stage 2 tilings.
+"""tiling_decoder_v1: decoder micro-sweep applied to top tiling_v1 tilings.
 
-CPU-only. Consumes frozen per-window predictions produced by the Stage 2
-tiling sweep and redecodes them under a grid of decoder parameters.
+CPU-only. Consumes frozen per-window predictions produced by the tiling_v1
+sweep and redecodes them under a grid of decoder parameters.
 
 Ranks trials lex (recall, precision) under the `bench` scorer on dev, writes
 one pooled summary.{json,csv} plus per-trial immutable experiment dirs that
-match the Stage 2 layout (manifest.json + config.resolved.yaml + command.txt
+match the tiling_v1 layout (manifest.json + config.resolved.yaml + command.txt
 + metrics/summary.json).
 """
 from __future__ import annotations
@@ -33,7 +33,7 @@ from experiments.layout import create_experiment_layout, write_command, write_re
 from experiments.manifest import load_split, write_manifest  # noqa: E402
 
 
-DEFAULT_SWEEP_PATH = REPO_ROOT / "configs" / "sweeps" / "stage2b_decoder_on_top_tilings_v1.yaml"
+DEFAULT_SWEEP_PATH = REPO_ROOT / "configs" / "sweeps" / "tiling_decoder_v1.yaml"
 DEFAULT_EXPERIMENTS_ROOT = REPO_ROOT / "experiments"
 
 
@@ -200,7 +200,7 @@ def run_single_trial(
 
     manifest = {
         "experiment_id": experiment_id,
-        "task_id": "task5_stage2b_decoder_sweep",
+        "task_id": "task5_tiling_decoder_sweep",
         "sweep_id": sweep_id,
         "trial_id": f"{tiling['trial_id']}-{decoder['decoder_id']}",
         "tiling_trial_id": tiling["trial_id"],

@@ -1,9 +1,9 @@
-sweep_id: stage2_tiling_v1
+sweep_id: tiling_v1
 
 defaults:
   checkpoint: /data/muskliu/npmaster/data/phase3/route_b/best_route_b_s0.pt
   benchmark_base: /data/syh/benchmark/nine_genome
-  base_results_dir: /data/syh/benchmark/nine_genome/results/stage2_tiling_v1
+  base_results_dir: /data/syh/benchmark/nine_genome/results/tiling_v1
   fna_dir: /data/syh/benchmark/nine_genome/fna
   src_dir: src
   operating_point: val_frozen_fused
@@ -12,19 +12,18 @@ defaults:
   evo_model: evo2_7b
   cache_dir: /data/public_models/hub
 
-# Consolidated from original stage2_tiling_v1.yaml (3 trials, node7),
-# stage2_tiling_v1_extra.yaml (5 trials, node7), and
-# stage2_tiling_v1_node8.yaml (8 trials, node8).
-# Per-trial `server` overrides the defaults.server for trials launched on node8.
+# Consolidated from the three original splits (3 trials node7, 5 trials node7,
+# 8 trials node8). Per-trial `server` overrides the defaults.server for trials
+# launched on node8.
 trials:
-  # --- original stage2_tiling_v1.yaml (node7, inherit default) ---
+  # --- group 1 (node7, inherit default) ---
   - window: 16384
     stride: 16384
   - window: 16384
     stride: 8192
   - window: 12288
     stride: 4096
-  # --- original stage2_tiling_v1_extra.yaml (node7, inherit default) ---
+  # --- group 2 (node7, inherit default) ---
   - window: 8192
     stride: 8192
   - window: 8192
@@ -35,7 +34,7 @@ trials:
     stride: 12288
   - window: 24576
     stride: 24576
-  # --- original stage2_tiling_v1_node8.yaml (node8, per-trial override) ---
+  # --- group 3 (node8, per-trial override) ---
   - window: 16384
     stride: 4096
     server: voc_gpu_node8_a800

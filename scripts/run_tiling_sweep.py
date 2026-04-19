@@ -1,31 +1,5 @@
 #!/usr/bin/env python3
-"""Local planner for Stage 3a hardneg sweep trials and command specs.
-
-Per trial, emits a ``command.txt`` with four sequential stages:
-
-  1. ``scripts/mine_hard_negatives.py`` — patches ``meta_arrays.pkl`` with a
-     fresh ``hard_negative`` column under the configured ``score_name``,
-     ``top_k`` and ``min_score``. Output lands under
-     ``<experiment_dir>/artifacts/mining/``.
-  2. ``src/train.py`` — warm-starts from ``base_checkpoint`` and trains with
-     ``--hard-neg-weight`` applied to the freshly mined meta. Output lands
-     under ``<experiment_dir>/artifacts/checkpoints/`` (best_<tag>.pt,
-     train_log_<tag>.csv).
-  3. ``scripts/inference_stride.py`` — runs the trained best_<tag>.pt over
-     dev genomes at the Stage 2 winning tiling (w8192/s2048 by default).
-  4. ``scripts/evaluate_nine_genome.py`` — scores the predictions under the
-     frozen ``val_frozen_fused`` operating point.
-
-All flag surfaces have been verified against the real scripts:
-
-  * ``scripts/mine_hard_negatives.py:171-183``
-  * ``src/train.py:333-358``
-  * ``scripts/inference_stride.py:77-92``
-  * ``scripts/evaluate_nine_genome.py:358-388``
-
-The runner does NOT execute anything; it only writes manifest + config +
-command.txt, mirroring the Stage 2 tiling runner's discipline.
-"""
+"""Local planner for tiling_v1 sweep trials and command specs."""
 from __future__ import annotations
 
 import argparse
@@ -46,31 +20,8 @@ from experiments.layout import create_experiment_layout, write_command, write_re
 from experiments.manifest import load_split, write_manifest
 
 DEFAULT_SPLIT_PATH = REPO_ROOT / "configs" / "splits" / "nine_genome_dev_lockbox_v1.json"
-DEFAULT_SWEEP_PATH = REPO_ROOT / "configs" / "sweeps" / "stage3_hardneg_v1.yaml"
+DEFAULT_SWEEP_PATH = REPO_ROOT / "configs" / "sweeps" / "tiling_v1.yaml"
 DEFAULT_EXPERIMENTS_ROOT = REPO_ROOT / "experiments"
-
-
-# Required keys in the sweep `defaults:` block. The runner refuses to plan if
-# any are missing — these are all paths / knobs the mining + training + eval
-# commands must have to be reproducible.
-REQUIRED_DEFAULTS = (
-    "base_checkpoint",
-    "mining_seed_checkpoint",
-    "base_meta_arrays",
-    "chunk_index",
-    "contig_index",
-    "embeddings",
-    "projections",
-    "bgc_csv",
-    "score_name",
-    "benchmark_base",
-    "fna_dir",
-    "src_dir",
-    "operating_point",
-    "window",
-    "stride",
-    "server",
-)
 
 
 def load_sweep_config(path: Path) -> dict:
@@ -92,9 +43,8 @@ def load_sweep_config(path: Path) -> dict:
         if not isinstance(raw_trial, dict):
             raise ValueError("Each trial must be a mapping.")
         trial = {
-            "top_k": int(raw_trial["top_k"]),
-            "min_score": float(raw_trial["min_score"]),
-            "hard_neg_weight": float(raw_trial["hard_neg_weight"]),
+            "window": int(raw_trial["window"]),
+            "stride": int(raw_trial["stride"]),
         }
         if "server" in raw_trial and raw_trial["server"] is not None:
             server = raw_trial["server"]
@@ -112,20 +62,15 @@ def load_sweep_config(path: Path) -> dict:
 
 
 def validate_trial(trial: dict) -> dict:
-    top_k = int(trial["top_k"])
-    min_score = float(trial["min_score"])
-    hard_neg_weight = float(trial["hard_neg_weight"])
-    if top_k <= 0:
-        raise ValueError("top_k must be positive")
-    if not (0.0 <= min_score <= 1.0):
-        raise ValueError("min_score must be in [0.0, 1.0]")
-    if hard_neg_weight <= 0:
-        raise ValueError("hard_neg_weight must be positive")
-    normalized = {
-        "top_k": top_k,
-        "min_score": min_score,
-        "hard_neg_weight": hard_neg_weight,
-    }
+    window = int(trial["window"])
+    stride = int(trial["stride"])
+    if window <= 0:
+        raise ValueError("window must be positive")
+    if stride <= 0:
+        raise ValueError("stride must be positive")
+    if stride > window:
+        raise ValueError("stride must be less than or equal to window")
+    normalized = {"window": window, "stride": stride}
     if "server" in trial and trial["server"] is not None:
         server = trial["server"]
         if not isinstance(server, str) or not server.strip():
@@ -134,20 +79,8 @@ def validate_trial(trial: dict) -> dict:
     return normalized
 
 
-def _fmt_float_tag(value: float) -> str:
-    """Format floats for trial_id: strip trailing zeros, dot -> 'p'."""
-    text = f"{float(value):.3f}".rstrip("0").rstrip(".")
-    if text == "":
-        text = "0"
-    return text.replace(".", "p")
-
-
-def build_trial_id(*, top_k: int, min_score: float, hard_neg_weight: float) -> str:
-    return (
-        f"tk{int(top_k)}"
-        f"-ms{_fmt_float_tag(min_score)}"
-        f"-hnw{_fmt_float_tag(hard_neg_weight)}"
-    )
+def build_trial_id(*, window: int, stride: int) -> str:
+    return f"w{int(window)}-s{int(stride)}"
 
 
 def resolve_git_commit() -> str:
@@ -193,78 +126,11 @@ def build_command_specs(
     experiment_rel_dir: Path,
     genome_ids: list[str],
     trial: dict,
-    trial_tag: str,
 ) -> dict:
-    mining_dir = experiment_rel_dir / "artifacts" / "mining"
-    mined_meta = mining_dir / "meta_arrays.pkl"
-
-    train_out_dir = experiment_rel_dir / "artifacts" / "checkpoints"
-    best_ckpt = train_out_dir / f"best_{trial_tag}.pt"
-
     predictions_dir = experiment_rel_dir / "artifacts" / "predictions"
     summary_json = experiment_rel_dir / "metrics" / "summary.json"
     genome_ids_arg = ",".join(genome_ids)
 
-    # -------- stage 1: mine hardnegs --------
-    # Flags verified at scripts/mine_hard_negatives.py:173-180.
-    mine_argv = [
-        "python",
-        "scripts/mine_hard_negatives.py",
-        "--ckpt",
-        str(defaults["mining_seed_checkpoint"]),
-        "--embeddings",
-        str(defaults["embeddings"]),
-        "--meta-arrays",
-        str(defaults["base_meta_arrays"]),
-        "--contig-index",
-        str(defaults["contig_index"]),
-        "--out-dir",
-        mining_dir.as_posix(),
-        "--score-name",
-        str(defaults["score_name"]),
-        "--top-k",
-        str(trial["top_k"]),
-        "--min-score",
-        f"{trial['min_score']:.4f}",
-    ]
-
-    # -------- stage 2: train --------
-    # Flags verified at src/train.py:335-357. Note: warm-start flag is --ckpt
-    # (not --warm-start); output ckpt + log CSV paths are derived from
-    # --out-dir + --tag, so we can't pass --output-ckpt / --log-csv directly.
-    train_argv = [
-        "python",
-        "src/train.py",
-        "--embeddings",
-        str(defaults["embeddings"]),
-        "--projections",
-        str(defaults["projections"]),
-        "--chunk-index",
-        str(defaults["chunk_index"]),
-        "--meta-arrays",
-        mined_meta.as_posix(),
-        "--contig-index",
-        str(defaults["contig_index"]),
-        "--bgc-csv",
-        str(defaults["bgc_csv"]),
-        "--ckpt",
-        str(defaults["base_checkpoint"]),
-        "--out-dir",
-        train_out_dir.as_posix(),
-        "--seed",
-        str(int(defaults.get("seed", 0))),
-        "--tag",
-        trial_tag,
-        "--batch-size",
-        str(int(defaults.get("batch_size", 64))),
-        "--epochs",
-        str(int(defaults.get("epochs", 100))),
-        "--hard-neg-weight",
-        f"{trial['hard_neg_weight']:.4f}",
-    ]
-
-    # -------- stage 3: inference --------
-    # Flags verified at scripts/inference_stride.py:78-92.
     inference_argv = [
         "python",
         "scripts/inference_stride.py",
@@ -273,15 +139,15 @@ def build_command_specs(
         "--out-dir",
         predictions_dir.as_posix(),
         "--ckpt",
-        best_ckpt.as_posix(),
+        str(defaults["checkpoint"]),
         "--src-dir",
         str(defaults["src_dir"]),
         "--genome-ids",
         genome_ids_arg,
         "--window",
-        str(int(defaults["window"])),
+        str(trial["window"]),
         "--stride",
-        str(int(defaults["stride"])),
+        str(trial["stride"]),
         "--layer",
         str(defaults.get("layer", "blocks.20.mlp.l3")),
         "--evo-model",
@@ -289,9 +155,6 @@ def build_command_specs(
         "--cache-dir",
         str(defaults.get("cache_dir", "/data/public_models/hub")),
     ]
-
-    # -------- stage 4: evaluate --------
-    # Flags verified at scripts/evaluate_nine_genome.py:359-387.
     evaluate_argv = [
         "python",
         "scripts/evaluate_nine_genome.py",
@@ -306,24 +169,7 @@ def build_command_specs(
         "--out",
         summary_json.as_posix(),
     ]
-
     return {
-        "mine": {
-            "argv": mine_argv,
-            "shell": shlex.join(mine_argv),
-            "outputs": {
-                "mining_dir": mining_dir.as_posix(),
-                "mined_meta_arrays": mined_meta.as_posix(),
-            },
-        },
-        "train": {
-            "argv": train_argv,
-            "shell": shlex.join(train_argv),
-            "outputs": {
-                "train_out_dir": train_out_dir.as_posix(),
-                "best_checkpoint": best_ckpt.as_posix(),
-            },
-        },
         "inference": {
             "argv": inference_argv,
             "shell": shlex.join(inference_argv),
@@ -349,31 +195,24 @@ def build_manifest(
     split_part: str,
     defaults: dict,
     trial: dict,
-    trial_tag: str,
     command_specs: dict,
 ) -> dict:
     server = trial.get("server") or defaults["server"]
     return {
         "experiment_id": experiment_id,
-        "task_id": "task7_stage3_hardneg_sweep",
+        "task_id": "task4_tiling_sweep",
         "sweep_id": defaults["sweep_id"],
-        "trial_id": trial_tag,
+        "trial_id": build_trial_id(window=trial["window"], stride=trial["stride"]),
         "git_commit": resolve_git_commit(),
         "git_dirty": resolve_git_dirty(),
         "split_version": split_data["version"],
         "split_part": split_part,
         "input_genome_ids": list(split_data[split_part]),
         "server": server,
-        "top_k": trial["top_k"],
-        "min_score": trial["min_score"],
-        "hard_neg_weight": trial["hard_neg_weight"],
-        "score_name": defaults["score_name"],
-        "warm_start": defaults["base_checkpoint"],
-        "mining_seed_checkpoint": defaults["mining_seed_checkpoint"],
-        "base_meta_arrays": defaults["base_meta_arrays"],
-        "window": int(defaults["window"]),
-        "stride": int(defaults["stride"]),
+        "window": trial["window"],
+        "stride": trial["stride"],
         "operating_point": defaults["operating_point"],
+        "checkpoint": defaults["checkpoint"],
         "command": f"bash {experiment_rel_dir.as_posix()}/command.txt",
         "command_specs": command_specs,
     }
@@ -384,7 +223,7 @@ def write_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def plan_hardneg_trials(
+def plan_tiling_trials(
     *,
     split_path: Path,
     sweep_path: Path,
@@ -401,7 +240,16 @@ def plan_hardneg_trials(
     defaults = deepcopy(sweep["defaults"])
     defaults["sweep_id"] = sweep["sweep_id"]
 
-    missing_defaults = [name for name in REQUIRED_DEFAULTS if defaults.get(name) in (None, "")]
+    required_defaults = (
+        "checkpoint",
+        "benchmark_base",
+        "base_results_dir",
+        "fna_dir",
+        "src_dir",
+        "operating_point",
+        "server",
+    )
+    missing_defaults = [name for name in required_defaults if not defaults.get(name)]
     if missing_defaults:
         raise ValueError(f"Missing required defaults in sweep config: {missing_defaults}")
 
@@ -410,11 +258,7 @@ def plan_hardneg_trials(
     experiments_root = experiments_root.resolve()
     for trial in sweep["trials"]:
         trial = validate_trial(trial)
-        trial_id = build_trial_id(
-            top_k=trial["top_k"],
-            min_score=trial["min_score"],
-            hard_neg_weight=trial["hard_neg_weight"],
-        )
+        trial_id = build_trial_id(window=trial["window"], stride=trial["stride"])
         if trial_id in seen_ids:
             raise ValueError(f"Duplicate trial_id generated for {trial_id}")
         seen_ids.add(trial_id)
@@ -429,7 +273,6 @@ def plan_hardneg_trials(
                     flush=True,
                 )
                 continue
-
         layout = create_experiment_layout(experiments_root, experiment_id)
         experiment_dir = layout["root"]
         experiment_rel_dir = repo_relative_experiment_dir(experiment_dir)
@@ -438,7 +281,6 @@ def plan_hardneg_trials(
             experiment_rel_dir=experiment_rel_dir,
             genome_ids=genome_ids,
             trial=trial,
-            trial_tag=trial_id,
         )
         manifest = build_manifest(
             experiment_id=experiment_id,
@@ -447,7 +289,6 @@ def plan_hardneg_trials(
             split_part=split_part,
             defaults=defaults,
             trial=trial,
-            trial_tag=trial_id,
             command_specs=command_specs,
         )
 
@@ -456,13 +297,6 @@ def plan_hardneg_trials(
             "split_version": split_data["version"],
             "split_part": split_part,
             "genome_ids": genome_ids,
-            "base_meta_arrays": defaults["base_meta_arrays"],
-            "chunk_index": defaults["chunk_index"],
-            "contig_index": defaults["contig_index"],
-            "embeddings": defaults["embeddings"],
-            "projections": defaults["projections"],
-            "base_checkpoint": defaults["base_checkpoint"],
-            "mining_seed_checkpoint": defaults["mining_seed_checkpoint"],
         }
         resolved_config = {
             "sweep_id": sweep["sweep_id"],
@@ -472,8 +306,6 @@ def plan_hardneg_trials(
         }
         command_text = "\n".join(
             [
-                command_specs["mine"]["shell"],
-                command_specs["train"]["shell"],
                 command_specs["inference"]["shell"],
                 command_specs["evaluate"]["shell"],
             ]
@@ -516,7 +348,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    plans = plan_hardneg_trials(
+    plans = plan_tiling_trials(
         split_path=Path(args.split_path),
         sweep_path=Path(args.sweep_path),
         split_part=args.split_part,

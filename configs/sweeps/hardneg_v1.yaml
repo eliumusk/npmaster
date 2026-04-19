@@ -1,6 +1,6 @@
-sweep_id: stage3_hardneg_v1
+sweep_id: hardneg_v1
 
-# Stage 3a hardneg-only sweep. Mining rebuilds meta_arrays.pkl per trial; all
+# Hardneg-only sweep. Mining rebuilds meta_arrays.pkl per trial; all
 # other artifacts (embeddings, chunk_index, contig_index, projections) are
 # shared across trials and reused. Training warm-starts from the mainline
 # H_hardneg_r10 checkpoint (same as best_route_b_s0) so Route B is reproduced
@@ -17,7 +17,7 @@ sweep_id: stage3_hardneg_v1
 # lets those land under <experiment_dir>/artifacts/checkpoints.
 defaults:
   # --- warm start (reproduce route_b mainline) ---
-  base_checkpoint: /data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt
+  base_checkpoint: /data/muskliu/npmaster/data/warm_starts/H_hardneg_r10/best_H_hardneg_r10.pt
   mining_seed_checkpoint: /data/muskliu/npmaster/data/phase3/route_b/best_route_b_s0.pt
 
   # --- inputs reused across trials ---
@@ -34,7 +34,7 @@ defaults:
   epochs: 100
   batch_size: 64
 
-  # --- eval / tiling (matches Stage 2 top tiling w8192/s2048 fused) ---
+  # --- eval / tiling (matches tiling_v1 top: w8192/s2048 fused) ---
   benchmark_base: /data/syh/benchmark/nine_genome
   fna_dir: /data/syh/benchmark/nine_genome/fna
   src_dir: src
@@ -50,7 +50,8 @@ defaults:
 
 # Trials: 4 top_k tiers × 2 hard_neg_weight values = 8 configs.
 #
-# top_k tiers chosen from the histogram (tmp/stage3_hardneg_histogram.md):
+# top_k tiers chosen from the hardneg score histogram on mainline Route B
+# (see docs/route-b-hardneg-v1.md for the distribution):
 #   k=100  → floor 0.997 (ultra-hard, 100 samples). Label-noise risk (R1).
 #   k=368  → floor 0.950 (matches current mine_s0_fused95 operating point).
 #   k=900  → ~"all with score ≥ 0.5", the shoulder of the distribution.

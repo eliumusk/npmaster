@@ -1,32 +1,32 @@
-sweep_id: stage2b_decoder_on_top_tilings_v1
+sweep_id: tiling_decoder_v1
 
-# Stage 2b: decoder micro-sweep applied to the top-3 tilings from Stage 2.
+# Decoder micro-sweep applied to the top-3 tilings from tiling_v1.
 # CPU-only; consumes frozen per-window predictions, so no inference runs.
 #
-# Ranking (same as Stage 1): lex (recall, precision) under `bench` scorer on dev.
+# Ranking (same as decoder_v1): lex (recall, precision) under `bench` scorer on dev.
 
 # Each tiling points at a predictions directory (local staging copy rsynced
-# from the remote snapshot). Labels match the original Stage 2 trial_id so
+# from the remote snapshot). Labels match the original tiling_v1 trial_id so
 # cross-referencing is easy.
 tilings:
   - trial_id: w8192-s2048
     window: 8192
     stride: 2048
-    predictions_dir: tmp/stage2b_predictions/w8192-s2048
+    predictions_dir: tmp/tiling_decoder_predictions/w8192-s2048
     source_experiment: stage2_tiling_v1-dev-w8192-s2048
-    stage2_bench_f1: 0.3618
+    tiling_bench_f1: 0.3618
   - trial_id: w12288-s3072
     window: 12288
     stride: 3072
-    predictions_dir: tmp/stage2b_predictions/w12288-s3072
+    predictions_dir: tmp/tiling_decoder_predictions/w12288-s3072
     source_experiment: stage2_tiling_v1-dev-w12288-s3072
-    stage2_bench_f1: 0.3604
+    tiling_bench_f1: 0.3604
   - trial_id: w16384-s4096
     window: 16384
     stride: 4096
-    predictions_dir: tmp/stage2b_predictions/w16384-s4096
+    predictions_dir: tmp/tiling_decoder_predictions/w16384-s4096
     source_experiment: stage2_tiling_v1-dev-w16384-s4096
-    stage2_bench_f1: 0.3511
+    tiling_bench_f1: 0.3511
 
 # 2 * 3 * 3 * 2 = 36 decoder configs per tiling -> 108 trials total.
 decoder_grid:
@@ -45,7 +45,7 @@ decoder_grid:
     - 1
     - 2
 
-# Fixed across all decoder trials. Keep valley off (matches Stage 1 top).
+# Fixed across all decoder trials. Keep valley off (matches decoder_v1 top).
 decoder_fixed:
   max_gap: 0
   length_cap: 50000
@@ -56,7 +56,7 @@ benchmark:
   # Local rsynced copy of /data/syh/benchmark/nine_genome/ground_truth.json.
   # We pass this as --base to evaluate_nine_genome (base/ground_truth.json is
   # the only file actually read).
-  base: tmp/stage2b_predictions/benchmark
+  base: tmp/tiling_decoder_predictions/benchmark
 
 split:
   path: configs/splits/nine_genome_dev_lockbox_v1.json

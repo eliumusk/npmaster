@@ -25,8 +25,8 @@ def load_module(rel_path: str, module_name: str):
 class Stage1DecoderSweepTests(unittest.TestCase):
     def setUp(self):
         self.sweep_mod = load_module(
-            "scripts/run_stage1_decoder_sweep.py",
-            "run_stage1_decoder_sweep",
+            "scripts/run_decoder_sweep.py",
+            "run_decoder_sweep",
         )
         self.eval_mod = load_module(
             "scripts/evaluate_nine_genome.py",
@@ -35,7 +35,7 @@ class Stage1DecoderSweepTests(unittest.TestCase):
 
     def test_load_sweep_config_reads_decoder_grid_lists(self):
         with tempfile.TemporaryDirectory() as tmpdir:
-            sweep_path = Path(tmpdir) / "stage1.yaml"
+            sweep_path = Path(tmpdir) / "sweep.yaml"
             sweep_path.write_text(
                 "\n".join(
                     [

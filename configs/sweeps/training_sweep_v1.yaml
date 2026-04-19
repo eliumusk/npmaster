@@ -1,11 +1,16 @@
-sweep_id: stage4_training_v1
+sweep_id: training_sweep_v1
 
-# Stage 4 training-hyperparameter sweep. Unlike Stage 3, mining is NOT per-trial:
-# all trials reuse the meta_arrays.pkl already mined by the Stage 3 winner
-# (`stage3_hardneg_v1-dev-tk100-ms0-hnw4`, recall=0.5412 / precision=0.2824 /
+# Training-hyperparameter sweep. Unlike hardneg_v1, mining is NOT per-trial:
+# all trials reuse the meta_arrays.pkl already mined by the hardneg_v1 winner
+# (`hardneg_v1-dev-tk100-ms0-hnw4`, recall=0.5412 / precision=0.2824 /
 # f1=0.3711). Only training hyperparameters vary across trials; every trial
-# warm-starts from the same Stage 3 seed checkpoint and runs the same
+# warm-starts from the same hardneg_v1 seed checkpoint and runs the same
 # inference/eval tail (w8192/s2048 fused, val_frozen_fused operating point).
+#
+# STATUS (2026-04-19 cleanup): the pre-mined meta_arrays.pkl used to live under
+# npmaster_exec/snapshots/... and was deleted along with the rest of that tree.
+# If this sweep is ever re-run, hardneg_v1 mining must be re-executed first to
+# regenerate meta_arrays.pkl at a stable repo-internal path.
 #
 # One-axis-at-a-time design (16 trials):
 #   * LR scale     — vary lr_proj / lr_context / lr_classifier together (×0.1, ×0.3, ×3, ×10)
@@ -13,8 +18,8 @@ sweep_id: stage4_training_v1
 #   * Warmup       — warmup_epochs ∈ {0, 10, 15, 20}
 #   * Dropout      — proj_dropout ∈ {0.0, 0.5}, cnn_dropout ∈ {0.2, 0.3}
 #
-# The default cell (Stage 3 best: hnw4 + train.py defaults) is intentionally
-# excluded — Stage 3 tk100-ms0-hnw4 already covers it. Each trial overrides
+# The default cell (hardneg_v1 best: hnw4 + train.py defaults) is intentionally
+# excluded — hardneg_v1 tk100-ms0-hnw4 already covers it. Each trial overrides
 # ONLY the knobs being swept; every other hyperparameter falls back to the
 # train.py default at src/train.py:347-356.
 #
@@ -23,11 +28,14 @@ sweep_id: stage4_training_v1
 #   scripts/inference_stride.py:77-92  (argparse)
 #   scripts/evaluate_nine_genome.py:358-388 (argparse)
 defaults:
-  # --- warm start (Stage 3 best seed) ---
-  base_checkpoint: /data/muskliu/npmaster/data/stage3_results/H_hardneg_r10/best_H_hardneg_r10.pt
+  # --- warm start (hardneg_v1 best seed) ---
+  base_checkpoint: /data/muskliu/npmaster/data/warm_starts/H_hardneg_r10/best_H_hardneg_r10.pt
 
-  # --- pre-mined Stage 3 winner meta_arrays (NO per-trial mining) ---
-  meta_arrays_path: /data/muskliu/npmaster_exec/snapshots/f66bdc8d4ce01ab0ec545ffce3043eb5a1d5b166-dirty-gpuenvfix1/repo/experiments/stage3_hardneg_v1-dev-tk100-ms0-hnw4/artifacts/mining/meta_arrays.pkl
+  # --- pre-mined hardneg_v1 winner meta_arrays (NO per-trial mining) ---
+  # This path was deleted in the 2026-04-19 cleanup. Re-run hardneg_v1 mining
+  # (or save meta_arrays.pkl alongside the promoted ckpt under
+  # data/phase3/hardneg_sweep_v1/best/) before launching this sweep.
+  meta_arrays_path: /data/muskliu/npmaster/data/phase3/hardneg_sweep_v1/best/meta_arrays.pkl
 
   # --- inputs reused across trials ---
   chunk_index: /data/muskliu/npmaster/data/phase3/route_b/chunk_index.pkl
@@ -37,12 +45,12 @@ defaults:
   bgc_csv: /data/muskliu/npmaster/data/bgc_annotations.csv
 
   # --- training hyperparams shared by all trials ---
-  hard_neg_weight: 4.0   # Stage 3 best
+  hard_neg_weight: 4.0   # hardneg_v1 best
   seed: 0
   epochs: 100
   batch_size: 64
 
-  # --- eval / tiling (matches Stage 2 top tiling w8192/s2048 fused) ---
+  # --- eval / tiling (matches tiling_v1 top: w8192/s2048 fused) ---
   benchmark_base: /data/syh/benchmark/nine_genome
   fna_dir: /data/syh/benchmark/nine_genome/fna
   src_dir: src
