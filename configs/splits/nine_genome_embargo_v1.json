@@ -1,0 +1,15 @@
+{
+  "version": "nine_genome_embargo_v1",
+  "reason": "Stage 5 treats all nine genomes as final external test only. Any appearance of these IDs in training configs, label CSVs, mining inputs, or selection-stage manifests is a protocol violation. Union of dev+lockbox from nine_genome_dev_lockbox_v1.json.",
+  "embargoed_genome_ids": [
+    "GCA_000154945.1",
+    "GCA_000156435.1",
+    "GCA_000156475.1",
+    "GCA_000158815.1",
+    "GCA_000158875.1",
+    "GCA_000158895.1",
+    "GCA_000158915.1",
+    "GCA_000568255.1",
+    "GCA_000568915.1"
+  ]
+}
