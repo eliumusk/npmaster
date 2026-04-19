@@ -4,7 +4,7 @@ Biosynthetic Gene Cluster (BGC) detection and discovery on bacterial genomes. Fr
 
 ## Current Status (9-genome, bench mode)
 
-Current best candidates are from the `hardneg_v1` hard-negative sweep checkpoint trained on antiSMASH-derived labels. Decoder parameters (`defrag_v2`) were selected on the 5-genome dev split, then frozen and evaluated on the 4-genome lockbox. No lockbox retuning was done.
+Current best candidates are from the Stage 3 hard-negative checkpoint trained on antiSMASH-derived labels. Decoder parameters were selected on the 5-genome dev split, then frozen and evaluated on the 4-genome lockbox. No lockbox retuning was done.
 
 Full 9-genome head-to-head:
 
@@ -105,15 +105,15 @@ python -u src/train.py --config configs/mainline.yaml --seed 0 \
     --data-dir data/mibig_v2 --out-dir data/phase3/route_b/s0
 ```
 
-**Run stride inference on a FASTA dir for the current hardneg_v1 + defrag_v2 candidates:**
+**Run stride inference on a FASTA dir for the current Stage 3/3b candidates:**
 
 ```bash
 python scripts/inference_stride.py \
     --fna-dir /data/syh/benchmark/nine_genome/fna \
-    --ckpt /data/muskliu/npmaster/data/phase3/hardneg_sweep_v1/best/best_tk100-ms0-hnw4.pt \
+    --ckpt /data/muskliu/npmaster/data/phase3/stage3_hardneg_v1/best/best_tk100-ms0-hnw4.pt \
     --window 8192 \
     --stride 2048 \
-    --out-dir /tmp/npmaster_hardneg_tk100_w8192_s2048
+    --out-dir /tmp/npmaster_stage3_tk100_w8192_s2048
 ```
 
 **Evaluate the promoted 9-genome operating point:**
@@ -121,7 +121,7 @@ python scripts/inference_stride.py \
 ```bash
 python scripts/evaluate_nine_genome.py \
     --base /data/syh/benchmark/nine_genome \
-    --results-dir /tmp/npmaster_hardneg_tk100_w8192_s2048 \
+    --results-dir /tmp/npmaster_stage3_tk100_w8192_s2048 \
     --operating-point defrag_v2_ms10_s099 \
     --out /tmp/defrag_v2_ms10_s099_all9.json
 ```

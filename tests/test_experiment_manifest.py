@@ -14,7 +14,7 @@ from experiments.manifest import load_split, validate_manifest  # noqa: E402
 
 
 SPLIT_PATH = ROOT / "configs" / "splits" / "nine_genome_dev_lockbox_v1.json"
-SCHEMA_PATH = ROOT / "configs" / "experiments" / "manifest_schema.json"
+SCHEMA_PATH = ROOT / "configs" / "experiments" / "stage0_manifest_schema.json"
 
 EXPECTED_GENOME_IDS = [
     "GCA_000154945.1",
@@ -44,7 +44,7 @@ class ExperimentSplitTests(unittest.TestCase):
         self.assertEqual(len(split["dev"]), 5)
         self.assertEqual(len(split["lockbox"]), 4)
 
-    def test_manifest_schema_lists_required_fields(self):
+    def test_manifest_schema_lists_required_stage0_fields(self):
         with SCHEMA_PATH.open(encoding="utf-8") as handle:
             schema = json.load(handle)
 

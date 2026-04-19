@@ -56,9 +56,9 @@ tuned_v2:
     f1: 0.3412
 
 defrag_v2_ms10_s099:
-  description: "dev-selected and lockbox-validated hardneg_v1 operating point"
+  description: "dev-selected and lockbox-validated Stage3 hard-negative operating point"
   checkpoint: best_tk100-ms0-hnw4
-  checkpoint_path: /data/muskliu/npmaster/data/phase3/hardneg_sweep_v1/best/best_tk100-ms0-hnw4.pt
+  checkpoint_path: /data/muskliu/npmaster/data/phase3/stage3_hardneg_v1/best/best_tk100-ms0-hnw4.pt
   window: 8192
   stride: 2048
   score: fused

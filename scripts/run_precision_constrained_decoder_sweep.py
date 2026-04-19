@@ -23,9 +23,9 @@ sys.path.insert(0, str(REPO_ROOT / "scripts"))
 import evaluate_nine_genome as eval_nine_genome  # noqa: E402
 
 
-DEFAULT_CONFIG = REPO_ROOT / "configs" / "sweeps" / "defrag_v2.yaml"
+DEFAULT_CONFIG = REPO_ROOT / "configs" / "sweeps" / "stage3b_defrag_v2.yaml"
 DEFAULT_SPLIT = REPO_ROOT / "configs" / "splits" / "nine_genome_dev_lockbox_v1.json"
-DEFAULT_OUTPUT_DIR = REPO_ROOT / "experiments" / "defrag_v2"
+DEFAULT_OUTPUT_DIR = REPO_ROOT / "experiments" / "stage3b_defrag_v2"
 
 
 def load_yaml(path: Path) -> dict[str, Any]:

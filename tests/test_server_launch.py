@@ -121,7 +121,7 @@ class ServerLaunchTests(unittest.TestCase):
             "experiment_id": "trial-009",
             "git_commit": "deadbeef",
             "relative_experiment_path": "experiments/trial-009",
-            "command": "python scripts/run_tiling_sweep.py --trial trial-009",
+            "command": "python scripts/run_stage2_tiling_sweep.py --trial trial-009",
         }
         host = {
             "name": "alpha",

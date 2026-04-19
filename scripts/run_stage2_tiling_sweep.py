@@ -1,34 +1,5 @@
 #!/usr/bin/env python3
-"""Local planner for training_sweep_v1 trials (training-hyperparameter sweep).
-
-Mirrors the hardneg_v1 runner discipline but **skips the mining step**. All
-trials reuse a single pre-mined ``meta_arrays.pkl`` (the hardneg_v1 winner's
-mining output, located at ``defaults.meta_arrays_path``). Per-trial variation
-is restricted to training hyperparameters: LR (lr_proj/lr_context/lr_classifier),
-weight decay, warmup_epochs, proj_dropout, cnn_dropout. Hyperparameters that a
-trial does NOT override are omitted from the train.py command — train.py then
-falls back to its own defaults at src/train.py:347-356.
-
-Per trial, emits a ``command.txt`` with three sequential steps:
-
-  1. ``src/train.py`` — warm-starts from ``base_checkpoint`` and trains with the
-     pre-mined ``meta_arrays_path`` plus per-trial hyperparam overrides. Output
-     lands under ``<experiment_dir>/artifacts/checkpoints/`` (best_<tag>.pt,
-     train_log_<tag>.csv).
-  2. ``scripts/inference_stride.py`` — runs the trained best_<tag>.pt over dev
-     genomes at the tiling_v1 winning tiling (w8192/s2048 by default).
-  3. ``scripts/evaluate_nine_genome.py`` — scores the predictions under the
-     frozen ``val_frozen_fused`` operating point.
-
-All flag surfaces have been verified against the real scripts:
-
-  * ``src/train.py:335-357``
-  * ``scripts/inference_stride.py:78-92``
-  * ``scripts/evaluate_nine_genome.py:359-387``
-
-The runner does NOT execute anything; it only writes manifest + config +
-command.txt, mirroring the tiling_v1 / hardneg_v1 runner discipline.
-"""
+"""Local planner for Stage 2 tiling sweep trials and command specs."""
 from __future__ import annotations
 
 import argparse
@@ -49,44 +20,8 @@ from experiments.layout import create_experiment_layout, write_command, write_re
 from experiments.manifest import load_split, write_manifest
 
 DEFAULT_SPLIT_PATH = REPO_ROOT / "configs" / "splits" / "nine_genome_dev_lockbox_v1.json"
-DEFAULT_SWEEP_PATH = REPO_ROOT / "configs" / "sweeps" / "training_sweep_v1.yaml"
+DEFAULT_SWEEP_PATH = REPO_ROOT / "configs" / "sweeps" / "stage2_tiling_v1.yaml"
 DEFAULT_EXPERIMENTS_ROOT = REPO_ROOT / "experiments"
-
-
-# Required keys in the sweep `defaults:` block. The runner refuses to plan if
-# any are missing — these are all paths / knobs the training + inference + eval
-# commands must have to be reproducible. Note: NO mining-related keys are
-# required (training_sweep_v1 reuses a pre-mined meta_arrays.pkl).
-REQUIRED_DEFAULTS = (
-    "base_checkpoint",
-    "meta_arrays_path",
-    "chunk_index",
-    "contig_index",
-    "embeddings",
-    "projections",
-    "bgc_csv",
-    "hard_neg_weight",
-    "benchmark_base",
-    "fna_dir",
-    "src_dir",
-    "operating_point",
-    "window",
-    "stride",
-    "server",
-)
-
-
-# Whitelist of hyperparameter knobs a trial may override, mapped to the train.py
-# CLI flag name. Verified against src/train.py:347-356.
-TRAIN_OVERRIDE_FLAGS = {
-    "lr_proj":        ("--lr-proj",        "float", 0.0, None),
-    "lr_context":     ("--lr-context",     "float", 0.0, None),
-    "lr_classifier":  ("--lr-classifier",  "float", 0.0, None),
-    "wd":             ("--wd",             "float", 0.0, None),
-    "warmup_epochs":  ("--warmup-epochs",  "int",   0,   None),
-    "proj_dropout":   ("--proj-dropout",   "float", 0.0, 1.0),
-    "cnn_dropout":    ("--cnn-dropout",    "float", 0.0, 1.0),
-}
 
 
 def load_sweep_config(path: Path) -> dict:
@@ -96,28 +31,28 @@ def load_sweep_config(path: Path) -> dict:
         raise ValueError("Sweep config must be a mapping.")
     if not data.get("sweep_id"):
         raise ValueError("Sweep config requires a non-empty sweep_id.")
-    raw_trials = data.get("trials")
-    if not isinstance(raw_trials, dict) or not raw_trials:
-        raise ValueError(
-            "Sweep config requires a non-empty `trials:` mapping "
-            "(trial_id -> overrides)."
-        )
+    trials = data.get("trials")
+    if not isinstance(trials, list) or not trials:
+        raise ValueError("Sweep config requires at least one trial.")
     defaults = data.get("defaults") or {}
     if not isinstance(defaults, dict):
         raise ValueError("Sweep defaults must be a mapping.")
 
     normalized_trials = []
-    for trial_id, raw_overrides in raw_trials.items():
-        if not isinstance(trial_id, str) or not trial_id.strip():
-            raise ValueError("Trial ids must be non-empty strings.")
-        if raw_overrides is None:
-            raw_overrides = {}
-        if not isinstance(raw_overrides, dict):
-            raise ValueError(
-                f"Trial {trial_id!r} overrides must be a mapping (or empty)."
-            )
-        normalized = validate_trial(trial_id, raw_overrides)
-        normalized_trials.append(normalized)
+    for raw_trial in trials:
+        if not isinstance(raw_trial, dict):
+            raise ValueError("Each trial must be a mapping.")
+        trial = {
+            "window": int(raw_trial["window"]),
+            "stride": int(raw_trial["stride"]),
+        }
+        if "server" in raw_trial and raw_trial["server"] is not None:
+            server = raw_trial["server"]
+            if not isinstance(server, str) or not server.strip():
+                raise ValueError("Per-trial server override must be a non-empty string.")
+            trial["server"] = server
+        validate_trial(trial)
+        normalized_trials.append(trial)
 
     return {
         "sweep_id": str(data["sweep_id"]),
@@ -126,62 +61,26 @@ def load_sweep_config(path: Path) -> dict:
     }
 
 
-def validate_trial(trial_id: str, raw_overrides: dict) -> dict:
-    overrides: dict = {}
-    server = None
-    for key, value in raw_overrides.items():
-        if key == "server":
-            if value is None:
-                continue
-            if not isinstance(value, str) or not value.strip():
-                raise ValueError(
-                    f"Trial {trial_id!r}: per-trial server override must be a "
-                    f"non-empty string."
-                )
-            server = value
-            continue
-        if key not in TRAIN_OVERRIDE_FLAGS:
-            raise ValueError(
-                f"Trial {trial_id!r}: unknown override key {key!r}. "
-                f"Allowed: {sorted(TRAIN_OVERRIDE_FLAGS)} or 'server'."
-            )
-        _, kind, lo, hi = TRAIN_OVERRIDE_FLAGS[key]
-        if kind == "int":
-            try:
-                value = int(value)
-            except (TypeError, ValueError) as exc:
-                raise ValueError(
-                    f"Trial {trial_id!r}: {key} must be an int (got {value!r})."
-                ) from exc
-        else:
-            try:
-                value = float(value)
-            except (TypeError, ValueError) as exc:
-                raise ValueError(
-                    f"Trial {trial_id!r}: {key} must be a float (got {value!r})."
-                ) from exc
-        if lo is not None and value < lo:
-            raise ValueError(
-                f"Trial {trial_id!r}: {key}={value} must be >= {lo}."
-            )
-        if hi is not None and value > hi:
-            raise ValueError(
-                f"Trial {trial_id!r}: {key}={value} must be <= {hi}."
-            )
-        overrides[key] = value
-
-    normalized: dict = {
-        "trial_id": trial_id,
-        "overrides": overrides,
-    }
-    if server is not None:
+def validate_trial(trial: dict) -> dict:
+    window = int(trial["window"])
+    stride = int(trial["stride"])
+    if window <= 0:
+        raise ValueError("window must be positive")
+    if stride <= 0:
+        raise ValueError("stride must be positive")
+    if stride > window:
+        raise ValueError("stride must be less than or equal to window")
+    normalized = {"window": window, "stride": stride}
+    if "server" in trial and trial["server"] is not None:
+        server = trial["server"]
+        if not isinstance(server, str) or not server.strip():
+            raise ValueError("Per-trial server override must be a non-empty string.")
         normalized["server"] = server
     return normalized
 
 
-def build_trial_id(*, trial_id: str) -> str:
-    """Trial_id is the yaml key itself (already human-readable)."""
-    return str(trial_id)
+def build_trial_id(*, window: int, stride: int) -> str:
+    return f"w{int(window)}-s{int(stride)}"
 
 
 def resolve_git_commit() -> str:
@@ -221,72 +120,17 @@ def repo_relative_experiment_dir(experiment_dir: Path) -> Path:
         return Path("experiments") / experiment_dir.name
 
 
-def _format_value(value, kind: str) -> str:
-    if kind == "int":
-        return str(int(value))
-    # Use a compact float repr that round-trips.
-    text = f"{float(value):.10g}"
-    return text
-
-
 def build_command_specs(
     *,
     defaults: dict,
     experiment_rel_dir: Path,
     genome_ids: list[str],
     trial: dict,
-    trial_tag: str,
 ) -> dict:
-    train_out_dir = experiment_rel_dir / "artifacts" / "checkpoints"
-    best_ckpt = train_out_dir / f"best_{trial_tag}.pt"
-
     predictions_dir = experiment_rel_dir / "artifacts" / "predictions"
     summary_json = experiment_rel_dir / "metrics" / "summary.json"
     genome_ids_arg = ",".join(genome_ids)
 
-    # -------- stage 1: train --------
-    # Flags verified at src/train.py:335-357. Note: warm-start flag is --ckpt
-    # (not --warm-start); output ckpt + log CSV paths are derived from --out-dir
-    # + --tag, so we can't pass --output-ckpt / --log-csv directly. This sweep
-    # points --meta-arrays directly at the pre-mined hardneg_v1 winner pkl.
-    train_argv = [
-        "python",
-        "src/train.py",
-        "--embeddings",
-        str(defaults["embeddings"]),
-        "--projections",
-        str(defaults["projections"]),
-        "--chunk-index",
-        str(defaults["chunk_index"]),
-        "--meta-arrays",
-        str(defaults["meta_arrays_path"]),
-        "--contig-index",
-        str(defaults["contig_index"]),
-        "--bgc-csv",
-        str(defaults["bgc_csv"]),
-        "--ckpt",
-        str(defaults["base_checkpoint"]),
-        "--out-dir",
-        train_out_dir.as_posix(),
-        "--seed",
-        str(int(defaults.get("seed", 0))),
-        "--tag",
-        trial_tag,
-        "--batch-size",
-        str(int(defaults.get("batch_size", 64))),
-        "--epochs",
-        str(int(defaults.get("epochs", 100))),
-        "--hard-neg-weight",
-        f"{float(defaults['hard_neg_weight']):.4f}",
-    ]
-    # Append per-trial overrides as explicit CLI flags. Skip unset knobs so
-    # train.py uses its own defaults.
-    for key, value in trial["overrides"].items():
-        flag, kind, _lo, _hi = TRAIN_OVERRIDE_FLAGS[key]
-        train_argv.extend([flag, _format_value(value, kind)])
-
-    # -------- stage 2: inference --------
-    # Flags verified at scripts/inference_stride.py:78-92.
     inference_argv = [
         "python",
         "scripts/inference_stride.py",
@@ -295,15 +139,15 @@ def build_command_specs(
         "--out-dir",
         predictions_dir.as_posix(),
         "--ckpt",
-        best_ckpt.as_posix(),
+        str(defaults["checkpoint"]),
         "--src-dir",
         str(defaults["src_dir"]),
         "--genome-ids",
         genome_ids_arg,
         "--window",
-        str(int(defaults["window"])),
+        str(trial["window"]),
         "--stride",
-        str(int(defaults["stride"])),
+        str(trial["stride"]),
         "--layer",
         str(defaults.get("layer", "blocks.20.mlp.l3")),
         "--evo-model",
@@ -311,9 +155,6 @@ def build_command_specs(
         "--cache-dir",
         str(defaults.get("cache_dir", "/data/public_models/hub")),
     ]
-
-    # -------- stage 3: evaluate --------
-    # Flags verified at scripts/evaluate_nine_genome.py:359-387.
     evaluate_argv = [
         "python",
         "scripts/evaluate_nine_genome.py",
@@ -328,16 +169,7 @@ def build_command_specs(
         "--out",
         summary_json.as_posix(),
     ]
-
     return {
-        "train": {
-            "argv": train_argv,
-            "shell": shlex.join(train_argv),
-            "outputs": {
-                "train_out_dir": train_out_dir.as_posix(),
-                "best_checkpoint": best_ckpt.as_posix(),
-            },
-        },
         "inference": {
             "argv": inference_argv,
             "shell": shlex.join(inference_argv),
@@ -363,28 +195,24 @@ def build_manifest(
     split_part: str,
     defaults: dict,
     trial: dict,
-    trial_tag: str,
     command_specs: dict,
 ) -> dict:
     server = trial.get("server") or defaults["server"]
     return {
         "experiment_id": experiment_id,
-        "task_id": "task8_training_sweep",
+        "task_id": "task4_stage2_tiling_sweep",
         "sweep_id": defaults["sweep_id"],
-        "trial_id": trial_tag,
+        "trial_id": build_trial_id(window=trial["window"], stride=trial["stride"]),
         "git_commit": resolve_git_commit(),
         "git_dirty": resolve_git_dirty(),
         "split_version": split_data["version"],
         "split_part": split_part,
         "input_genome_ids": list(split_data[split_part]),
         "server": server,
-        "overrides": trial["overrides"],
-        "hard_neg_weight": float(defaults["hard_neg_weight"]),
-        "warm_start": defaults["base_checkpoint"],
-        "base_meta_arrays_path": defaults["meta_arrays_path"],
-        "window": int(defaults["window"]),
-        "stride": int(defaults["stride"]),
+        "window": trial["window"],
+        "stride": trial["stride"],
         "operating_point": defaults["operating_point"],
+        "checkpoint": defaults["checkpoint"],
         "command": f"bash {experiment_rel_dir.as_posix()}/command.txt",
         "command_specs": command_specs,
     }
@@ -395,7 +223,7 @@ def write_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def plan_training_trials(
+def plan_tiling_trials(
     *,
     split_path: Path,
     sweep_path: Path,
@@ -412,7 +240,16 @@ def plan_training_trials(
     defaults = deepcopy(sweep["defaults"])
     defaults["sweep_id"] = sweep["sweep_id"]
 
-    missing_defaults = [name for name in REQUIRED_DEFAULTS if defaults.get(name) in (None, "")]
+    required_defaults = (
+        "checkpoint",
+        "benchmark_base",
+        "base_results_dir",
+        "fna_dir",
+        "src_dir",
+        "operating_point",
+        "server",
+    )
+    missing_defaults = [name for name in required_defaults if not defaults.get(name)]
     if missing_defaults:
         raise ValueError(f"Missing required defaults in sweep config: {missing_defaults}")
 
@@ -420,7 +257,8 @@ def plan_training_trials(
     seen_ids: set[str] = set()
     experiments_root = experiments_root.resolve()
     for trial in sweep["trials"]:
-        trial_id = build_trial_id(trial_id=trial["trial_id"])
+        trial = validate_trial(trial)
+        trial_id = build_trial_id(window=trial["window"], stride=trial["stride"])
         if trial_id in seen_ids:
             raise ValueError(f"Duplicate trial_id generated for {trial_id}")
         seen_ids.add(trial_id)
@@ -435,7 +273,6 @@ def plan_training_trials(
                     flush=True,
                 )
                 continue
-
         layout = create_experiment_layout(experiments_root, experiment_id)
         experiment_dir = layout["root"]
         experiment_rel_dir = repo_relative_experiment_dir(experiment_dir)
@@ -444,7 +281,6 @@ def plan_training_trials(
             experiment_rel_dir=experiment_rel_dir,
             genome_ids=genome_ids,
             trial=trial,
-            trial_tag=trial_id,
         )
         manifest = build_manifest(
             experiment_id=experiment_id,
@@ -453,7 +289,6 @@ def plan_training_trials(
             split_part=split_part,
             defaults=defaults,
             trial=trial,
-            trial_tag=trial_id,
             command_specs=command_specs,
         )
 
@@ -462,12 +297,6 @@ def plan_training_trials(
             "split_version": split_data["version"],
             "split_part": split_part,
             "genome_ids": genome_ids,
-            "meta_arrays_path": defaults["meta_arrays_path"],
-            "chunk_index": defaults["chunk_index"],
-            "contig_index": defaults["contig_index"],
-            "embeddings": defaults["embeddings"],
-            "projections": defaults["projections"],
-            "base_checkpoint": defaults["base_checkpoint"],
         }
         resolved_config = {
             "sweep_id": sweep["sweep_id"],
@@ -477,7 +306,6 @@ def plan_training_trials(
         }
         command_text = "\n".join(
             [
-                command_specs["train"]["shell"],
                 command_specs["inference"]["shell"],
                 command_specs["evaluate"]["shell"],
             ]
@@ -520,7 +348,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    plans = plan_training_trials(
+    plans = plan_tiling_trials(
         split_path=Path(args.split_path),
         sweep_path=Path(args.sweep_path),
         split_part=args.split_part,

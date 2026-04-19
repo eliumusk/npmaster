@@ -27,7 +27,7 @@ def load_module(rel_path: str, module_name: str):
 
 MINIMAL_DEFAULTS = [
     "  base_checkpoint: /warm/H_hardneg_r10.pt",
-    "  meta_arrays_path: /pre-mined/hardneg_v1_winner/meta_arrays.pkl",
+    "  meta_arrays_path: /pre-mined/stage3_winner/meta_arrays.pkl",
     "  chunk_index: /data/chunk_index.pkl",
     "  contig_index: /data/contig_index.pkl",
     "  embeddings: /data/embeddings.npy",
@@ -66,17 +66,17 @@ def _split_payload() -> dict:
 class Stage4TrainingSweepTests(unittest.TestCase):
     def setUp(self):
         self.runner = load_module(
-            "scripts/run_training_sweep.py",
-            "run_training_sweep",
+            "scripts/run_stage4_training_sweep.py",
+            "run_stage4_training_sweep",
         )
 
     # ---------- yaml / trial parsing ----------
 
     def test_repo_sweep_config_loads_with_defaults_and_16_trials(self):
         config = self.runner.load_sweep_config(
-            ROOT / "configs" / "sweeps" / "training_sweep_v1.yaml"
+            ROOT / "configs" / "sweeps" / "stage4_training_v1.yaml"
         )
-        self.assertEqual(config["sweep_id"], "training_sweep_v1")
+        self.assertEqual(config["sweep_id"], "stage4_training_v1")
         self.assertEqual(len(config["trials"]), 16)
         self.assertEqual(config["defaults"]["operating_point"], "val_frozen_fused")
         self.assertEqual(config["defaults"]["window"], 8192)
@@ -84,15 +84,17 @@ class Stage4TrainingSweepTests(unittest.TestCase):
         self.assertEqual(float(config["defaults"]["hard_neg_weight"]), 4.0)
         self.assertEqual(
             config["defaults"]["meta_arrays_path"],
-            "/data/muskliu/npmaster/data/phase3/hardneg_sweep_v1/best/"
-            "meta_arrays.pkl",
+            "/data/muskliu/npmaster_exec/snapshots/"
+            "f66bdc8d4ce01ab0ec545ffce3043eb5a1d5b166-dirty-gpuenvfix1/repo/"
+            "experiments/stage3_hardneg_v1-dev-tk100-ms0-hnw4/"
+            "artifacts/mining/meta_arrays.pkl",
         )
         # Default server fixed (per-trial server can override at launch time).
         self.assertEqual(config["defaults"]["server"], "voc_gpu_node7_a800")
 
     def test_repo_sweep_trial_ids_match_yaml_keys_and_are_unique(self):
         config = self.runner.load_sweep_config(
-            ROOT / "configs" / "sweeps" / "training_sweep_v1.yaml"
+            ROOT / "configs" / "sweeps" / "stage4_training_v1.yaml"
         )
         ids = [t["trial_id"] for t in config["trials"]]
         self.assertEqual(len(ids), len(set(ids)))
@@ -155,7 +157,7 @@ class Stage4TrainingSweepTests(unittest.TestCase):
 
     def _write_sweep(self, path: Path, extra_lines: list[str] | None = None) -> None:
         lines = [
-            "sweep_id: training_tmp",
+            "sweep_id: stage4_training_tmp",
             "defaults:",
             *MINIMAL_DEFAULTS,
             "trials:",
@@ -174,7 +176,7 @@ class Stage4TrainingSweepTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             split_path = tmp / "split.json"
-            sweep_path = tmp / "sweep.yaml"
+            sweep_path = tmp / "stage4.yaml"
             experiments_root = tmp / "experiments"
             self._write_split(split_path)
             self._write_sweep(sweep_path)
@@ -192,11 +194,11 @@ class Stage4TrainingSweepTests(unittest.TestCase):
 
             # Manifest required + Stage-4-specific fields.
             manifest = first["manifest"]
-            self.assertEqual(manifest["task_id"], "task8_training_sweep")
+            self.assertEqual(manifest["task_id"], "task8_stage4_training_sweep")
             self.assertEqual(manifest["warm_start"], "/warm/H_hardneg_r10.pt")
             self.assertEqual(
                 manifest["base_meta_arrays_path"],
-                "/pre-mined/hardneg_v1_winner/meta_arrays.pkl",
+                "/pre-mined/stage3_winner/meta_arrays.pkl",
             )
             self.assertEqual(manifest["split_part"], "dev")
             self.assertEqual(manifest["server"], "gpu-a")
@@ -245,7 +247,7 @@ class Stage4TrainingSweepTests(unittest.TestCase):
             meta_idx = train_argv.index("--meta-arrays")
             self.assertEqual(
                 train_argv[meta_idx + 1],
-                "/pre-mined/hardneg_v1_winner/meta_arrays.pkl",
+                "/pre-mined/stage3_winner/meta_arrays.pkl",
             )
             ckpt_idx = train_argv.index("--ckpt")
             self.assertEqual(train_argv[ckpt_idx + 1], "/warm/H_hardneg_r10.pt")
@@ -305,7 +307,7 @@ class Stage4TrainingSweepTests(unittest.TestCase):
             self.assertEqual(disk_manifest["warm_start"], "/warm/H_hardneg_r10.pt")
             self.assertEqual(
                 disk_manifest["base_meta_arrays_path"],
-                "/pre-mined/hardneg_v1_winner/meta_arrays.pkl",
+                "/pre-mined/stage3_winner/meta_arrays.pkl",
             )
 
             # command.txt: 3 stages only — no `mine_hard_negatives.py` line.
@@ -319,9 +321,9 @@ class Stage4TrainingSweepTests(unittest.TestCase):
             self.assertGreaterEqual(ev_pos, 0)
             self.assertLess(train_pos, inf_pos)
             self.assertLess(inf_pos, ev_pos)
-            # The hardneg_v1 winner pkl must be referenced verbatim in train cmd.
+            # The Stage 3 winner pkl must be referenced verbatim in train cmd.
             self.assertIn(
-                "/pre-mined/hardneg_v1_winner/meta_arrays.pkl",
+                "/pre-mined/stage3_winner/meta_arrays.pkl",
                 command_txt,
             )
             # Override flags appear; non-overrides do not.
@@ -346,7 +348,7 @@ class Stage4TrainingSweepTests(unittest.TestCase):
             experiments_root = Path(tmpdir) / "experiments"
             plans = self.runner.plan_training_trials(
                 split_path=ROOT / "configs" / "splits" / "nine_genome_dev_lockbox_v1.json",
-                sweep_path=ROOT / "configs" / "sweeps" / "training_sweep_v1.yaml",
+                sweep_path=ROOT / "configs" / "sweeps" / "stage4_training_v1.yaml",
                 split_part="dev",
                 experiments_root=experiments_root,
             )
@@ -357,7 +359,7 @@ class Stage4TrainingSweepTests(unittest.TestCase):
             self.assertEqual(len(set(trial_ids)), 16)
             # Every experiment_id is prefixed with sweep_id and split_part.
             for eid in exp_ids:
-                self.assertTrue(eid.startswith("training_sweep_v1-dev-"))
+                self.assertTrue(eid.startswith("stage4_training_v1-dev-"))
             # Spot-check: lr-x10p0 must reference 1e-2 lr_classifier.
             lr_x10 = next(p for p in plans if p["trial_id"] == "lr-x10p0")
             argv = lr_x10["command_specs"]["train"]["argv"]
@@ -377,7 +379,7 @@ class Stage4TrainingSweepTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             split_path = tmp / "split.json"
-            sweep_path = tmp / "sweep.yaml"
+            sweep_path = tmp / "stage4.yaml"
             experiments_root = tmp / "experiments"
             self._write_split(split_path)
             self._write_sweep(sweep_path)
@@ -452,14 +454,14 @@ class Stage4TrainingSweepTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmpdir:
             tmp = Path(tmpdir)
             split_path = tmp / "split.json"
-            sweep_path = tmp / "sweep.yaml"
+            sweep_path = tmp / "stage4.yaml"
             experiments_root = tmp / "experiments"
             self._write_split(split_path)
 
             sweep_path.write_text(
                 "\n".join(
                     [
-                        "sweep_id: training_tmp",
+                        "sweep_id: stage4_training_tmp",
                         "defaults:",
                         *MINIMAL_DEFAULTS,
                         "trials:",

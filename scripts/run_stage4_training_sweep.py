@@ -1,30 +1,33 @@
 #!/usr/bin/env python3
-"""Local planner for hardneg_v1 sweep trials and command specs.
+"""Local planner for Stage 4 training-hyperparameter sweep trials.
 
-Per trial, emits a ``command.txt`` with four sequential stages:
+Stage 4 mirrors the Stage 3 runner discipline but **skips the mining stage**.
+All trials reuse a single pre-mined ``meta_arrays.pkl`` (the Stage 3 winner's
+mining output, located at ``defaults.meta_arrays_path``). Per-trial variation
+is restricted to training hyperparameters: LR (lr_proj/lr_context/lr_classifier),
+weight decay, warmup_epochs, proj_dropout, cnn_dropout. Hyperparameters that a
+trial does NOT override are omitted from the train.py command — train.py then
+falls back to its own defaults at src/train.py:347-356.
 
-  1. ``scripts/mine_hard_negatives.py`` — patches ``meta_arrays.pkl`` with a
-     fresh ``hard_negative`` column under the configured ``score_name``,
-     ``top_k`` and ``min_score``. Output lands under
-     ``<experiment_dir>/artifacts/mining/``.
-  2. ``src/train.py`` — warm-starts from ``base_checkpoint`` and trains with
-     ``--hard-neg-weight`` applied to the freshly mined meta. Output lands
-     under ``<experiment_dir>/artifacts/checkpoints/`` (best_<tag>.pt,
+Per trial, emits a ``command.txt`` with three sequential stages:
+
+  1. ``src/train.py`` — warm-starts from ``base_checkpoint`` and trains with the
+     pre-mined ``meta_arrays_path`` plus per-trial hyperparam overrides. Output
+     lands under ``<experiment_dir>/artifacts/checkpoints/`` (best_<tag>.pt,
      train_log_<tag>.csv).
-  3. ``scripts/inference_stride.py`` — runs the trained best_<tag>.pt over
-     dev genomes at the tiling_v1 winning tiling (w8192/s2048 by default).
-  4. ``scripts/evaluate_nine_genome.py`` — scores the predictions under the
+  2. ``scripts/inference_stride.py`` — runs the trained best_<tag>.pt over dev
+     genomes at the Stage 2 winning tiling (w8192/s2048 by default).
+  3. ``scripts/evaluate_nine_genome.py`` — scores the predictions under the
      frozen ``val_frozen_fused`` operating point.
 
 All flag surfaces have been verified against the real scripts:
 
-  * ``scripts/mine_hard_negatives.py:171-183``
-  * ``src/train.py:333-358``
-  * ``scripts/inference_stride.py:77-92``
-  * ``scripts/evaluate_nine_genome.py:358-388``
+  * ``src/train.py:335-357``
+  * ``scripts/inference_stride.py:78-92``
+  * ``scripts/evaluate_nine_genome.py:359-387``
 
 The runner does NOT execute anything; it only writes manifest + config +
-command.txt, mirroring the tiling_v1 runner's discipline.
+command.txt, mirroring the Stage 2 / Stage 3 runner discipline.
 """
 from __future__ import annotations
 
@@ -46,23 +49,23 @@ from experiments.layout import create_experiment_layout, write_command, write_re
 from experiments.manifest import load_split, write_manifest
 
 DEFAULT_SPLIT_PATH = REPO_ROOT / "configs" / "splits" / "nine_genome_dev_lockbox_v1.json"
-DEFAULT_SWEEP_PATH = REPO_ROOT / "configs" / "sweeps" / "hardneg_v1.yaml"
+DEFAULT_SWEEP_PATH = REPO_ROOT / "configs" / "sweeps" / "stage4_training_v1.yaml"
 DEFAULT_EXPERIMENTS_ROOT = REPO_ROOT / "experiments"
 
 
 # Required keys in the sweep `defaults:` block. The runner refuses to plan if
-# any are missing — these are all paths / knobs the mining + training + eval
-# commands must have to be reproducible.
+# any are missing — these are all paths / knobs the training + inference + eval
+# commands must have to be reproducible. Note: NO mining-related keys are
+# required (Stage 4 reuses a pre-mined meta_arrays.pkl).
 REQUIRED_DEFAULTS = (
     "base_checkpoint",
-    "mining_seed_checkpoint",
-    "base_meta_arrays",
+    "meta_arrays_path",
     "chunk_index",
     "contig_index",
     "embeddings",
     "projections",
     "bgc_csv",
-    "score_name",
+    "hard_neg_weight",
     "benchmark_base",
     "fna_dir",
     "src_dir",
@@ -73,6 +76,19 @@ REQUIRED_DEFAULTS = (
 )
 
 
+# Whitelist of hyperparameter knobs a trial may override, mapped to the train.py
+# CLI flag name. Verified against src/train.py:347-356.
+TRAIN_OVERRIDE_FLAGS = {
+    "lr_proj":        ("--lr-proj",        "float", 0.0, None),
+    "lr_context":     ("--lr-context",     "float", 0.0, None),
+    "lr_classifier":  ("--lr-classifier",  "float", 0.0, None),
+    "wd":             ("--wd",             "float", 0.0, None),
+    "warmup_epochs":  ("--warmup-epochs",  "int",   0,   None),
+    "proj_dropout":   ("--proj-dropout",   "float", 0.0, 1.0),
+    "cnn_dropout":    ("--cnn-dropout",    "float", 0.0, 1.0),
+}
+
+
 def load_sweep_config(path: Path) -> dict:
     with path.open(encoding="utf-8") as handle:
         data = yaml.safe_load(handle) or {}
@@ -80,29 +96,28 @@ def load_sweep_config(path: Path) -> dict:
         raise ValueError("Sweep config must be a mapping.")
     if not data.get("sweep_id"):
         raise ValueError("Sweep config requires a non-empty sweep_id.")
-    trials = data.get("trials")
-    if not isinstance(trials, list) or not trials:
-        raise ValueError("Sweep config requires at least one trial.")
+    raw_trials = data.get("trials")
+    if not isinstance(raw_trials, dict) or not raw_trials:
+        raise ValueError(
+            "Sweep config requires a non-empty `trials:` mapping "
+            "(trial_id -> overrides)."
+        )
     defaults = data.get("defaults") or {}
     if not isinstance(defaults, dict):
         raise ValueError("Sweep defaults must be a mapping.")
 
     normalized_trials = []
-    for raw_trial in trials:
-        if not isinstance(raw_trial, dict):
-            raise ValueError("Each trial must be a mapping.")
-        trial = {
-            "top_k": int(raw_trial["top_k"]),
-            "min_score": float(raw_trial["min_score"]),
-            "hard_neg_weight": float(raw_trial["hard_neg_weight"]),
-        }
-        if "server" in raw_trial and raw_trial["server"] is not None:
-            server = raw_trial["server"]
-            if not isinstance(server, str) or not server.strip():
-                raise ValueError("Per-trial server override must be a non-empty string.")
-            trial["server"] = server
-        validate_trial(trial)
-        normalized_trials.append(trial)
+    for trial_id, raw_overrides in raw_trials.items():
+        if not isinstance(trial_id, str) or not trial_id.strip():
+            raise ValueError("Trial ids must be non-empty strings.")
+        if raw_overrides is None:
+            raw_overrides = {}
+        if not isinstance(raw_overrides, dict):
+            raise ValueError(
+                f"Trial {trial_id!r} overrides must be a mapping (or empty)."
+            )
+        normalized = validate_trial(trial_id, raw_overrides)
+        normalized_trials.append(normalized)
 
     return {
         "sweep_id": str(data["sweep_id"]),
@@ -111,43 +126,62 @@ def load_sweep_config(path: Path) -> dict:
     }
 
 
-def validate_trial(trial: dict) -> dict:
-    top_k = int(trial["top_k"])
-    min_score = float(trial["min_score"])
-    hard_neg_weight = float(trial["hard_neg_weight"])
-    if top_k <= 0:
-        raise ValueError("top_k must be positive")
-    if not (0.0 <= min_score <= 1.0):
-        raise ValueError("min_score must be in [0.0, 1.0]")
-    if hard_neg_weight <= 0:
-        raise ValueError("hard_neg_weight must be positive")
-    normalized = {
-        "top_k": top_k,
-        "min_score": min_score,
-        "hard_neg_weight": hard_neg_weight,
+def validate_trial(trial_id: str, raw_overrides: dict) -> dict:
+    overrides: dict = {}
+    server = None
+    for key, value in raw_overrides.items():
+        if key == "server":
+            if value is None:
+                continue
+            if not isinstance(value, str) or not value.strip():
+                raise ValueError(
+                    f"Trial {trial_id!r}: per-trial server override must be a "
+                    f"non-empty string."
+                )
+            server = value
+            continue
+        if key not in TRAIN_OVERRIDE_FLAGS:
+            raise ValueError(
+                f"Trial {trial_id!r}: unknown override key {key!r}. "
+                f"Allowed: {sorted(TRAIN_OVERRIDE_FLAGS)} or 'server'."
+            )
+        _, kind, lo, hi = TRAIN_OVERRIDE_FLAGS[key]
+        if kind == "int":
+            try:
+                value = int(value)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Trial {trial_id!r}: {key} must be an int (got {value!r})."
+                ) from exc
+        else:
+            try:
+                value = float(value)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(
+                    f"Trial {trial_id!r}: {key} must be a float (got {value!r})."
+                ) from exc
+        if lo is not None and value < lo:
+            raise ValueError(
+                f"Trial {trial_id!r}: {key}={value} must be >= {lo}."
+            )
+        if hi is not None and value > hi:
+            raise ValueError(
+                f"Trial {trial_id!r}: {key}={value} must be <= {hi}."
+            )
+        overrides[key] = value
+
+    normalized: dict = {
+        "trial_id": trial_id,
+        "overrides": overrides,
     }
-    if "server" in trial and trial["server"] is not None:
-        server = trial["server"]
-        if not isinstance(server, str) or not server.strip():
-            raise ValueError("Per-trial server override must be a non-empty string.")
+    if server is not None:
         normalized["server"] = server
     return normalized
 
 
-def _fmt_float_tag(value: float) -> str:
-    """Format floats for trial_id: strip trailing zeros, dot -> 'p'."""
-    text = f"{float(value):.3f}".rstrip("0").rstrip(".")
-    if text == "":
-        text = "0"
-    return text.replace(".", "p")
-
-
-def build_trial_id(*, top_k: int, min_score: float, hard_neg_weight: float) -> str:
-    return (
-        f"tk{int(top_k)}"
-        f"-ms{_fmt_float_tag(min_score)}"
-        f"-hnw{_fmt_float_tag(hard_neg_weight)}"
-    )
+def build_trial_id(*, trial_id: str) -> str:
+    """Stage 4 trial_id is the yaml key itself (already human-readable)."""
+    return str(trial_id)
 
 
 def resolve_git_commit() -> str:
@@ -187,6 +221,14 @@ def repo_relative_experiment_dir(experiment_dir: Path) -> Path:
         return Path("experiments") / experiment_dir.name
 
 
+def _format_value(value, kind: str) -> str:
+    if kind == "int":
+        return str(int(value))
+    # Use a compact float repr that round-trips.
+    text = f"{float(value):.10g}"
+    return text
+
+
 def build_command_specs(
     *,
     defaults: dict,
@@ -195,9 +237,6 @@ def build_command_specs(
     trial: dict,
     trial_tag: str,
 ) -> dict:
-    mining_dir = experiment_rel_dir / "artifacts" / "mining"
-    mined_meta = mining_dir / "meta_arrays.pkl"
-
     train_out_dir = experiment_rel_dir / "artifacts" / "checkpoints"
     best_ckpt = train_out_dir / f"best_{trial_tag}.pt"
 
@@ -205,33 +244,11 @@ def build_command_specs(
     summary_json = experiment_rel_dir / "metrics" / "summary.json"
     genome_ids_arg = ",".join(genome_ids)
 
-    # -------- stage 1: mine hardnegs --------
-    # Flags verified at scripts/mine_hard_negatives.py:173-180.
-    mine_argv = [
-        "python",
-        "scripts/mine_hard_negatives.py",
-        "--ckpt",
-        str(defaults["mining_seed_checkpoint"]),
-        "--embeddings",
-        str(defaults["embeddings"]),
-        "--meta-arrays",
-        str(defaults["base_meta_arrays"]),
-        "--contig-index",
-        str(defaults["contig_index"]),
-        "--out-dir",
-        mining_dir.as_posix(),
-        "--score-name",
-        str(defaults["score_name"]),
-        "--top-k",
-        str(trial["top_k"]),
-        "--min-score",
-        f"{trial['min_score']:.4f}",
-    ]
-
-    # -------- stage 2: train --------
+    # -------- stage 1: train --------
     # Flags verified at src/train.py:335-357. Note: warm-start flag is --ckpt
-    # (not --warm-start); output ckpt + log CSV paths are derived from
-    # --out-dir + --tag, so we can't pass --output-ckpt / --log-csv directly.
+    # (not --warm-start); output ckpt + log CSV paths are derived from --out-dir
+    # + --tag, so we can't pass --output-ckpt / --log-csv directly. Stage 4
+    # points --meta-arrays directly at the pre-mined Stage 3 winner pkl.
     train_argv = [
         "python",
         "src/train.py",
@@ -242,7 +259,7 @@ def build_command_specs(
         "--chunk-index",
         str(defaults["chunk_index"]),
         "--meta-arrays",
-        mined_meta.as_posix(),
+        str(defaults["meta_arrays_path"]),
         "--contig-index",
         str(defaults["contig_index"]),
         "--bgc-csv",
@@ -260,10 +277,15 @@ def build_command_specs(
         "--epochs",
         str(int(defaults.get("epochs", 100))),
         "--hard-neg-weight",
-        f"{trial['hard_neg_weight']:.4f}",
+        f"{float(defaults['hard_neg_weight']):.4f}",
     ]
+    # Append per-trial overrides as explicit CLI flags. Skip unset knobs so
+    # train.py uses its own defaults.
+    for key, value in trial["overrides"].items():
+        flag, kind, _lo, _hi = TRAIN_OVERRIDE_FLAGS[key]
+        train_argv.extend([flag, _format_value(value, kind)])
 
-    # -------- stage 3: inference --------
+    # -------- stage 2: inference --------
     # Flags verified at scripts/inference_stride.py:78-92.
     inference_argv = [
         "python",
@@ -290,7 +312,7 @@ def build_command_specs(
         str(defaults.get("cache_dir", "/data/public_models/hub")),
     ]
 
-    # -------- stage 4: evaluate --------
+    # -------- stage 3: evaluate --------
     # Flags verified at scripts/evaluate_nine_genome.py:359-387.
     evaluate_argv = [
         "python",
@@ -308,14 +330,6 @@ def build_command_specs(
     ]
 
     return {
-        "mine": {
-            "argv": mine_argv,
-            "shell": shlex.join(mine_argv),
-            "outputs": {
-                "mining_dir": mining_dir.as_posix(),
-                "mined_meta_arrays": mined_meta.as_posix(),
-            },
-        },
         "train": {
             "argv": train_argv,
             "shell": shlex.join(train_argv),
@@ -355,7 +369,7 @@ def build_manifest(
     server = trial.get("server") or defaults["server"]
     return {
         "experiment_id": experiment_id,
-        "task_id": "task7_hardneg_sweep",
+        "task_id": "task8_stage4_training_sweep",
         "sweep_id": defaults["sweep_id"],
         "trial_id": trial_tag,
         "git_commit": resolve_git_commit(),
@@ -364,13 +378,10 @@ def build_manifest(
         "split_part": split_part,
         "input_genome_ids": list(split_data[split_part]),
         "server": server,
-        "top_k": trial["top_k"],
-        "min_score": trial["min_score"],
-        "hard_neg_weight": trial["hard_neg_weight"],
-        "score_name": defaults["score_name"],
+        "overrides": trial["overrides"],
+        "hard_neg_weight": float(defaults["hard_neg_weight"]),
         "warm_start": defaults["base_checkpoint"],
-        "mining_seed_checkpoint": defaults["mining_seed_checkpoint"],
-        "base_meta_arrays": defaults["base_meta_arrays"],
+        "base_meta_arrays_path": defaults["meta_arrays_path"],
         "window": int(defaults["window"]),
         "stride": int(defaults["stride"]),
         "operating_point": defaults["operating_point"],
@@ -384,7 +395,7 @@ def write_text(path: Path, content: str) -> None:
     path.write_text(content, encoding="utf-8")
 
 
-def plan_hardneg_trials(
+def plan_training_trials(
     *,
     split_path: Path,
     sweep_path: Path,
@@ -409,12 +420,7 @@ def plan_hardneg_trials(
     seen_ids: set[str] = set()
     experiments_root = experiments_root.resolve()
     for trial in sweep["trials"]:
-        trial = validate_trial(trial)
-        trial_id = build_trial_id(
-            top_k=trial["top_k"],
-            min_score=trial["min_score"],
-            hard_neg_weight=trial["hard_neg_weight"],
-        )
+        trial_id = build_trial_id(trial_id=trial["trial_id"])
         if trial_id in seen_ids:
             raise ValueError(f"Duplicate trial_id generated for {trial_id}")
         seen_ids.add(trial_id)
@@ -456,13 +462,12 @@ def plan_hardneg_trials(
             "split_version": split_data["version"],
             "split_part": split_part,
             "genome_ids": genome_ids,
-            "base_meta_arrays": defaults["base_meta_arrays"],
+            "meta_arrays_path": defaults["meta_arrays_path"],
             "chunk_index": defaults["chunk_index"],
             "contig_index": defaults["contig_index"],
             "embeddings": defaults["embeddings"],
             "projections": defaults["projections"],
             "base_checkpoint": defaults["base_checkpoint"],
-            "mining_seed_checkpoint": defaults["mining_seed_checkpoint"],
         }
         resolved_config = {
             "sweep_id": sweep["sweep_id"],
@@ -472,7 +477,6 @@ def plan_hardneg_trials(
         }
         command_text = "\n".join(
             [
-                command_specs["mine"]["shell"],
                 command_specs["train"]["shell"],
                 command_specs["inference"]["shell"],
                 command_specs["evaluate"]["shell"],
@@ -516,7 +520,7 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    plans = plan_hardneg_trials(
+    plans = plan_training_trials(
         split_path=Path(args.split_path),
         sweep_path=Path(args.sweep_path),
         split_part=args.split_part,

@@ -16,7 +16,7 @@ Entry points: `src/train.py`, `src/evaluate.py`.
 
 ## Checkpoints
 
-Mainline Route B checkpoints: `best_route_b_s{0,1,2}.pt` (3-seed replication) at `/data/muskliu/npmaster/data/phase3/route_b/`. They warm-start from the single-seed `H_hardneg_r10` checkpoint at `/data/muskliu/npmaster/data/warm_starts/H_hardneg_r10/best_H_hardneg_r10.pt`.
+Mainline: `H_hardneg_r10_s{0,1,2}` (3-seed replication). Server: `/data/muskliu/npmaster/data/stage3_results/H_hardneg_r10_s*/`.
 
 ## Internal antiSMASH-Proxy Benchmark (3-seed mean ± std)
 
