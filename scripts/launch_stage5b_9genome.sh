@@ -31,9 +31,13 @@ CANDIDATES=(
 )
 
 # Pick one free GPU per job.
-FREE_GPUS=( $(nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits \
-  | awk -F', ' '$2 < 500 {print $1}') )
-echo "free GPUs on $(hostname): ${FREE_GPUS[*]:-none}" | tee -a "${LAUNCH_LOG}"
+mapfile -t FREE_GPUS < <(nvidia-smi --query-gpu=index,memory.used --format=csv,noheader,nounits \
+  | awk -F', ' '$2 < 500 {print $1}')
+if [[ ${#FREE_GPUS[@]} -eq 0 ]]; then
+  FREE_GPUS=(0)
+fi
+NUM_GPUS=${#FREE_GPUS[@]}
+echo "free GPUs on $(hostname): ${FREE_GPUS[*]}" | tee -a "${LAUNCH_LOG}"
 
 PIDS=()
 i=0
@@ -47,7 +51,7 @@ for entry in "${CANDIDATES[@]}"; do
   log="${trial_dir}/logs/final_9genome_b_${tag}.log"
   mkdir -p "${pred_dir}" "$(dirname "${summary_json}")" "$(dirname "${log}")"
 
-  gpu="${FREE_GPUS[$(( i % ${#FREE_GPUS[@]:-1} ))]:-0}"
+  gpu="${FREE_GPUS[$(( i % NUM_GPUS ))]}"
   i=$(( i + 1 ))
   echo "=> ${tag}  gpu=${gpu}  needs_inf=${needs_inf}  decoder=start_${start}_ext_${ext}_ms_${ms}" | tee -a "${LAUNCH_LOG}"
 
