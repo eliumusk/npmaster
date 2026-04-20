@@ -77,8 +77,18 @@ def _verify_alignment(meta: dict, frame: pd.DataFrame) -> None:
 def apply_stage5_to_meta(
     meta: dict,
     frame: pd.DataFrame,
+    allow_promotion: bool = False,
 ) -> dict:
-    """Return a new meta-arrays dict with Stage 5 labels applied."""
+    """Return a new meta-arrays dict with Stage 5 labels applied.
+
+    ``allow_promotion`` (Stage 5c-1+): set True when the variant's label
+    source is an entirely new GT set (e.g. proto_core coords) that
+    legitimately promotes some rows from negative/ambiguous to positive.
+    Promoted rows that have all-zero type channels get
+    ``Other`` (channel 6) = 1 as a default training target; the
+    downstream `bgc_score = max over types` eval still treats them as
+    "BGC" without needing per-core type labels.
+    """
     _verify_alignment(meta, frame)
 
     required_cols = {"stage5_label", "stage5_weight"}
@@ -90,39 +100,62 @@ def apply_stage5_to_meta(
 
     stage5_label = frame["stage5_label"].astype(str).to_numpy()
     stage5_weight = frame["stage5_weight"].astype(float).to_numpy()
+    orig_label = np.array(meta["label"], dtype=object)
 
     new_labels = meta["labels"].copy()
-    new_label_str = np.array(meta["label"], dtype=object).copy()
+    new_label_str = orig_label.copy()
 
     # Mask any row the variant demoted to ambiguous.
     mask_rows = stage5_label == "ambiguous"
     new_labels[mask_rows] = 0.0
     new_label_str[mask_rows] = "ambiguous"
 
-    # No promotion: a row that was not originally positive cannot become
-    # positive just because stage5_label says so. The variants in our
-    # ladder only ever demote or mask, so this is a safety invariant
-    # rather than a limitation.
-    promote_rows = (stage5_label == "positive") & (
-        np.array(meta["label"], dtype=object) != "positive"
-    )
+    promote_rows = (stage5_label == "positive") & (orig_label != "positive")
     if promote_rows.any():
-        raise ValueError(
-            f"{int(promote_rows.sum())} rows request promotion from "
-            "non-positive to positive — current variants should never "
-            "do this. Bug in the label builder or a schema drift."
-        )
+        if not allow_promotion:
+            raise ValueError(
+                f"{int(promote_rows.sum())} rows request promotion from "
+                "non-positive to positive — pass allow_promotion=True "
+                "when the variant replaces the GT source (e.g. Stage "
+                "5c-1 proto_core labels)."
+            )
+        # Assign type-channel Other (index 6) = 1, clear channel 7
+        # (is_negative), zero the rest. Preserves any existing type
+        # multi-hot only if it was already positive-typed (which we
+        # skip by construction since promote_rows excludes originals).
+        new_labels[promote_rows] = 0.0
+        new_labels[promote_rows, 6] = 1.0
+        new_label_str[promote_rows] = "positive"
 
-    # Negatives stay as negatives (channel 7 = 1). Our variants do not
-    # currently move rows between negative and ambiguous; assert this.
-    neg_drift = (np.array(meta["label"], dtype=object) == "negative") & (
-        stage5_label != "negative"
-    )
-    if neg_drift.any():
+    # Originally-negative rows that are still negative stay; rows going
+    # negative → ambiguous or negative → positive are handled above.
+    # We allow the "negative → ambiguous" drift under allow_promotion=True
+    # (proto_core flips more windows into ambiguous because distance
+    # checks change).
+    neg_drift = (orig_label == "negative") & (stage5_label != "negative")
+    if neg_drift.any() and not allow_promotion:
         raise ValueError(
             f"{int(neg_drift.sum())} originally-negative rows changed "
-            "label under the variant — unexpected."
+            "label under the variant — unexpected under the Stage 5a/5b "
+            "variant ladder. Pass allow_promotion=True for Stage 5c-1+."
         )
+    # Under allow_promotion, if a row was originally negative but is now
+    # ambiguous under the new GT, zero out the channels (mask).
+    neg_to_amb = (orig_label == "negative") & (stage5_label == "ambiguous")
+    new_labels[neg_to_amb] = 0.0
+    # And if originally ambiguous but now negative, mark as negative by
+    # setting channel 7 = 1 and others to 0.
+    amb_to_neg = (orig_label == "ambiguous") & (stage5_label == "negative")
+    new_labels[amb_to_neg] = 0.0
+    new_labels[amb_to_neg, 7] = 1.0
+    new_label_str[amb_to_neg] = "negative"
+    # And if originally positive but the new GT calls it negative (e.g. a
+    # region-positive window that doesn't overlap any proto_core), demote
+    # to negative cleanly.
+    pos_to_neg = (orig_label == "positive") & (stage5_label == "negative")
+    new_labels[pos_to_neg] = 0.0
+    new_labels[pos_to_neg, 7] = 1.0
+    new_label_str[pos_to_neg] = "negative"
 
     # Route upweight into the existing hard_negative loss path.
     new_hard_neg = meta["hard_negative"].astype(np.int32).copy()
@@ -159,11 +192,17 @@ def main(argv: list[str] | None = None) -> int:
         default=None,
         help="Optional path to write a summary JSON describing the patch.",
     )
+    parser.add_argument(
+        "--allow-promotion",
+        action="store_true",
+        help="Allow non-positive → positive promotion. Required for "
+        "Stage 5c-1 core-GT variants where the GT source changes.",
+    )
     args = parser.parse_args(argv)
 
     meta = _load_meta(args.meta)
     frame = pd.read_csv(args.stage5_csv)
-    out = apply_stage5_to_meta(meta, frame)
+    out = apply_stage5_to_meta(meta, frame, allow_promotion=args.allow_promotion)
     _dump_meta(out, args.output)
 
     summary = {
