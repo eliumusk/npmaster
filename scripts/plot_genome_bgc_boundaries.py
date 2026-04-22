@@ -18,12 +18,21 @@ from typing import Any
 REPO_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "baselines"))
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "evo2_lr"))
 
 import evaluate_nine_genome as ev  # noqa: E402
 from baselines.parse_antismash import parse_antismash_dir  # noqa: E402
 from baselines.parse_bgc_prophet import parse_bgc_prophet_file  # noqa: E402
 from baselines.parse_deepbgc import parse_deepbgc_dir  # noqa: E402
 from postprocess_v2 import decode_regions_hysteresis  # noqa: E402
+from v4_1_multiscale_readout import (  # noqa: E402
+    PRIMARY_OP as V41_PRIMARY_OP,
+    SHORT_OP as V41_SHORT_OP,
+    SHORT_LENGTH_CAP as V41_SHORT_LENGTH_CAP,
+    IOU_DEDUP as V41_IOU_DEDUP,
+    decode_dir as v41_decode_dir,
+    union_dedup as v41_union_dedup,
+)
 
 
 Region = tuple[str, int, int]
@@ -47,6 +56,16 @@ class NPMasterTrack:
 class BaselineTrack:
     label: str
     regions_by_genome: dict[str, list[Region]]
+
+
+@dataclass(frozen=True)
+class V41Track:
+    """v4.1 multi-scale ensemble track: two preds dirs, union-deduplicated at
+    frozen OPs from `v4_1_multiscale_readout`.
+    """
+    label: str
+    primary_dir: Path
+    short_dir: Path
 
 
 TRACK_COLORS = [
@@ -122,6 +141,37 @@ def load_baseline_tracks(
         raw = parse_deepbgc_dir(deepbgc_dir, genome_ids=genome_ids)
         tracks.append(("DeepBGC", _unified_predictions_to_regions(raw, genome_id)))
     return tracks
+
+
+def parse_v41_track_spec(spec: str) -> V41Track:
+    """Parse `label|primary_dir|short_dir`.
+
+    Uses frozen v4.1 OPs (see `scripts/evo2_lr/v4_1_multiscale_readout.py`).
+    Primary: w=8192/s=2048 @ s=0.95/e=0.80/ms=3.
+    Short rescue: w=4096/s=1024 @ s=0.95/e=0.80/ms=5, length-capped <10 kb.
+    Union-dedup IoU=0.3.
+    """
+    parts = [p.strip() for p in spec.split("|")]
+    if len(parts) != 3:
+        raise ValueError("--v41-track must be 'label|primary_dir|short_dir'")
+    label, primary_dir, short_dir = parts
+    return V41Track(label=label, primary_dir=Path(primary_dir), short_dir=Path(short_dir))
+
+
+def decode_v41_track(genome_id: str, track: V41Track) -> list[Region]:
+    """Decode v4.1 ensemble regions for one genome by running both dirs and unioning.
+
+    Trades a little redundant work (decodes every genome in both dirs even when
+    we only plot one) for code simplicity; fine for ≤9 genomes.
+    """
+    primary = v41_decode_dir(track.primary_dir, V41_PRIMARY_OP)
+    short = v41_decode_dir(track.short_dir, V41_SHORT_OP)
+    short_filt = {g: [r for r in regs if (r[2] - r[1]) < V41_SHORT_LENGTH_CAP]
+                  for g, regs in short.items()}
+    merged = v41_union_dedup(primary.get(genome_id, []),
+                             short_filt.get(genome_id, []),
+                             V41_IOU_DEDUP)
+    return [(r[0], int(r[1]), int(r[2])) for r in merged]
 
 
 def decode_npmaster_track(genome_id: str, track: NPMasterTrack) -> list[Region]:
@@ -412,6 +462,15 @@ def parse_args() -> argparse.Namespace:
             "Example: 'Best F1|tmp/preds|max_type|0.995|0.99|4|30000'"
         ),
     )
+    parser.add_argument(
+        "--v41-track",
+        action="append",
+        default=[],
+        help=(
+            "Repeatable v4.1 multi-scale ensemble track: 'label|primary_dir|short_dir'. "
+            "OPs are frozen (see v4_1_multiscale_readout.py)."
+        ),
+    )
     parser.add_argument("--max-contigs", type=int, default=None)
     parser.add_argument("--contig", default=None)
     parser.add_argument("--start-bp", type=int, default=None)
@@ -432,6 +491,9 @@ def main() -> None:
         antismash_dir=args.antismash_dir,
         deepbgc_dir=args.deepbgc_dir,
     )
+    for spec in args.v41_track:
+        v41 = parse_v41_track_spec(spec)
+        baseline_tracks.append((v41.label, decode_v41_track(args.genome_id, v41)))
     npmaster_tracks = [parse_npmaster_track_spec(spec) for spec in args.npmaster_track]
     if args.mode == "zoom":
         if args.contig is None or args.start_bp is None or args.end_bp is None:

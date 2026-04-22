@@ -1,0 +1,107 @@
+{
+  "label_mode": "region",
+  "ops": {
+    "primary": {
+      "op": {
+        "start": 0.9,
+        "extend": 0.9,
+        "ms": 1,
+        "max_gap": 0,
+        "name": "primary"
+      },
+      "pooled": {
+        "dedup_f1": 0.4504570383912249,
+        "strict_f1": 0.3412698412698413,
+        "bench_f1": 0.453049722752477,
+        "bench_precision": 0.4472361809045226,
+        "bench_recall": 0.45901639344262296,
+        "n_pred": 199
+      }
+    },
+    "alt": {
+      "op": {
+        "start": 0.95,
+        "extend": 0.8,
+        "ms": 3,
+        "max_gap": 0,
+        "name": "alt"
+      },
+      "pooled": {
+        "dedup_f1": 0.4126357354392893,
+        "strict_f1": 0.2784810126582279,
+        "bench_f1": 0.41513850955911047,
+        "bench_precision": 0.6222222222222222,
+        "bench_recall": 0.3114754098360656,
+        "n_pred": 90
+      }
+    },
+    "sens_lower": {
+      "op": {
+        "start": 0.88,
+        "extend": 0.88,
+        "ms": 1,
+        "max_gap": 0,
+        "name": "sens_lower"
+      },
+      "pooled": {
+        "dedup_f1": 0.42417909936451925,
+        "strict_f1": 0.311787072243346,
+        "bench_f1": 0.4271206079814606,
+        "bench_precision": 0.3755656108597285,
+        "bench_recall": 0.49508196721311476,
+        "n_pred": 221
+      }
+    },
+    "sens_higher": {
+      "op": {
+        "start": 0.92,
+        "extend": 0.92,
+        "ms": 1,
+        "max_gap": 0,
+        "name": "sens_higher"
+      },
+      "pooled": {
+        "dedup_f1": 0.4565820697421872,
+        "strict_f1": 0.35196687370600405,
+        "bench_f1": 0.4590753732685735,
+        "bench_precision": 0.4887640449438202,
+        "bench_recall": 0.43278688524590164,
+        "n_pred": 178
+      }
+    },
+    "sens_wider": {
+      "op": {
+        "start": 0.95,
+        "extend": 0.9,
+        "ms": 1,
+        "max_gap": 0,
+        "name": "sens_wider"
+      },
+      "pooled": {
+        "dedup_f1": 0.47359224658108706,
+        "strict_f1": 0.3705357142857143,
+        "bench_f1": 0.47584898676783566,
+        "bench_precision": 0.5944055944055944,
+        "bench_recall": 0.39672131147540984,
+        "n_pred": 143
+      }
+    },
+    "sens_mid": {
+      "op": {
+        "start": 0.93,
+        "extend": 0.8,
+        "ms": 3,
+        "max_gap": 0,
+        "name": "sens_mid"
+      },
+      "pooled": {
+        "dedup_f1": 0.4117175266394225,
+        "strict_f1": 0.2743142144638404,
+        "bench_f1": 0.41437632135306557,
+        "bench_precision": 0.5833333333333334,
+        "bench_recall": 0.32131147540983607,
+        "n_pred": 96
+      }
+    }
+  }
+}

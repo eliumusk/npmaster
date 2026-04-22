@@ -1,3 +1,6 @@
+# Claude Code internal state
+.claude/
+
 # Server-side artifacts (never in git)
 /data/
 /checkpoints/

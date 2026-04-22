@@ -1,0 +1,33 @@
+{
+  "genome_id": "GCA_000154945.1",
+  "out_png": "/tmp/9genome_comparison/GCA_000154945.1.png",
+  "tracks": [
+    "GT",
+    "antiSMASH",
+    "BGC-Prophet",
+    "DeepBGC",
+    "defrag_v2_ms10_s099",
+    "v4.1 ensemble"
+  ],
+  "contigs": [
+    "CM000950.1"
+  ],
+  "region_counts": {
+    "GT": 34,
+    "antiSMASH": 23,
+    "BGC-Prophet": 10,
+    "DeepBGC": 98,
+    "defrag_v2_ms10_s099": 10,
+    "v4.1 ensemble": 16
+  },
+  "contig_region_counts": {
+    "CM000950.1": {
+      "GT": 34,
+      "antiSMASH": 23,
+      "BGC-Prophet": 10,
+      "DeepBGC": 98,
+      "defrag_v2_ms10_s099": 10,
+      "v4.1 ensemble": 16
+    }
+  }
+}
