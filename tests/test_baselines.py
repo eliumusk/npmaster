@@ -22,7 +22,7 @@ def load_module(rel_path: str, module_name: str):
 
 class AntismashParserTests(unittest.TestCase):
     def test_reads_areas_and_converts_to_zero_based(self):
-        mod = load_module("scripts/baselines/parse_antismash.py", "parse_antismash")
+        mod = load_module("src/baselines/parse_antismash.py", "parse_antismash")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             gid = "GCA_test.1"
@@ -45,7 +45,7 @@ class AntismashParserTests(unittest.TestCase):
             self.assertEqual(p0["predicted_type"], "PKS,NRPS")
 
     def test_skips_malformed_area(self):
-        mod = load_module("scripts/baselines/parse_antismash.py", "parse_antismash_skip")
+        mod = load_module("src/baselines/parse_antismash.py", "parse_antismash_skip")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             gid = "GCA_x.1"
@@ -65,7 +65,7 @@ class AntismashParserTests(unittest.TestCase):
 
 class BgcProphetParserTests(unittest.TestCase):
     def test_parses_per_genome_lists(self):
-        mod = load_module("scripts/baselines/parse_bgc_prophet.py", "parse_bgcp")
+        mod = load_module("src/baselines/parse_bgc_prophet.py", "parse_bgcp")
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "bgc_prophet_regions.json"
             path.write_text(json.dumps({
@@ -78,7 +78,7 @@ class BgcProphetParserTests(unittest.TestCase):
             self.assertEqual(preds["GCA_2.1"], [])
 
     def test_genome_id_subset(self):
-        mod = load_module("scripts/baselines/parse_bgc_prophet.py", "parse_bgcp_subset")
+        mod = load_module("src/baselines/parse_bgc_prophet.py", "parse_bgcp_subset")
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "r.json"
             path.write_text(json.dumps({
@@ -91,7 +91,7 @@ class BgcProphetParserTests(unittest.TestCase):
 
 class DeepbgcParserTests(unittest.TestCase):
     def test_reads_bgc_tsv_and_subtracts_one_from_start(self):
-        mod = load_module("scripts/baselines/parse_deepbgc.py", "parse_deepbgc_mod")
+        mod = load_module("src/baselines/parse_deepbgc.py", "parse_deepbgc_mod")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             gid = "GCA_y.1"
@@ -109,7 +109,7 @@ class DeepbgcParserTests(unittest.TestCase):
 
 class GeccoParserTests(unittest.TestCase):
     def test_requires_features_tsv_and_handles_empty_clusters(self):
-        mod = load_module("scripts/baselines/parse_gecco.py", "parse_gecco_mod")
+        mod = load_module("src/baselines/parse_gecco.py", "parse_gecco_mod")
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             empty = root / "GCA_empty.1"
@@ -138,7 +138,7 @@ class GeccoParserTests(unittest.TestCase):
 class NineGenomeBaselineAggregatorTests(unittest.TestCase):
     def test_bench_aggregates_tp_counts_across_genomes(self):
         mod = load_module(
-            "scripts/evaluate_nine_genome_baselines.py",
+            "scripts/evaluate/baselines_nine_genome.py",
             "evaluate_nine_genome_baselines",
         )
         gt = {
@@ -160,7 +160,7 @@ class NineGenomeBaselineAggregatorTests(unittest.TestCase):
 
     def test_aggregates_fragmentation_metrics_across_genomes(self):
         mod = load_module(
-            "scripts/evaluate_nine_genome_baselines.py",
+            "scripts/evaluate/baselines_nine_genome.py",
             "evaluate_nine_genome_baselines_frag",
         )
         gt = {
@@ -182,7 +182,7 @@ class NineGenomeBaselineAggregatorTests(unittest.TestCase):
 
     def test_region_length_stats_empty(self):
         mod = load_module(
-            "scripts/evaluate_nine_genome_baselines.py",
+            "scripts/evaluate/baselines_nine_genome.py",
             "evaluate_nine_genome_baselines_empty",
         )
         stats = mod.region_length_stats({"G1": []})
@@ -190,7 +190,7 @@ class NineGenomeBaselineAggregatorTests(unittest.TestCase):
 
     def test_markdown_table_has_bench_columns(self):
         mod = load_module(
-            "scripts/evaluate_nine_genome_baselines.py",
+            "scripts/evaluate/baselines_nine_genome.py",
             "evaluate_nine_genome_baselines_md",
         )
         rows = [{

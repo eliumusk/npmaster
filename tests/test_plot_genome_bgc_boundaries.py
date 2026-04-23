@@ -24,7 +24,7 @@ def load_module(rel_path: str, module_name: str):
 class PlotGenomeBcgBoundariesTests(unittest.TestCase):
     def setUp(self):
         self.plotter = load_module(
-            "scripts/plot/genome_bgc_boundaries.py",
+            "src/plotting/boundaries.py",
             "plot_genome_bgc_boundaries",
         )
 

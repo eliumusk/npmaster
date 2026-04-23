@@ -269,7 +269,7 @@ class RouteBHardNegativeTests(unittest.TestCase):
             "train_for_tests",
         )
         self.mine_mod = load_module(
-            "scripts/mine_hard_negatives.py",
+            "scripts/train/mine_hard_negatives.py",
             "mine_hard_negatives",
         )
 
