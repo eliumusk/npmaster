@@ -16,10 +16,10 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "baselines"))
 
-from evaluate_nine_genome import (  # noqa: E402
+from benchmark.nine_genome import (  # noqa: E402
     DEFAULT_OPERATING_POINTS,
     GENOME_IDS,
     eval_regions,
@@ -27,7 +27,7 @@ from evaluate_nine_genome import (  # noqa: E402
     load_operating_point,
     load_windows_from_csv,
 )
-from postprocess_v2 import decode_regions_hysteresis  # noqa: E402
+from decoding.postprocess import decode_regions_hysteresis  # noqa: E402
 
 from parse_antismash import parse_antismash_dir  # noqa: E402
 from parse_bgc_prophet import parse_bgc_prophet_file  # noqa: E402

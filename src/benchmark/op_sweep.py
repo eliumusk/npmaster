@@ -30,11 +30,11 @@ import numpy as np
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
-from postprocess_v2 import WindowScore, decode_regions_hysteresis  # noqa: E402
+sys.path.insert(0, str(REPO_ROOT / "src"))
+from decoding.postprocess import WindowScore, decode_regions_hysteresis  # noqa: E402
 # Use the canonical 9-genome region evaluator so metrics are comparable 1:1
 # with defrag_v2_ms10_s099 / operating_points.yaml.
-from evaluate_nine_genome import eval_regions  # noqa: E402
+from benchmark.nine_genome import eval_regions  # noqa: E402
 
 
 def regions_metrics(preds: list[tuple[str, int, int]],

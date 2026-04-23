@@ -37,8 +37,8 @@ import numpy as np
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(REPO_ROOT / "scripts" / "evo2_lr"))
-from extract_batch_9genome import (  # noqa: E402
+sys.path.insert(0, str(REPO_ROOT / "src"))
+from evo2_lr.extract_batch import (  # noqa: E402
     extract_mean_pool,
     make_windows,
     read_fna,
@@ -62,7 +62,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--src-dir", default=None)
     parser.add_argument("--emb-cache-dir", type=Path, default=None,
                         help="Dir with {genome}_embeddings.npy + {genome}_windows.csv "
-                             "from extract_batch_9genome. If present for a genome, "
+                             "from evo2_lr.extract_batch. If present for a genome, "
                              "Evo2 forward is skipped for that genome.")
     parser.add_argument("--save-to-cache", action=argparse.BooleanOptionalAction, default=True,
                         help="On cache miss, write produced embeddings to --emb-cache-dir "

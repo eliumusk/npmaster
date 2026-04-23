@@ -34,9 +34,9 @@ from pathlib import Path
 
 import yaml
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
-from postprocess_v2 import WindowScore, decode_regions_hysteresis  # noqa: E402
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT / "src"))
+from decoding.postprocess import WindowScore, decode_regions_hysteresis  # noqa: E402
 
 DEFAULT_OPERATING_POINTS = REPO_ROOT / "configs" / "operating_points.yaml"
 

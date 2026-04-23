@@ -27,8 +27,7 @@ import numpy as np
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
-sys.path.insert(0, str(REPO_ROOT / "scripts" / "evo2_lr"))
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 from eval_v41_classification_9genome import (  # noqa: E402
     BGC_TYPES, load_type_lrs, type_lr_forward,

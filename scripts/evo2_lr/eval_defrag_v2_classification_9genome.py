@@ -32,9 +32,8 @@ import numpy as np
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "baselines"))
-sys.path.insert(0, str(REPO_ROOT / "scripts" / "evo2_lr"))
 
 from baselines.parse_antismash import parse_antismash_dir  # noqa: E402
 from eval_v41_classification_9genome import (  # noqa: E402
@@ -48,7 +47,7 @@ from eval_v41_classification_9genome import (  # noqa: E402
 # Stage 2 per-type LRs (used by v4.1 eval) use BGC_TYPES directly; the CNN head
 # uses a different column order that we have to respect here.
 CNN_TYPE_ORDER = ["Polyketide", "NRP", "Terpene", "RiPP", "Saccharide", "Alkaloid", "Other"]
-from v4_1_multiscale_readout import (  # noqa: E402
+from decoding.v4_1 import (  # noqa: E402
     PRIMARY_OP as V41_PRIMARY_OP,
     SHORT_OP as V41_SHORT_OP,
     SHORT_LENGTH_CAP as V41_SHORT_LENGTH_CAP,

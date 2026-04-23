@@ -19,9 +19,9 @@ from pathlib import Path
 from typing import Any
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from evaluate_nine_genome import (  # noqa: E402
+from benchmark.nine_genome import (  # noqa: E402
     DEFAULT_OPERATING_POINTS,
     decode_regions_hysteresis,
     load_ground_truth,

@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(_REPO_ROOT / "scripts"))
-from postprocess_v2 import WindowScore, decode_regions_hysteresis  # noqa: E402
+sys.path.insert(0, str(_REPO_ROOT / "src"))
+from decoding.postprocess import WindowScore, decode_regions_hysteresis  # noqa: E402
 
 
 def decode_regions(

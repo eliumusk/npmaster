@@ -26,10 +26,9 @@ import numpy as np
 import pandas as pd
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
-sys.path.insert(0, str(REPO_ROOT / "scripts" / "evo2_lr"))
-from postprocess_v2 import WindowScore, decode_regions_hysteresis  # noqa: E402
-from evaluate_nine_genome import eval_regions  # noqa: E402
+sys.path.insert(0, str(REPO_ROOT / "src"))
+from decoding.postprocess import WindowScore, decode_regions_hysteresis  # noqa: E402
+from benchmark.nine_genome import eval_regions  # noqa: E402
 
 
 # --- v4.1 frozen operating points ---------------------------------------------

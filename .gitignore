@@ -1,6 +1,9 @@
 # Claude Code internal state
 .claude/
 
+# Retired code/results kept locally for provenance only
+_archive/
+
 # Server-side artifacts (never in git)
 /data/
 /checkpoints/

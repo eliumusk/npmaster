@@ -42,10 +42,10 @@ REPO_ROOT = next(
     ),
     Path.cwd(),
 )
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 import evaluate_nine_genome as ev  # noqa: E402
-from postprocess_v2 import decode_regions_hysteresis  # noqa: E402
+from decoding.postprocess import decode_regions_hysteresis  # noqa: E402
 
 
 TRACK_ORDER = [

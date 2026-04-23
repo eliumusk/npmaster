@@ -36,9 +36,8 @@ from pathlib import Path
 import numpy as np
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO_ROOT / "scripts"))
-sys.path.insert(0, str(REPO_ROOT / "scripts" / "evo2_lr"))
-from _op_sweep_helpers import (  # noqa: E402
+sys.path.insert(0, str(REPO_ROOT / "src"))
+from benchmark.op_sweep import (  # noqa: E402
     decode_genome, regions_metrics, pool_from_per_genome
 )
 
