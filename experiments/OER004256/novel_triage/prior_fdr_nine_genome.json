@@ -1,0 +1,337 @@
+{
+  "v41_total": 246,
+  "antismash_total": 283,
+  "gt_total": 305,
+  "score_bins": {
+    "0.95-0.98": {
+      "total": 42,
+      "as_cov": 28,
+      "as_missed": 14,
+      "as_missed_and_gt": 5,
+      "as_missed_no_gt": 9,
+      "gt_cov": 21
+    },
+    "0.98-0.99": {
+      "total": 22,
+      "as_cov": 18,
+      "as_missed": 4,
+      "as_missed_and_gt": 2,
+      "as_missed_no_gt": 2,
+      "gt_cov": 12
+    },
+    "0.99-0.995": {
+      "total": 20,
+      "as_cov": 18,
+      "as_missed": 2,
+      "as_missed_and_gt": 0,
+      "as_missed_no_gt": 2,
+      "gt_cov": 11
+    },
+    "0.995-1.0": {
+      "total": 162,
+      "as_cov": 153,
+      "as_missed": 9,
+      "as_missed_and_gt": 6,
+      "as_missed_no_gt": 3,
+      "gt_cov": 126
+    }
+  },
+  "score_ge_0_98": {
+    "total": 204,
+    "as_missed": 15,
+    "as_missed_and_gt": 8,
+    "p_gt_given_as_missed": 0.5333333333333333
+  },
+  "apparent_novel_calls": [
+    {
+      "genome": "GCA_000154945.1",
+      "contig": "CM000950.1",
+      "start": 1926144,
+      "end": 1934336,
+      "length": 8192,
+      "score": 0.95251,
+      "source": "short_rescue",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000156435.1",
+      "contig": "DS999641.1",
+      "start": 155648,
+      "end": 176128,
+      "length": 20480,
+      "score": 0.999976,
+      "source": "primary",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000156435.1",
+      "contig": "DS999641.1",
+      "start": 1843200,
+      "end": 1865728,
+      "length": 22528,
+      "score": 0.999801,
+      "source": "primary",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000156435.1",
+      "contig": "DS999641.1",
+      "start": 7555072,
+      "end": 7573504,
+      "length": 18432,
+      "score": 0.956885,
+      "source": "primary",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000156475.1",
+      "contig": "DS999645.1",
+      "start": 3928064,
+      "end": 3944448,
+      "length": 16384,
+      "score": 0.995867,
+      "source": "primary",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000156475.1",
+      "contig": "DS999645.1",
+      "start": 1792000,
+      "end": 1804288,
+      "length": 12288,
+      "score": 0.96478,
+      "source": "primary",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158815.1",
+      "contig": "GG657738.1",
+      "start": 239616,
+      "end": 260096,
+      "length": 20480,
+      "score": 0.997847,
+      "source": "primary",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158875.1",
+      "contig": "GG657746.1",
+      "start": 6633472,
+      "end": 6641664,
+      "length": 8192,
+      "score": 0.998468,
+      "source": "short_rescue",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000158875.1",
+      "contig": "GG657746.1",
+      "start": 75776,
+      "end": 83968,
+      "length": 8192,
+      "score": 0.989815,
+      "source": "short_rescue",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "start": 7199744,
+      "end": 7207936,
+      "length": 8192,
+      "score": 1.0,
+      "source": "short_rescue",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "start": 1077248,
+      "end": 1110016,
+      "length": 32768,
+      "score": 0.999997,
+      "source": "primary",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "start": 1099776,
+      "end": 1107968,
+      "length": 8192,
+      "score": 0.998899,
+      "source": "short_rescue",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "start": 7414784,
+      "end": 7422976,
+      "length": 8192,
+      "score": 0.992303,
+      "source": "short_rescue",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "start": 4904960,
+      "end": 4925440,
+      "length": 20480,
+      "score": 0.988549,
+      "source": "primary",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "start": 6600704,
+      "end": 6617088,
+      "length": 16384,
+      "score": 0.987114,
+      "source": "primary",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "start": 7328768,
+      "end": 7336960,
+      "length": 8192,
+      "score": 0.975075,
+      "source": "short_rescue",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657751.1",
+      "start": 135168,
+      "end": 143360,
+      "length": 8192,
+      "score": 0.969903,
+      "source": "short_rescue",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "start": 6126592,
+      "end": 6134784,
+      "length": 8192,
+      "score": 0.968867,
+      "source": "short_rescue",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "start": 759808,
+      "end": 772096,
+      "length": 12288,
+      "score": 0.96713,
+      "source": "primary",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158895.1",
+      "contig": "GG657750.1",
+      "start": 449536,
+      "end": 458752,
+      "length": 9216,
+      "score": 0.958093,
+      "source": "short_rescue",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000158915.1",
+      "contig": "GG657754.1",
+      "start": 75776,
+      "end": 94208,
+      "length": 18432,
+      "score": 0.999765,
+      "source": "primary",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000158915.1",
+      "contig": "GG657754.1",
+      "start": 9078784,
+      "end": 9095168,
+      "length": 16384,
+      "score": 0.990175,
+      "source": "primary",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158915.1",
+      "contig": "GG657754.1",
+      "start": 2803712,
+      "end": 2816000,
+      "length": 12288,
+      "score": 0.972139,
+      "source": "primary",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000158915.1",
+      "contig": "GG657754.1",
+      "start": 9840640,
+      "end": 9848832,
+      "length": 8192,
+      "score": 0.970582,
+      "source": "short_rescue",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000158915.1",
+      "contig": "GG657754.1",
+      "start": 2492416,
+      "end": 2519040,
+      "length": 26624,
+      "score": 0.968674,
+      "source": "primary",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000568255.1",
+      "contig": "KK037166.1",
+      "start": 4268032,
+      "end": 4282368,
+      "length": 14336,
+      "score": 0.985696,
+      "source": "primary",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000568255.1",
+      "contig": "KK037166.1",
+      "start": 3045376,
+      "end": 3059712,
+      "length": 14336,
+      "score": 0.965219,
+      "source": "primary",
+      "gt_covered": true
+    },
+    {
+      "genome": "GCA_000568255.1",
+      "contig": "KK037166.1",
+      "start": 3958784,
+      "end": 3971072,
+      "length": 12288,
+      "score": 0.962379,
+      "source": "primary",
+      "gt_covered": false
+    },
+    {
+      "genome": "GCA_000568255.1",
+      "contig": "KK037166.1",
+      "start": 2707456,
+      "end": 2721792,
+      "length": 14336,
+      "score": 0.961701,
+      "source": "primary",
+      "gt_covered": false
+    }
+  ]
+}

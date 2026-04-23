@@ -1,0 +1,124 @@
+{
+  "name": "OER",
+  "n_antismash_regions": 1976,
+  "n_v41_regions": 254,
+  "as_region_density_per_Gb": 12820679.18456328,
+  "v41_region_density_per_Gb": 1648002.2838456847,
+  "antismash_length_dist": {
+    "<5kb": 0,
+    "5-10kb": 134,
+    "10-20kb": 1420,
+    "20-50kb": 419,
+    ">=50kb": 3
+  },
+  "v41_length_dist": {
+    "<5kb": 3,
+    "5-10kb": 85,
+    "10-20kb": 147,
+    "20-50kb": 19,
+    ">=50kb": 0
+  },
+  "antismash_median_length": 13577,
+  "antismash_mean_length": 15721.10576923077,
+  "as_region_contig_length_dist": {
+    "<15kb": 1976,
+    "15-30kb": 0,
+    "30-100kb": 0,
+    "100-500kb": 0,
+    ">=500kb": 0
+  },
+  "as_regions_per_contig_hist": {
+    "1": 1956,
+    "2-3": 10,
+    "4-10": 0,
+    ">10": 0
+  },
+  "as_contigs_total": 1966,
+  "as_max_regions_on_single_contig": 2,
+  "v41_max_regions_on_single_contig": 2,
+  "categories": {
+    "BOTH_from_antismash_side": 237,
+    "AS_ONLY": 1739,
+    "V41_ONLY": 17
+  },
+  "as_only_length_dist": {
+    "<5kb": 0,
+    "5-10kb": 134,
+    "10-20kb": 1264,
+    "20-50kb": 340,
+    ">=50kb": 1
+  },
+  "as_only_contig_length_dist": {
+    "<15kb": 1739,
+    "15-30kb": 0,
+    "30-100kb": 0,
+    "100-500kb": 0,
+    ">=500kb": 0
+  },
+  "as_only_ncds_dist": {
+    ">15_CDS": 649,
+    "8-15_CDS": 1030,
+    "4-7_CDS": 60
+  },
+  "as_only_product_top10": {
+    "terpene-precursor": 460,
+    "terpene": 331,
+    "RiPP-like": 186,
+    "NRPS-like": 159,
+    "T3PKS": 113,
+    "RRE-containing": 87,
+    "phosphonate": 73,
+    "betalactone": 47,
+    "hydrogen-cyanide": 46,
+    "ranthipeptide": 39
+  },
+  "both_length_dist": {
+    "<5kb": 0,
+    "5-10kb": 0,
+    "10-20kb": 156,
+    "20-50kb": 79,
+    ">=50kb": 2
+  },
+  "both_contig_length_dist": {
+    "<15kb": 237,
+    "15-30kb": 0,
+    "30-100kb": 0,
+    "100-500kb": 0,
+    ">=500kb": 0
+  },
+  "both_ncds_dist": {
+    "4-7_CDS": 67,
+    ">15_CDS": 77,
+    "8-15_CDS": 79,
+    "1-3_CDS": 14
+  },
+  "both_product_top10": {
+    "T1PKS": 93,
+    "NRPS": 49,
+    "arylpolyene": 35,
+    "hglE-KS": 28,
+    "terpene": 15,
+    "NRPS-like": 8,
+    "lassopeptide": 2,
+    "NRP-metallophore": 2,
+    "lincosamides": 2,
+    "NAPAA": 1
+  },
+  "as_only_v41_signal": {
+    "never_covered_no_windows": 0,
+    "covered_low_score(<0.5)": 135,
+    "covered_mid_score(0.5-0.95)": 1155,
+    "covered_high_score(>=0.95)_but_decoder_rejected": 449
+  },
+  "as_only_v41_max_score_percentiles": {
+    "p10": 0.529,
+    "p50": 0.846,
+    "p90": 0.981,
+    "p99": 0.999
+  },
+  "as_only_max_score_v41_summary": {
+    "n": 1739,
+    "mean": 0.7916292035652667,
+    "max": 0.999995
+  }
+}
