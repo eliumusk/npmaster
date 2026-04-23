@@ -30,6 +30,8 @@ def _build_parser() -> argparse.ArgumentParser:
     ex.add_argument("--window", type=int, default=8192)
     ex.add_argument("--stride", type=int, default=2048)
     ex.add_argument("--layer", default="blocks.20.mlp.l3")
+    ex.add_argument("--min-contig-len", type=int, default=0)
+    ex.add_argument("--batch-size", type=int, default=1)
 
     # predict
     pr = sub.add_parser("predict", help="embeddings + windows → per-window LR scores")
@@ -49,6 +51,8 @@ def _build_parser() -> argparse.ArgumentParser:
     rn.add_argument("--fna", type=Path, required=True)
     rn.add_argument("--out-dir", type=Path, required=True)
     rn.add_argument("--op", choices=["primary", "alt"], default="alt")
+    rn.add_argument("--min-contig-len", type=int, default=0)
+    rn.add_argument("--batch-size", type=int, default=1)
 
     return p
 
@@ -64,6 +68,8 @@ def main(argv: list[str] | None = None) -> None:
         mf = extract.extract_embeddings(
             args.fna, emb, win,
             window=args.window, stride=args.stride, layer=args.layer,
+            min_contig_len=args.min_contig_len,
+            batch_size=args.batch_size,
         )
         print(json.dumps(mf, indent=2))
         return
@@ -112,7 +118,14 @@ def main(argv: list[str] | None = None) -> None:
         from .config import load_frozen_config, PRIMARY_OP, ALT_OP
         cfg = load_frozen_config()
         op = PRIMARY_OP if args.op == "primary" else ALT_OP
-        result = run_pipeline(args.fna, args.out_dir, frozen_cfg=cfg, op=op)
+        result = run_pipeline(
+            args.fna,
+            args.out_dir,
+            frozen_cfg=cfg,
+            op=op,
+            min_contig_len=args.min_contig_len,
+            batch_size=args.batch_size,
+        )
         print(json.dumps(result, indent=2))
         return
 

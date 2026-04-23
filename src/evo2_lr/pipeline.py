@@ -57,6 +57,8 @@ def run_pipeline(
     *,
     frozen_cfg: FrozenConfig | None = None,
     op: dict | None = None,
+    min_contig_len: int = 0,
+    batch_size: int = 1,
 ) -> dict:
     """FASTA → embeddings → scores → regions. Writes all intermediate artifacts."""
     out_dir = Path(out_dir); out_dir.mkdir(parents=True, exist_ok=True)
@@ -79,6 +81,8 @@ def run_pipeline(
             fna_path, emb_path, win_path,
             window=frozen_cfg.window, stride=frozen_cfg.stride,
             layer=frozen_cfg.layer,
+            min_contig_len=min_contig_len,
+            batch_size=batch_size,
         )
 
     score_df, regions = apply_from_embeddings(
@@ -94,5 +98,7 @@ def run_pipeline(
         "regions_csv": str(out_dir / f"{genome}_regions.csv"),
         "n_windows": int(len(score_df)),
         "n_regions": int(len(regions)),
+        "min_contig_len": int(min_contig_len),
+        "batch_size": int(batch_size),
         "op": op,
     }

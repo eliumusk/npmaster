@@ -33,15 +33,21 @@ import pandas as pd
 import torch
 
 
+# CNN output class order — empirically verified 2026-04-23 by correlating
+# per-column positive counts in meta_arrays.pkl with single-type clusters in
+# bgc_annotations.csv. EARLIER VERSIONS OF THIS FILE HAD THE WRONG ORDER
+# (copied from inference_stride.py), which caused pred_class strings to be
+# silently mislabeled (Polyketide→Alkaloid, NRP→Terpene, etc). probs values
+# themselves were always correct — only the string mapping was wrong.
 DEFAULT_CLASS_NAMES = [
-    "Alkaloid",
-    "Terpene",
-    "NRP",
-    "Polyketide",
-    "RiPP",
-    "Saccharide",
-    "Other",
-    "non-BGC",
+    "Polyketide",  # col 0
+    "NRP",         # col 1
+    "Terpene",     # col 2
+    "RiPP",        # col 3
+    "Saccharide",  # col 4
+    "Alkaloid",    # col 5
+    "Other",       # col 6
+    "non-BGC",     # col 7
 ]
 
 

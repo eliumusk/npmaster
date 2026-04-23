@@ -1,0 +1,175 @@
+{
+  "dataset": "OER004256 (7 metagenomic samples, contigs >= 10 kb, 16 shards)",
+  "total_bp_after_filter": "~1.48 Gbp",
+  "extract": {
+    "w8192_s2048": {
+      "total_windows": 755512,
+      "wall_clock": "5h 40min",
+      "agg_throughput_ws": 37.0
+    },
+    "w4096_s1024": {
+      "total_windows": 1471100,
+      "wall_clock": "5h 40min",
+      "agg_throughput_ws": 72.1
+    }
+  },
+  "v41_ensemble": {
+    "n_regions": 254,
+    "median_len_bp": 12288,
+    "mean_len_bp": 12505,
+    "length_buckets": {
+      "<5kb": 3,
+      "5-10kb": 85,
+      "10-20kb": 147,
+      "20-50kb": 19,
+      ">=50kb": 0
+    }
+  },
+  "defrag_v2_ms10_s099": {
+    "n_regions": 93,
+    "median_len_bp": 26624,
+    "mean_len_bp": 26333
+  },
+  "overlap_IoU_ge_0.3": {
+    "both": 58,
+    "v41_only": 196,
+    "defrag_v2_only": 36
+  },
+  "v41_type_distribution": {
+    "Alkaloid": 0,
+    "Terpene": 17,
+    "NRP": 78,
+    "Polyketide": 150,
+    "RiPP": 4,
+    "Saccharide": 1,
+    "Other": 4
+  },
+  "wet_lab_candidates_terpene_ripp_3_15kb": {
+    "total": 20,
+    "Terpene_top10": [
+      {
+        "genome": "OER004256_v41_shard05",
+        "contig": "OER00425672|k141_7824444",
+        "start": 0,
+        "end": 10794,
+        "len": 10794,
+        "v41_type_score": 0.9999998807907104
+      },
+      {
+        "genome": "OER004256_v41_shard11",
+        "contig": "OER00425677|k141_7499930",
+        "start": 10240,
+        "end": 15649,
+        "len": 5409,
+        "v41_type_score": 0.9999998807907104
+      },
+      {
+        "genome": "OER004256_v41_shard03",
+        "contig": "OER00425668|k141_12279675",
+        "start": 14336,
+        "end": 19468,
+        "len": 5132,
+        "v41_type_score": 0.9999997615814208
+      },
+      {
+        "genome": "OER004256_v41_shard15",
+        "contig": "OER00425677|k141_2104096",
+        "start": 4096,
+        "end": 10771,
+        "len": 6675,
+        "v41_type_score": 0.9999996423721312
+      },
+      {
+        "genome": "OER004256_v41_shard08",
+        "contig": "OER00425668|k141_6355510",
+        "start": 3072,
+        "end": 10424,
+        "len": 7352,
+        "v41_type_score": 0.9998279809951782
+      },
+      {
+        "genome": "OER004256_v41_shard03",
+        "contig": "OER00425668|k141_6166673",
+        "start": 6144,
+        "end": 11228,
+        "len": 5084,
+        "v41_type_score": 0.999745547771454
+      },
+      {
+        "genome": "OER004256_v41_shard15",
+        "contig": "OER00425670|k141_8003444",
+        "start": 10240,
+        "end": 21363,
+        "len": 11123,
+        "v41_type_score": 0.99968159198761
+      },
+      {
+        "genome": "OER004256_v41_shard02",
+        "contig": "OER00425672|k141_9874813",
+        "start": 9216,
+        "end": 16415,
+        "len": 7199,
+        "v41_type_score": 0.9996123909950256
+      },
+      {
+        "genome": "OER004256_v41_shard09",
+        "contig": "OER00425672|k141_4462833",
+        "start": 4096,
+        "end": 16384,
+        "len": 12288,
+        "v41_type_score": 0.9994354844093324
+      },
+      {
+        "genome": "OER004256_v41_shard02",
+        "contig": "OER00425670|k141_9213366",
+        "start": 4096,
+        "end": 18432,
+        "len": 14336,
+        "v41_type_score": 0.9993014335632324
+      }
+    ],
+    "RiPP_top10": [
+      {
+        "genome": "OER004256_v41_shard02",
+        "contig": "OER00425671|k141_8264069",
+        "start": 8192,
+        "end": 13924,
+        "len": 5732,
+        "v41_type_score": 0.9991274476051332
+      },
+      {
+        "genome": "OER004256_v41_shard01",
+        "contig": "OER00425670|k141_8138120",
+        "start": 4096,
+        "end": 10033,
+        "len": 5937,
+        "v41_type_score": 0.998872697353363
+      },
+      {
+        "genome": "OER004256_v41_shard07",
+        "contig": "OER00425671|k141_4883135",
+        "start": 9216,
+        "end": 14516,
+        "len": 5300,
+        "v41_type_score": 0.9941976070404052
+      },
+      {
+        "genome": "OER004256_v41_shard08",
+        "contig": "OER00425670|k141_6055645",
+        "start": 3072,
+        "end": 10090,
+        "len": 7018,
+        "v41_type_score": 0.9819466471672058
+      }
+    ]
+  },
+  "antismash_coverage": "OER00425669 part00 + part01 only (1 of 7 samples, partial coverage); 6 other samples NOT run; full-dataset antiSMASH requires user decision on compute budget (~10-20h per sample)",
+  "artifacts_on_server": {
+    "v41_regions": "/data/muskliu/npmaster/experiments/OER004256_compare/v41_regions/all_regions.csv",
+    "v41_regions_typed": "/data/muskliu/npmaster/experiments/OER004256_compare/v41_regions/all_regions_typed.csv",
+    "defrag_v2_regions": "/data/muskliu/npmaster/experiments/OER004256_compare/defrag_v2_regions/all_regions.csv",
+    "v41_primary_embeddings": "/data/muskliu/npmaster/experiments/OER004256_compare/v41_primary_w8192_s2048_embeddings",
+    "v41_short_embeddings": "/data/muskliu/npmaster/experiments/OER004256_compare/v41_short_w4096_s1024_embeddings",
+    "defrag_v2_per_window_preds": "/data/muskliu/npmaster/experiments/OER004256_compare/defrag_v2_preds"
+  }
+}
