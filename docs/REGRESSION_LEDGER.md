@@ -20,7 +20,7 @@ Frozen operating points: `configs/experiments/evo2_first_principles_v4_1_frozen.
 
 | # | Metric | Value | Source |
 |---|---|---|---|
-| 6 | defrag_v2 CNN per-type top-1 | **0.827** (top-any 0.971, n=139 pairs) | `experiments/defrag_v2_classification_9genome_FIXED.json` |
+| 6 | defrag_v2 CNN per-type top-1 | **0.827** (top-any 0.971, n=139 pairs) | `experiments/nine_genome/defrag_v2_classification.json` |
 | 7 | v4.1 Stage-2 LR per-type top-1 | ~0.705 (top-any 0.827) | eval script output |
 | 8 | defrag_v2 per-type detail (top 4) | Terpene F1=0.973 · Polyketide 0.843 · RiPP 0.833 · NRP 0.78 | same as #6 |
 
@@ -36,7 +36,7 @@ Note on #6: class-order bug fixed 2026-04-23 across all CNN inference scripts. S
 | 12 | Inter-tool type agreement | 87.4% (222 / 254) |
 | 13 | Wet-lab candidates (both = Terpene or RiPP) | **18** |
 
-Artifacts: `experiments/OER004256_compare/v41_regions_fully_typed.csv`, `experiments/OER004256_compare/OER004256_wrap_up_report.json`.
+Artifacts: `experiments/OER004256/v41_regions_fully_typed.csv`, `experiments/OER004256/OER004256_wrap_up_report.json`.
 
 ## Known blind spot (do not attempt to "fix" as part of refactor)
 

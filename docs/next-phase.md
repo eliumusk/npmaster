@@ -44,7 +44,7 @@ lockbox candidates. **Status: lockbox-validated; `defrag_v2_ms10_s099` promoted.
 
 1. `scripts/run_precision_constrained_decoder_sweep.py` now emits `dedup_f1`, `dedup_precision`, `unique_gt_precision_tp`, `duplicate_precision_tp`, `max_preds_per_gt`, `median_pred_len`, `p75_pred_len`, and `max_gap` into `summary.csv`. Primary ranking is by `dedup_f1` (was `bench f1`). CSV sort now honors `ranking.min_recall` / `ranking.max_n_pred` gates: eligible trials appear first (dedup_f1-best), ineligible ones follow with a `False` in `meets_recall_floor` / `meets_n_pred_cap`. `resolve_params` now prefers `decoder_grid` values over `decoder_fixed` (previously `max_gap` grid values were silently dropped).
 2. `scripts/evaluate/nine_genome.py` reports a top-level `pred_length_stats` block (min / mean / median / p25 / p75 / max over all predicted region lengths).
-3. `configs/sweeps/stage3b_defrag_v1.yaml` is the first-pass config (only scans `min_support_windows` ∈ {1, 2}) and is **superseded** by `stage3b_defrag_v2.yaml` (scans `min_support_windows` ∈ {5..11} and `start_threshold` ∈ {0.99, 0.995, 0.998, 0.999}). The v2 artifact at `experiments/stage3b_defrag_v2/` is the reproducible source for the numbers in this section.
+3. `configs/sweeps/stage3b_defrag_v1.yaml` is the first-pass config (only scans `min_support_windows` ∈ {1, 2}) and is **superseded** by `stage3b_defrag_v2.yaml` (scans `min_support_windows` ∈ {5..11} and `start_threshold` ∈ {0.99, 0.995, 0.998, 0.999}). The v2 artifact at `experiments/nine_genome/stage3b_defrag_v2/` is the reproducible source for the numbers in this section.
 
 ### Window geometry (easy to get wrong)
 
@@ -61,7 +61,7 @@ These sizes sit in the middle of the typical 20–100 kb BGC range, so raising m
 
 ### Fine-grained min-support sweep
 
-On Stage 3 hardneg predictions, dev split, `fused / start=0.99 / extend=0.95 / max_gap=0 / length_cap=None`. Source: `experiments/stage3b_defrag_v2/summary.csv` for the start=0.99 slice.
+On Stage 3 hardneg predictions, dev split, `fused / start=0.99 / extend=0.95 / max_gap=0 / length_cap=None`. Source: `experiments/nine_genome/stage3b_defrag_v2/summary.csv` for the start=0.99 slice.
 
 | ms | R | bench P | bench F1 | loose F1 | strict F1 | dedup P | dedup F1 | n_pred | uniqGT | median len |
 |---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|

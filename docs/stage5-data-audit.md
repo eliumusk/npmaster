@@ -115,7 +115,7 @@ threshold** on the existing CSV. No new data required.
 
 ### Prior 9-genome decoder tuning — audit verdict
 
-Commit `c181a9b` + `experiments/stage3b_defrag_v2/summary.csv`:
+Commit `c181a9b` + `experiments/nine_genome/stage3b_defrag_v2/summary.csv`:
 
 - **168 decoder configurations** evaluated on the 9-genome `dev` split
   (5 genomes).

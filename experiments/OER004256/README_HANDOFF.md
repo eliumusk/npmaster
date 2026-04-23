@@ -177,7 +177,7 @@
 | 路径 | 内容 |
 |---|---|
 | `/data/syh/OER0042/OER004256/` | 原 FASTA（7 个样本） |
-| `/data/muskliu/npmaster/experiments/OER004256_compare/v41_shards_gt10kb_16/` | 过滤后切好的 16 个 shard FASTA |
+| `/data/muskliu/npmaster/experiments/OER004256/v41_shards_gt10kb_16/` | 过滤后切好的 16 个 shard FASTA |
 | `.../v41_primary_w8192_s2048_embeddings/` | Evo2 embedding 缓存（主档，5.89 GB） |
 | `.../v41_short_w4096_s1024_embeddings/` | Evo2 embedding 缓存（短档，12 GB） |
 | `.../v41_primary_preds/`, `.../v41_short_preds/` | v4.1 per-window BGC 分数 |
