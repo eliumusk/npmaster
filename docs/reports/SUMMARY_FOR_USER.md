@@ -89,7 +89,7 @@ src/evo2_lr/                      # minimal Python package
   README.md
   __init__.py __main__.py
 
-scripts/evo2_lr/                  # runnable scripts (7 files)
+scripts/                  # runnable scripts (7 files)
   extract_batch_9genome.py        # Evo2 extraction on multiple FASTAs
   apply_lr_to_dir.py              # apply frozen LR to an embeddings dir
   train_lr.py                     # train LR from labelled training embeddings
@@ -122,7 +122,7 @@ tests/
 ## Reproducing v4.1 on 9-genome
 
 ```bash
-python scripts/evo2_lr/v4_1_multiscale_readout.py \
+python scripts/evaluate/v4_1_multiscale.py \
   --primary-preds experiments/evo2_first_principles/9g_preds_lrA1_w8192 \
   --short-preds   experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
   --gt-json       /data/syh/benchmark/nine_genome/ground_truth.json \

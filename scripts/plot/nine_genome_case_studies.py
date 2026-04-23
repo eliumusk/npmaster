@@ -44,7 +44,7 @@ REPO_ROOT = next(
 )
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-import evaluate_nine_genome as ev  # noqa: E402
+from benchmark import nine_genome as ev  # noqa: E402
 from decoding.postprocess import decode_regions_hysteresis  # noqa: E402
 
 

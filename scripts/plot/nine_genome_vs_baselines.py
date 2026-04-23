@@ -29,13 +29,12 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
-sys.path.insert(0, str(REPO_ROOT / "scripts" / "baselines"))
 
-import evaluate_nine_genome as ev  # noqa: E402
+from benchmark import nine_genome as ev  # noqa: E402
 from baselines.parse_antismash import parse_antismash_dir  # noqa: E402
 from baselines.parse_bgc_prophet import parse_bgc_prophet_file  # noqa: E402
 from baselines.parse_deepbgc import parse_deepbgc_dir  # noqa: E402
-from plot_genome_bgc_boundaries import plot_genome_boundaries, NPMasterTrack  # noqa: E402
+from plotting.boundaries import plot_genome_boundaries, NPMasterTrack  # noqa: E402
 from decoding.postprocess import WindowScore, decode_regions_hysteresis  # noqa: E402
 from decoding.v4_1 import (  # noqa: E402
     PRIMARY_OP as V4_1_PRIMARY_OP,

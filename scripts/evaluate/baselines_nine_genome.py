@@ -17,7 +17,6 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
-sys.path.insert(0, str(REPO_ROOT / "scripts" / "baselines"))
 
 from benchmark.nine_genome import (  # noqa: E402
     DEFAULT_OPERATING_POINTS,
@@ -29,10 +28,10 @@ from benchmark.nine_genome import (  # noqa: E402
 )
 from decoding.postprocess import decode_regions_hysteresis  # noqa: E402
 
-from parse_antismash import parse_antismash_dir  # noqa: E402
-from parse_bgc_prophet import parse_bgc_prophet_file  # noqa: E402
-from parse_deepbgc import parse_deepbgc_dir  # noqa: E402
-from parse_gecco import parse_gecco_dir  # noqa: E402
+from baselines.parse_antismash import parse_antismash_dir  # noqa: E402
+from baselines.parse_bgc_prophet import parse_bgc_prophet_file  # noqa: E402
+from baselines.parse_deepbgc import parse_deepbgc_dir  # noqa: E402
+from baselines.parse_gecco import parse_gecco_dir  # noqa: E402
 
 
 BASELINE_PARSERS = {

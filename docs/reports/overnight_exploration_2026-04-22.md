@@ -148,10 +148,10 @@ more likely to come from:
 
 ## Artifacts
 
-- Code (after cleanup): `src/evo2_lr/` package + 7 scripts in `scripts/evo2_lr/`
+- Code (after cleanup): `src/evo2_lr/` package + 7 scripts in `scripts/`
   (failed-experiment scripts deleted; results preserved in
   `experiments/evo2_first_principles/stage0/exp_*.json`)
-- Canonical ensemble: `scripts/evo2_lr/v4_1_multiscale_readout.py`
+- Canonical ensemble: `scripts/evaluate/v4_1_multiscale.py`
 - Frozen config: `configs/experiments/evo2_first_principles_v4_1_frozen.yaml`
 
 ## Daytime follow-ups (ran after this log was first drafted)
@@ -177,7 +177,7 @@ trained 2-parameter logistic regression on test_id windows, applied to
   the 9-genome BGC distribution.
 
 Learned ensemble weights that look great on meta-training fail at inference
-when target distribution differs. Script: `scripts/evo2_lr/path_a_learn_fusion.py`
+when target distribution differs. Script: `(archived in _archive)`
 (since removed — results preserved in
 `experiments/evo2_first_principles/stage0/...`).
 

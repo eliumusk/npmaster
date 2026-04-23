@@ -52,7 +52,7 @@ Reading, without cherry-picking:
 
 ### Boundary plots (dev split, longest contig per genome)
 
-Each strip is one tool's BGC calls along the longest contig, with GT in black. Source: `scripts/plot_genome_bgc_boundaries.py`. PNGs live under `figures/dev_boundaries/`.
+Each strip is one tool's BGC calls along the longest contig, with GT in black. Source: `scripts/plot/genome_bgc_boundaries.py`. PNGs live under `figures/dev_boundaries/`.
 
 | Genome | Plot |
 |---|---|
@@ -64,35 +64,41 @@ Each strip is one tool's BGC calls along the longest contig, with GT in black. S
 
 ## Layout
 
+See `docs/CONVENTIONS.md` for the rules; here is the summary.
+
 ```
 npmaster/
-├── configs/
-│   ├── mainline.yaml          # Phase 3 Route B training config
-│   └── operating_points.yaml  # frozen decoder points for 9-genome
-├── src/
-│   ├── train.py               # end-to-end Route B training
-│   ├── evaluate.py            # contig-aware region-level eval
-│   ├── utils.py
-│   ├── model/                 # ContextFullModel + context CNN + projector
-│   └── data/                  # ChunkDataset + ContextDataset
-├── scripts/
-│   ├── build_chunks.py
-│   ├── inference_stride.py    # Evo2 embed + model inference on FASTA
-│   ├── postprocess_v2.py      # hysteresis region decoder (library)
-│   ├── evaluate_nine_genome.py            # single operating point, NP-Master only
-│   ├── evaluate_nine_genome_baselines.py  # all tools + ops, one table
-│   ├── mine_hard_negatives.py
-│   └── baselines/             # parse antiSMASH/DeepBGC/GECCO/BGC-Prophet outputs
+├── configs/                      # YAML/JSON run parameters
+│   ├── mainline.yaml             # Route B training
+│   ├── operating_points.yaml     # frozen decoder OPs for 9-genome
+│   └── experiments/              # frozen first-principles configs
+├── src/                          # IMPORTABLE LIBRARY (no CLIs, no argparse)
+│   ├── train.py  evaluate.py  utils.py
+│   ├── model/                    # ContextFullModel + dilated CNN + projector
+│   ├── data/                     # ChunkDataset + ContextDataset
+│   ├── evo2_lr/                  # Evo2 embedding + mean-pool LR pipeline
+│   ├── decoding/                 # region decoders (hysteresis, v4.1 ensemble)
+│   ├── benchmark/                # 9-genome eval + OP sweep math
+│   └── classification/           # per-type Stage-2 LR + region-pairing helpers
+├── scripts/                      # CLI ENTRY POINTS (one verb per dir)
+│   ├── extract/  inference/  decode/  classify/
+│   ├── evaluate/  train/  plot/  diagnose/  utils/
+│   └── baselines/                # antiSMASH / DeepBGC / GECCO / BGC-Prophet parsers
+├── experiments/                  # OUTPUTS (JSON / CSV / plots, per-target)
+│   ├── nine_genome/              # benchmark artifacts
+│   ├── evo2_first_principles/    # v4.1 design campaign
+│   └── OER004256/                # wet-lab handoff package
 ├── tests/
-└── docs/
-    ├── mainline.md
-    ├── operating-points.md
-    ├── evaluation-protocol.md
-    ├── route-b-hardneg-v1.md
-    └── next-phase.md
+├── docs/
+│   ├── CONVENTIONS.md            # layout + naming rules
+│   ├── REGRESSION_LEDGER.md      # frozen numbers any refactor must preserve
+│   ├── mainline.md  operating-points.md  evaluation-protocol.md  ...
+│   └── reports/
+├── _backups/                     # local-only ckpt backups (never deleted, never pushed)
+└── _archive/                     # retired code/results (gitignored, kept for provenance)
 ```
 
-Data, checkpoints, wandb, results are **server-only** (gitignored). Local clone is code + configs + docs.
+Data, checkpoints, wandb, raw results are **server-only** (gitignored). Local clone is code + configs + docs + promoted JSON/CSV outputs.
 
 ## Quick Start (server-side)
 
@@ -108,7 +114,7 @@ python -u src/train.py --config configs/mainline.yaml --seed 0 \
 **Run stride inference on a FASTA dir for the current Stage 3/3b candidates:**
 
 ```bash
-python scripts/inference_stride.py \
+python scripts/inference/stride.py \
     --fna-dir /data/syh/benchmark/nine_genome/fna \
     --ckpt /data/muskliu/npmaster/data/phase3/stage3_hardneg_v1/best/best_tk100-ms0-hnw4.pt \
     --window 8192 \
@@ -119,7 +125,7 @@ python scripts/inference_stride.py \
 **Evaluate the promoted 9-genome operating point:**
 
 ```bash
-python scripts/evaluate_nine_genome.py \
+python scripts/evaluate/nine_genome.py \
     --base /data/syh/benchmark/nine_genome \
     --results-dir /tmp/npmaster_stage3_tk100_w8192_s2048 \
     --operating-point defrag_v2_ms10_s099 \
@@ -131,7 +137,7 @@ Use explicit flags with `--start-threshold 0.995` only for the precision-oriente
 **Regenerate the full baseline comparison table:**
 
 ```bash
-python scripts/evaluate_nine_genome_baselines.py \
+python scripts/evaluate/baselines_nine_genome.py \
     --antismash-dir    /data/syh/benchmark/nine_genome/results/antismash \
     --deepbgc-dir      /data/syh/benchmark/nine_genome/results/deepbgc \
     --bgc-prophet-json /data/syh/benchmark/nine_genome/results/bgc_prophet/bgc_prophet_regions.json \
@@ -140,6 +146,18 @@ python scripts/evaluate_nine_genome_baselines.py \
     --out     data/phase4/nine_genome_comparison/results.json \
     --out-md  data/phase4/nine_genome_comparison/results.md
 ```
+
+**v4.1 multi-scale ensemble (primary mainline since 2026-04-22):**
+
+```bash
+python scripts/evaluate/v4_1_multiscale.py \
+    --primary-preds experiments/evo2_first_principles/9g_preds_lrA1_w8192 \
+    --short-preds   experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
+    --gt-json /data/syh/benchmark/nine_genome/ground_truth.json \
+    --out-json experiments/evo2_first_principles/v4_1_final_readout.json
+```
+
+See `docs/REGRESSION_LEDGER.md` for all canonical reproduce commands.
 
 External baseline directories are read-only inputs; all parsing logic lives in `scripts/baselines/`.
 

@@ -44,7 +44,7 @@ Writes:
 Assuming per-window prediction CSVs at w=8192 and w=4096 already exist:
 
 ```bash
-python scripts/evo2_lr/v4_1_multiscale_readout.py \
+python scripts/evaluate/v4_1_multiscale.py \
   --primary-preds experiments/evo2_first_principles/9g_preds_lrA1_w8192 \
   --short-preds   experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
   --gt-json       /data/syh/benchmark/nine_genome/ground_truth.json \
@@ -135,10 +135,10 @@ Full rejection log:
 
 ## Script inventory (cleaned)
 
-- `scripts/evo2_lr/extract_batch_9genome.py` — Evo2 extraction on 9-genome FASTAs
-- `scripts/evo2_lr/apply_lr_to_dir.py` — apply LR weights to a dir of embeddings
-- `scripts/evo2_lr/train_lr.py` — train LR from labelled embeddings
-- `scripts/evo2_lr/honest_readout.py` — single-scale v4 honest readout
-- `scripts/evo2_lr/v4_1_multiscale_readout.py` — v4.1 ensemble honest readout (current mainline)
-- `scripts/evo2_lr/genome_154945_diagnostic.py` — diagnostic for the shared blind-spot genome
-- `scripts/evo2_lr/_op_sweep_helpers.py` — shared helpers for honest_readout
+- `scripts/extract_batch_9genome.py` — Evo2 extraction on 9-genome FASTAs
+- `scripts/apply_lr_to_dir.py` — apply LR weights to a dir of embeddings
+- `scripts/train_lr.py` — train LR from labelled embeddings
+- `scripts/evaluate/honest_readout.py` — single-scale v4 honest readout
+- `scripts/evaluate/v4_1_multiscale.py` — v4.1 ensemble honest readout (current mainline)
+- `scripts/genome_154945_diagnostic.py` — diagnostic for the shared blind-spot genome
+- `scripts/_op_sweep_helpers.py` — shared helpers for honest_readout
