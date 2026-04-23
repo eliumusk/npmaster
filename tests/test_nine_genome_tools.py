@@ -25,7 +25,7 @@ def load_module(rel_path: str, module_name: str):
 class EvalNineGenomeOperatingPointTests(unittest.TestCase):
     def setUp(self):
         self.eval_mod = load_module(
-            "scripts/evaluate_nine_genome.py",
+            "src/benchmark/nine_genome.py",
             "evaluate_nine_genome",
         )
 
@@ -154,7 +154,7 @@ class EvalNineGenomeOperatingPointTests(unittest.TestCase):
 class NineGenomeStrideInferenceTests(unittest.TestCase):
     def setUp(self):
         self.infer_mod = load_module(
-            "scripts/inference_stride.py",
+            "scripts/inference/stride.py",
             "inference_stride",
         )
 
@@ -190,7 +190,7 @@ class NineGenomeStrideInferenceTests(unittest.TestCase):
 class PostprocessV2Tests(unittest.TestCase):
     def setUp(self):
         self.pp_mod = load_module(
-            "scripts/postprocess_v2.py",
+            "src/decoding/postprocess.py",
             "postprocess_v2",
         )
 

@@ -8,7 +8,7 @@ defrag_v2's ContextFullModel natively emits 8-class per-window probabilities
 different order that turned out to be wrong, but the numeric values are correct).
 
 For each defrag_v2 region, we max-aggregate the 7 BGC-type probs across
-windows overlapping the region (same aggregation as label_v41_regions_with_types.py
+windows overlapping the region (same aggregation as scripts/classify/v4_1_regions.py
 for fair apples-to-apples), then argmax to get dominant type.
 
 Output: copy of regions CSV with added columns v41-style:

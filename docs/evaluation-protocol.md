@@ -23,7 +23,7 @@ Per-window CSV writes `bgc_score = max_type` and `non_bgc_score = probs[7]`, so 
 
 ## 3. Region Decoder (v2)
 
-Regions are produced by `scripts/postprocess_v2.py::decode_regions_hysteresis`:
+Regions are produced by `src/decoding/postprocess.py::decode_regions_hysteresis`:
 
 - dual-threshold hysteresis (`start_threshold ≥ extend_threshold`)
 - optional `min_support_windows`
@@ -39,13 +39,13 @@ For the 9-genome benchmark the matching rule is **asymmetric 50% overlap**:
 - **Recall TP**: a GT BGC is TP if any predicted region satisfies `overlap / gt_len ≥ 0.5`.
 - **Precision TP**: a predicted region is TP if any GT BGC satisfies `overlap / pred_len ≥ 0.5`.
 
-This is the `bench` mode in `scripts/evaluate_nine_genome.py`. The old `/data/syh/benchmark/nine_genome/evaluate.py` precision (any overlap > 0) is **deprecated** — too permissive, produces misleadingly high precision on long predictions.
+This is the `bench` mode in `scripts/evaluate/nine_genome.py`. The old `/data/syh/benchmark/nine_genome/evaluate.py` precision (any overlap > 0) is **deprecated** — too permissive, produces misleadingly high precision on long predictions.
 
 For reviewer-facing tables, `bench` is the only precision number quoted. `loose / strict / iou` modes are also computed by the script but are for internal diagnosis.
 
 ### 4.1 Fragmentation Diagnostics
 
-`bench` precision can be inflated if one true BGC is split into many short predictions. Therefore `scripts/evaluate_nine_genome.py` also reports a diagnostic `fragmentation` block:
+`bench` precision can be inflated if one true BGC is split into many short predictions. Therefore `scripts/evaluate/nine_genome.py` also reports a diagnostic `fragmentation` block:
 
 - `unique_gt_precision_tp`: number of unique GT BGCs covered by precision-TP predictions
 - `duplicate_precision_tp`: extra precision TPs caused by multiple predictions hitting the same GT

@@ -37,12 +37,12 @@ Selected directly on 9-genome. Shows what the current model + decoder can achiev
 ```bash
 # on server (after stage 3 clone)
 cd /data/muskliu/npmaster
-python scripts/evaluate_nine_genome.py \
+python scripts/evaluate/nine_genome.py \
     --operating-point val_frozen_fused \
     --results-dir /tmp/npmaster_stride8192_s0_merged \
     --out /tmp/val_frozen_fused.json
 
-python scripts/evaluate_nine_genome.py \
+python scripts/evaluate/nine_genome.py \
     --operating-point tuned_v2 \
     --results-dir /tmp/npmaster_stride8192_s0_merged \
     --out /tmp/tuned_v2.json
@@ -60,7 +60,7 @@ python scripts/evaluate_nine_genome.py \
 | NP-Master tuned_v2 *(diagnostic)* | 0.5311 | 0.2513 | 0.3412 | — |
 | BGC-Prophet | 0.3475 | 0.4529 | 0.3933 | 22.7 kb |
 
-Reproduce with `scripts/evaluate_nine_genome_baselines.py` (see README Quick Start).
+Reproduce with `scripts/evaluate/baselines_nine_genome.py` (see README Quick Start).
 
 Caveats when reading this table:
 

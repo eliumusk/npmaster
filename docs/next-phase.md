@@ -43,12 +43,12 @@ lockbox candidates. **Status: lockbox-validated; `defrag_v2_ms10_s099` promoted.
 ### Infrastructure changes
 
 1. `scripts/run_precision_constrained_decoder_sweep.py` now emits `dedup_f1`, `dedup_precision`, `unique_gt_precision_tp`, `duplicate_precision_tp`, `max_preds_per_gt`, `median_pred_len`, `p75_pred_len`, and `max_gap` into `summary.csv`. Primary ranking is by `dedup_f1` (was `bench f1`). CSV sort now honors `ranking.min_recall` / `ranking.max_n_pred` gates: eligible trials appear first (dedup_f1-best), ineligible ones follow with a `False` in `meets_recall_floor` / `meets_n_pred_cap`. `resolve_params` now prefers `decoder_grid` values over `decoder_fixed` (previously `max_gap` grid values were silently dropped).
-2. `scripts/evaluate_nine_genome.py` reports a top-level `pred_length_stats` block (min / mean / median / p25 / p75 / max over all predicted region lengths).
+2. `scripts/evaluate/nine_genome.py` reports a top-level `pred_length_stats` block (min / mean / median / p25 / p75 / max over all predicted region lengths).
 3. `configs/sweeps/stage3b_defrag_v1.yaml` is the first-pass config (only scans `min_support_windows` ∈ {1, 2}) and is **superseded** by `stage3b_defrag_v2.yaml` (scans `min_support_windows` ∈ {5..11} and `start_threshold` ∈ {0.99, 0.995, 0.998, 0.999}). The v2 artifact at `experiments/stage3b_defrag_v2/` is the reproducible source for the numbers in this section.
 
 ### Window geometry (easy to get wrong)
 
-Stage 3 remote prediction CSVs use `window=8192, stride=2048` — not stride 8192. A single window below `extend_threshold` closes a region (see `scripts/postprocess_v2.py::decode_regions_hysteresis`), so the knob that controls within-BGC splits is `min_support_windows`, not `max_gap`. At stride=2048, `min_support_windows=K` forces a region to span at least `(K-1)*2048 + 8192` bp:
+Stage 3 remote prediction CSVs use `window=8192, stride=2048` — not stride 8192. A single window below `extend_threshold` closes a region (see `src/decoding/postprocess.py::decode_regions_hysteresis`), so the knob that controls within-BGC splits is `min_support_windows`, not `max_gap`. At stride=2048, `min_support_windows=K` forces a region to span at least `(K-1)*2048 + 8192` bp:
 
 | ms | min span (bp) |
 |---:|---:|
@@ -121,7 +121,7 @@ Decision: promote `defrag_v2_ms10_s099` to `configs/operating_points.yaml`. `s09
 
 Mine top-K high-scoring windows from training negatives, weight their loss, retrain Route B. Minimal intervention:
 
-- mining: `scripts/mine_hard_negatives.py` (formerly `mine_route_b_hardneg.py`)
+- mining: `scripts/train/mine_hard_negatives.py` (formerly `mine_route_b_hardneg.py`)
 - training: `src/train.py` + `src/data/chunk_dataset.py` accept the mined flag
 - decision rule for 3-seed promotion: see `route-b-hardneg-v1.md::Decision Rule`
 

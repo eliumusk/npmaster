@@ -138,7 +138,7 @@ remains a useful 9-genome-informed upper bound only.
 
 ## 4. Architecture — short-window head is cheap
 
-From `scripts/inference_stride.py:116`, `src/model/context_full_model.py`:
+From `scripts/inference/stride.py:116`, `src/model/context_full_model.py`:
 
 - Evo2 (frozen, `blocks.20.mlp.l3`, 4 096-dim) is called **once per
   window**, then **mean-pooled** over tokens to a single 4 096-d vector.
@@ -153,7 +153,7 @@ From `scripts/inference_stride.py:116`, `src/model/context_full_model.py`:
 Because Evo2 is mean-pooled per window, running inference at
 `window = 2048` or `4096` is not an architecture change — it is the
 same model fed narrower windows. Retraining on a new chunk set (via
-`scripts/build_chunks.py`) is required, but Evo2 extraction and the
+`scripts/train/build_chunks.py`) is required, but Evo2 extraction and the
 downstream CNN are unchanged. **Cost is proportional only to total
 windows, not a new embedding pass.** This matches the user's intuition.
 

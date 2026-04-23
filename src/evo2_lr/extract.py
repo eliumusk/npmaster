@@ -1,7 +1,7 @@
 """FASTA → Evo2 mean-pool embeddings at configured (window, stride).
 
 This is a thin wrapper around the Evo2 Python SDK. It mirrors the
-`scripts/inference_stride.py` logic but without the Route B CNN step —
+`scripts/inference/stride.py` logic but without the Route B CNN step —
 output is raw 4096-d mean-pool embeddings per window.
 
 Supported input: plain .fna and .fna.gz.

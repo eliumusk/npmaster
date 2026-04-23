@@ -276,7 +276,7 @@ class Stage4TrainingSweepTests(unittest.TestCase):
 
             # inference: best_<tag>.pt under checkpoints/.
             inf_argv = cs["inference"]["argv"]
-            self.assertEqual(inf_argv[1], "scripts/inference_stride.py")
+            self.assertEqual(inf_argv[1], "scripts/inference/stride.py")
             ckpt_flag_idx = inf_argv.index("--ckpt")
             self.assertIn("best_lr-x3p0.pt", inf_argv[ckpt_flag_idx + 1])
             window_idx = inf_argv.index("--window")
@@ -314,7 +314,7 @@ class Stage4TrainingSweepTests(unittest.TestCase):
             command_txt = command_path.read_text(encoding="utf-8")
             self.assertNotIn("mine_hard_negatives.py", command_txt)
             train_pos = command_txt.find("src/train.py")
-            inf_pos = command_txt.find("scripts/inference_stride.py")
+            inf_pos = command_txt.find("scripts/inference/stride.py")
             ev_pos = command_txt.find("scripts/evaluate_nine_genome.py")
             self.assertGreaterEqual(train_pos, 0)
             self.assertGreaterEqual(inf_pos, 0)
@@ -372,7 +372,7 @@ class Stage4TrainingSweepTests(unittest.TestCase):
                 ).read_text(encoding="utf-8")
                 self.assertNotIn("mine_hard_negatives.py", cmd_txt)
                 self.assertIn("src/train.py", cmd_txt)
-                self.assertIn("scripts/inference_stride.py", cmd_txt)
+                self.assertIn("scripts/inference/stride.py", cmd_txt)
                 self.assertIn("scripts/evaluate_nine_genome.py", cmd_txt)
 
     def test_skip_existing_preserves_manifest_and_adds_new_trials(self):

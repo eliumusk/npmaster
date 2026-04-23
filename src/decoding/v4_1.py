@@ -9,7 +9,7 @@ All OPs pre-declared from first principles (see plan §13).
 Produces per-bucket recall + pooled metrics + bootstrap CI over genomes.
 
 Usage:
-  python scripts/evo2_lr/v4_1_multiscale_readout.py \\
+  python src/decoding/v4_1.py \\
     --primary-preds experiments/evo2_first_principles/9g_preds_lrA1_w8192 \\
     --short-preds  experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \\
     --gt-json /data/syh/benchmark/nine_genome/ground_truth.json \\

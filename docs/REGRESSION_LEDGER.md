@@ -8,11 +8,11 @@ If a commit after this date reports a number outside the listed CI (or changes a
 
 | # | Metric | Value | Source artifact | Reproduce script |
 |---|---|---|---|---|
-| 1 | v4.1 multi-scale ensemble dedup_F1 | **0.4878** (CI95 0.345–0.609) | `experiments/evo2_first_principles/v4_1_final_readout.json` | `scripts/evo2_lr/v4_1_multiscale_readout.py` |
+| 1 | v4.1 multi-scale ensemble dedup_F1 | **0.4878** (CI95 0.345–0.609) | `experiments/evo2_first_principles/v4_1_final_readout.json` | `scripts/evaluate/v4_1_multiscale.py` |
 | 2 | v4.1 bench_F1 / precision / recall | 0.5192 / 0.5976 / 0.4590 | same | same |
 | 3 | v4.1 strict_F1 | 0.4299 (CI95 0.284–0.564) | same | same |
-| 4 | v4 single-scale (w=8192) dedup_F1 | 0.4869 (CI95 0.344–0.611) | `v4_1_final_readout.json` → `primary_only` block | `scripts/evo2_lr/honest_readout.py` |
-| 5 | defrag_v2_ms10_s099 dedup_F1 (w=8192/s=2048, start=0.99/extend=0.95/ms=10) | **0.4385** (precision 0.4714, n_pred 140) | `configs/operating_points.yaml` lines 58–79 | `scripts/reproduce_defrag_v2_9genome.py` |
+| 4 | v4 single-scale (w=8192) dedup_F1 | 0.4869 (CI95 0.344–0.611) | `v4_1_final_readout.json` → `primary_only` block | `scripts/evaluate/honest_readout.py` |
+| 5 | defrag_v2_ms10_s099 dedup_F1 (w=8192/s=2048, start=0.99/extend=0.95/ms=10) | **0.4385** (precision 0.4714, n_pred 140) | `configs/operating_points.yaml` lines 58–79 | `scripts/evaluate/reproduce_defrag_v2_nine_genome.py` |
 
 Frozen operating points: `configs/experiments/evo2_first_principles_v4_1_frozen.yaml`, `configs/operating_points.yaml`.
 
@@ -45,21 +45,21 @@ Artifacts: `experiments/OER004256_compare/v41_regions_fully_typed.csv`, `experim
 ## Baselines (for comparison context)
 
 - BGC-Prophet 9-genome: dedup_F1 0.3911 · strict_F1 0.3018 · bench_F1 0.3933
-- antiSMASH / DeepBGC / GECCO: live in `scripts/evaluate_nine_genome_baselines.py` outputs (server-side data).
+- antiSMASH / DeepBGC / GECCO: live in `scripts/evaluate/baselines_nine_genome.py` outputs (server-side data).
 
 ## Reproduce commands (post-refactor script paths will change; content must still produce these numbers)
 
 1. **v4.1 honest readout** → produces #1–3
    ```
-   python <v4_1_multiscale_readout> \
+   python scripts/evaluate/v4_1_multiscale.py \
      --primary-preds experiments/evo2_first_principles/9g_preds_lrA1_w8192 \
-     --short-preds experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
+     --short-preds   experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
      --gt-json /data/syh/benchmark/nine_genome/ground_truth.json \
      --out-json experiments/evo2_first_principles/v4_1_final_readout.json
    ```
 2. **defrag_v2 9-genome** → produces #5
    ```
-   python <reproduce_defrag_v2_nine_genome> \
+   python scripts/evaluate/reproduce_defrag_v2_nine_genome.py \
      --checkpoint /data/muskliu/npmaster/data/phase3/stage3_hardneg_v1/best/best_tk100-ms0-hnw4.pt \
      --window 8192 --stride 2048 \
      --start-threshold 0.99 --extend-threshold 0.95 --min-support-windows 10 \
@@ -67,9 +67,9 @@ Artifacts: `experiments/OER004256_compare/v41_regions_fully_typed.csv`, `experim
    ```
 3. **defrag_v2 classification** → produces #6, #8
    ```
-   python <eval_defrag_v2_classification_nine_genome> \
-     --v41-primary-preds experiments/evo2_first_principles/9g_preds_lrA1_w8192 \
-     --v41-short-preds   experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
+   python scripts/evaluate/classification_defrag_v2_nine_genome.py \
+     --v4-1-primary-preds experiments/evo2_first_principles/9g_preds_lrA1_w8192 \
+     --v4-1-short-preds   experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
      --defrag-v2-preds-dir /data/muskliu/npmaster/data/phase4/defrag_v2_ms10_s099_preds_stride2048 \
      --antismash-dir /data/syh/benchmark/nine_genome/results/antismash \
      --bgc-annotations /data/muskliu/npmaster/data/bgc_annotations.csv \

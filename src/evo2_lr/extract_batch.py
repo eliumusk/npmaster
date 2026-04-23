@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Extract Evo2 7B mean-pool embeddings on 9-genome FASTA at chosen (window, stride).
 
-This is a stripped-down mirror of scripts/inference_stride.py that emits ONLY
+This is a stripped-down mirror of scripts/inference/stride.py that emits ONLY
 the per-window embedding array + window coord CSV. No downstream ContextModel.
 
 Output per genome (to --out-dir):

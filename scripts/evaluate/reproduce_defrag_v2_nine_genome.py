@@ -14,7 +14,7 @@ reproduces the published pooled dedup_F1 = 0.4385.
 
 Canonical invocation (on server):
   conda activate bgc
-  python scripts/reproduce_defrag_v2_9genome.py \
+  python scripts/evaluate/reproduce_defrag_v2_nine_genome.py \
       --ckpt /data/muskliu/npmaster/data/phase3/stage3_hardneg_v1/best/best_tk100-ms0-hnw4.pt \
       --emb-dir /data/muskliu/npmaster/experiments/evo2_first_principles/9g_embeddings_w8192_s2048 \
       --out-dir /data/muskliu/npmaster/data/phase4/defrag_v2_ms10_s099_preds_stride2048
@@ -74,7 +74,7 @@ def parse_args() -> argparse.Namespace:
 def main() -> None:
     args = parse_args()
 
-    repo_root = args.repo_root or Path(__file__).resolve().parents[1]
+    repo_root = args.repo_root or Path(__file__).resolve().parents[2]
     sys.path.insert(0, str(resolve_src_dir(repo_root)))
     from model.context_full_model import ContextFullModel  # noqa: E402
 

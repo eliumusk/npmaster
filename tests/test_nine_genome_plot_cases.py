@@ -21,7 +21,7 @@ def load_module(rel_path: str, module_name: str):
 class NineGenomeCaseStudySelectionTests(unittest.TestCase):
     def setUp(self):
         self.mod = load_module(
-            "scripts/plot_nine_genome_case_studies.py",
+            "scripts/plot/nine_genome_case_studies.py",
             "plot_nine_genome_case_studies",
         )
 

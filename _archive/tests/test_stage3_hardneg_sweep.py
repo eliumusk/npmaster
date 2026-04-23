@@ -276,7 +276,7 @@ class Stage3HardnegSweepTests(unittest.TestCase):
 
             # inference: uses best_<tag>.pt under checkpoints/.
             inf_argv = cs["inference"]["argv"]
-            self.assertEqual(inf_argv[1], "scripts/inference_stride.py")
+            self.assertEqual(inf_argv[1], "scripts/inference/stride.py")
             ckpt_flag_idx = inf_argv.index("--ckpt")
             self.assertIn("best_tk5000-ms0p8-hnw1.pt", inf_argv[ckpt_flag_idx + 1])
             window_idx = inf_argv.index("--window")
@@ -314,7 +314,7 @@ class Stage3HardnegSweepTests(unittest.TestCase):
             command_txt = command_path.read_text(encoding="utf-8")
             mine_pos = command_txt.find("scripts/mine_hard_negatives.py")
             train_pos = command_txt.find("src/train.py")
-            inf_pos = command_txt.find("scripts/inference_stride.py")
+            inf_pos = command_txt.find("scripts/inference/stride.py")
             ev_pos = command_txt.find("scripts/evaluate_nine_genome.py")
             self.assertGreaterEqual(mine_pos, 0)
             self.assertGreaterEqual(train_pos, 0)

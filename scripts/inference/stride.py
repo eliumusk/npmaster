@@ -6,7 +6,7 @@ Two paths, transparently chosen per genome:
       + `{genome}_windows.csv` at the requested geometry, Evo2 forward is
       **skipped entirely**. Only the CNN head runs (seconds per genome).
   (2) **Cache miss / no --emb-cache-dir** — Evo2 forward runs on the FASTA. Uses
-      the optimized path from `scripts/evo2_lr/extract_batch_9genome.py`
+      the optimized path from `src/evo2_lr/extract_batch.py`
       (batched + layer-truncated). Optionally writes cache for next run.
 
 Evo2 re-extraction is ~2-3 orders of magnitude more expensive than the CNN
@@ -14,11 +14,11 @@ head. Always prefer the cached path — the 2026-04-22 optimization bench
 measured full-forward bs=1 at 1.3 windows/s/GPU, vs. the CNN head at
 ~thousands of windows/s.
 
-Typical use after a cached extract run (e.g. the 16-GPU `extract_batch_9genome`
+Typical use after a cached extract run (e.g. the 16-GPU `evo2_lr.extract_batch`
 pipeline):
-  python scripts/inference_stride.py \
+  python scripts/inference/stride.py \
     --fna-dir        <source FASTAs> \
-    --emb-cache-dir  <dir produced by extract_batch_9genome> \
+    --emb-cache-dir  <dir produced by evo2_lr.extract_batch> \
     --ckpt           <defrag_v2-style ckpt> \
     --out-dir        <preds target> \
     --window 8192 --stride 2048 --layer blocks.20.mlp.l3
@@ -36,7 +36,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
+REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 from evo2_lr.extract_batch import (  # noqa: E402
     extract_mean_pool,
@@ -97,8 +97,8 @@ def resolve_src_dir(cli_value: str | None) -> Path:
     try:
         current_file = Path(__file__).resolve()
         candidates.extend([
-            current_file.parent.parent / "src",
             current_file.parent.parent.parent / "src",
+            current_file.parent.parent / "src",
         ])
     except Exception:
         pass
@@ -133,7 +133,7 @@ def save_to_cache(cache_dir: Path, genome_id: str, emb: np.ndarray,
                   win_rows: list[tuple[str, int, int]]) -> None:
     cache_dir.mkdir(parents=True, exist_ok=True)
     emb_p, win_p = cache_paths(cache_dir, genome_id)
-    np.save(emb_p, emb.astype(np.float16))  # match extract_batch_9genome default
+    np.save(emb_p, emb.astype(np.float16))  # match evo2_lr.extract_batch default
     with open(win_p, "w", newline="") as f:
         wr = csv.writer(f)
         wr.writerow(["contig", "start", "end"])

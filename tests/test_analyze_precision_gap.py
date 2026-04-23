@@ -21,7 +21,7 @@ def load_module(rel_path: str, module_name: str):
 class AnalyzePrecisionGapTests(unittest.TestCase):
     def setUp(self):
         self.analyzer = load_module(
-            "scripts/analyze_precision_gap.py",
+            "scripts/diagnose/precision_gap.py",
             "analyze_precision_gap",
         )
 

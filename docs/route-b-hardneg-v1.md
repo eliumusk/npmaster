@@ -26,7 +26,7 @@ Interpretation:
 Two changes only:
 
 1. **Fresh Route B hard-negative mining**
-   - script: `scripts/mine_hard_negatives.py`
+   - script: `scripts/train/mine_hard_negatives.py`
    - source: current Route B checkpoint scores on `train` windows labeled `negative`
    - default score family: `fused`
    - default selection: `top_k=5000`, `min_score=0.95`

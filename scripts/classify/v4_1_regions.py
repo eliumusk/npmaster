@@ -12,10 +12,10 @@ Input:
   --emb-dir             w=8192 cached embeddings dir (matches region genomes)
   --type-lr-dir         dir with lr_type_{Alkaloid|Terpene|NRP|Polyketide|RiPP|Saccharide|Other}.npz
   --out-csv             copy of regions CSV with added columns:
-                          v41_type         (argmax)
-                          v41_type_score   (score for argmax)
-                          v41_type_top2    (second best)
-                          v41_type_scores  (7 scores, semicolon-joined rounded)
+                          v4_1_type         (argmax)
+                          v4_1_type_score   (score for argmax)
+                          v4_1_type_top2    (second best)
+                          v4_1_type_scores  (7 scores, semicolon-joined rounded)
 """
 from __future__ import annotations
 
@@ -29,7 +29,7 @@ import pandas as pd
 REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 
-from eval_v41_classification_9genome import (  # noqa: E402
+from classification.per_type import (  # noqa: E402
     BGC_TYPES, load_type_lrs, type_lr_forward,
 )
 
@@ -57,10 +57,10 @@ def main() -> None:
             print(f"[skip] {genome}: no cached emb", flush=True)
             for _, r in grp.iterrows():
                 r = r.copy()
-                r["v41_type"] = None
-                r["v41_type_score"] = None
-                r["v41_type_top2"] = None
-                r["v41_type_scores"] = None
+                r["v4_1_type"] = None
+                r["v4_1_type_score"] = None
+                r["v4_1_type_top2"] = None
+                r["v4_1_type_scores"] = None
                 out_rows.append(r)
             continue
         emb = np.load(emb_p).astype(np.float32)
@@ -88,10 +88,10 @@ def main() -> None:
                 v2 = BGC_TYPES[int(order[1])]
                 scs = ";".join(f"{BGC_TYPES[i]}={per_type[i]:.3f}" for i in range(7))
             r = r.copy()
-            r["v41_type"] = vt
-            r["v41_type_score"] = vs
-            r["v41_type_top2"] = v2
-            r["v41_type_scores"] = scs
+            r["v4_1_type"] = vt
+            r["v4_1_type_score"] = vs
+            r["v4_1_type_top2"] = v2
+            r["v4_1_type_scores"] = scs
             out_rows.append(r)
         print(f"[{genome}] labeled {len(grp)} regions", flush=True)
 
@@ -101,7 +101,7 @@ def main() -> None:
 
     # Print type distribution summary
     print("\n[type distribution]")
-    vc = out_df["v41_type"].value_counts(dropna=False)
+    vc = out_df["v4_1_type"].value_counts(dropna=False)
     for t, n in vc.items():
         print(f"  {t!s:<12}  {n}")
     print(f"\n[done] {args.out_csv}")

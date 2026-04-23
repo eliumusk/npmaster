@@ -30,7 +30,7 @@ import yaml
 
 _repo_candidates: list[Path] = []
 try:
-    _repo_candidates.append(Path(__file__).resolve().parents[1])
+    _repo_candidates.append(Path(__file__).resolve().parents[2])
 except NameError:
     pass
 _repo_candidates.append(Path.cwd())

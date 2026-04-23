@@ -6,19 +6,19 @@ defrag_v2_ms10_s099 / v4.1 ensemble.
 
 Decodes v4.1 primary+short once and defrag_v2 once, then loops over genomes —
 avoids re-decoding each preds dir per-genome (which `plot_genome_bgc_boundaries
---v41-track` would do if invoked 9×).
+--v4-1-track` would do if invoked 9×).
 
 Canonical invocation (on server):
   conda activate bgc
-  python scripts/plot_9genome_vs_baselines.py \
+  python scripts/scripts/plot/nine_genome_vs_baselines.py \
       --gt /data/syh/benchmark/nine_genome/ground_truth.json \
       --antismash-dir /data/syh/benchmark/nine_genome/results/antismash \
       --bgc-prophet-json /data/syh/benchmark/nine_genome/results/bgc_prophet/bgc_prophet_regions.json \
       --deepbgc-dir /data/syh/benchmark/nine_genome/results/deepbgc \
       --defrag-v2-preds-dir /data/muskliu/npmaster/data/phase4/defrag_v2_ms10_s099_preds_stride2048 \
-      --v41-primary-dir /data/muskliu/npmaster/experiments/evo2_first_principles/9g_preds_lrA1_w8192 \
-      --v41-short-dir /data/muskliu/npmaster/experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
-      --out-dir figures/9genome_comparison
+      --v4-1-primary-dir /data/muskliu/npmaster/experiments/evo2_first_principles/9g_preds_lrA1_w8192 \
+      --v4-1-short-dir /data/muskliu/npmaster/experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
+      --out-dir figures/nine_genome_comparison
 """
 from __future__ import annotations
 
@@ -27,7 +27,7 @@ import json
 import sys
 from pathlib import Path
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "baselines"))
 
@@ -38,12 +38,12 @@ from baselines.parse_deepbgc import parse_deepbgc_dir  # noqa: E402
 from plot_genome_bgc_boundaries import plot_genome_boundaries, NPMasterTrack  # noqa: E402
 from decoding.postprocess import WindowScore, decode_regions_hysteresis  # noqa: E402
 from decoding.v4_1 import (  # noqa: E402
-    PRIMARY_OP as V41_PRIMARY_OP,
-    SHORT_OP as V41_SHORT_OP,
-    SHORT_LENGTH_CAP as V41_SHORT_LENGTH_CAP,
-    IOU_DEDUP as V41_IOU_DEDUP,
-    decode_dir as v41_decode_dir,
-    union_dedup as v41_union_dedup,
+    PRIMARY_OP as V4_1_PRIMARY_OP,
+    SHORT_OP as V4_1_SHORT_OP,
+    SHORT_LENGTH_CAP as V4_1_SHORT_LENGTH_CAP,
+    IOU_DEDUP as V4_1_IOU_DEDUP,
+    decode_dir as v4_1_decode_dir,
+    union_dedup as v4_1_union_dedup,
 )
 
 
@@ -75,15 +75,15 @@ def decode_defrag_v2(preds_dir: Path) -> dict[str, list[tuple[str, int, int]]]:
     return out
 
 
-def decode_v41(primary_dir: Path, short_dir: Path) -> dict[str, list[tuple[str, int, int]]]:
-    primary = v41_decode_dir(primary_dir, V41_PRIMARY_OP)
-    short = v41_decode_dir(short_dir, V41_SHORT_OP)
-    short_filt = {g: [r for r in regs if (r[2] - r[1]) < V41_SHORT_LENGTH_CAP]
+def decode_v4_1(primary_dir: Path, short_dir: Path) -> dict[str, list[tuple[str, int, int]]]:
+    primary = v4_1_decode_dir(primary_dir, V4_1_PRIMARY_OP)
+    short = v4_1_decode_dir(short_dir, V4_1_SHORT_OP)
+    short_filt = {g: [r for r in regs if (r[2] - r[1]) < V4_1_SHORT_LENGTH_CAP]
                   for g, regs in short.items()}
     genomes = set(primary) | set(short_filt)
     out: dict[str, list[tuple[str, int, int]]] = {}
     for g in genomes:
-        merged = v41_union_dedup(primary.get(g, []), short_filt.get(g, []), V41_IOU_DEDUP)
+        merged = v4_1_union_dedup(primary.get(g, []), short_filt.get(g, []), V4_1_IOU_DEDUP)
         out[g] = [(r[0], int(r[1]), int(r[2])) for r in merged]
     return out
 
@@ -95,8 +95,8 @@ def parse_args() -> argparse.Namespace:
     p.add_argument("--bgc-prophet-json", required=True, type=Path)
     p.add_argument("--deepbgc-dir", required=True, type=Path)
     p.add_argument("--defrag-v2-preds-dir", required=True, type=Path)
-    p.add_argument("--v41-primary-dir", required=True, type=Path)
-    p.add_argument("--v41-short-dir", required=True, type=Path)
+    p.add_argument("--v4-1-primary-dir", required=True, type=Path)
+    p.add_argument("--v4-1-short-dir", required=True, type=Path)
     p.add_argument("--out-dir", required=True, type=Path)
     p.add_argument("--genome-ids", default=None,
                    help="Comma-separated subset; default: all genomes in GT")
@@ -123,9 +123,9 @@ def main() -> None:
     print(f"[decode] defrag_v2_ms10_s099 from {args.defrag_v2_preds_dir}", flush=True)
     defrag = decode_defrag_v2(args.defrag_v2_preds_dir)
 
-    print(f"[decode] v4.1 ensemble (primary={args.v41_primary_dir}, short={args.v41_short_dir})",
+    print(f"[decode] v4.1 ensemble (primary={args.v4_1_primary_dir}, short={args.v4_1_short_dir})",
           flush=True)
-    v41 = decode_v41(args.v41_primary_dir, args.v41_short_dir)
+    v4_1 = decode_v4_1(args.v4_1_primary_dir, args.v4_1_short_dir)
 
     def _unified(preds: dict[str, list[dict]], g: str) -> list[tuple[str, int, int]]:
         return [(r["contig_id"], int(r["start_bp"]), int(r["end_bp"])) for r in preds.get(g, [])]
@@ -136,7 +136,7 @@ def main() -> None:
             ("BGC-Prophet", _unified(bgc_prophet, g)),
             ("DeepBGC", _unified(deepbgc, g)),
             ("defrag_v2_ms10_s099", defrag.get(g, [])),
-            ("v4.1 ensemble", v41.get(g, [])),
+            ("v4.1 ensemble", v4_1.get(g, [])),
         ]
         out_png = args.out_dir / f"{g}.png"
         out_json = args.out_dir / f"{g}.json"

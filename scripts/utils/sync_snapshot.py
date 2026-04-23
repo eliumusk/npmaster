@@ -103,7 +103,7 @@ def main() -> int:
         description="Validate a local experiment bundle and print the sync plan."
     )
     parser.add_argument("experiment_dir", type=Path)
-    parser.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parents[1])
+    parser.add_argument("--repo-root", type=Path, default=Path(__file__).resolve().parents[2])
     args = parser.parse_args()
 
     bundle_spec = build_run_bundle_spec(args.experiment_dir, args.repo_root)

@@ -60,8 +60,8 @@ def resolve_src_dir(cli_value: str | None) -> Path:
     try:
         current_file = Path(__file__).resolve()
         candidates.extend([
-            current_file.parent.parent / "src",
             current_file.parent.parent.parent / "src",
+            current_file.parent.parent / "src",
             Path.cwd() / "src",
             Path.cwd().parent / "src",
         ])

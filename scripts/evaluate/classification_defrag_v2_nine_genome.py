@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Evaluate defrag_v2 CNN's per-type classification vs antiSMASH on 9-genome.
 
-Same pairing + confusion matrix logic as eval_v41_classification_9genome.py,
+Same pairing + confusion matrix logic as classification_v4_1_nine_genome.py,
 but the type source is the ContextFullModel CNN head's native 8-class output
 stored in per-window prediction CSVs (column `probs` = JSON list of 8).
 
@@ -12,14 +12,14 @@ the result directly comparable to the v4.1 confusion matrix on the same
 regions.
 
 Typical invocation (on server):
-  python scripts/evo2_lr/eval_defrag_v2_classification_9genome.py \
-      --v41-primary-preds .../9g_preds_lrA1_w8192 \
-      --v41-short-preds   .../short_bgc/9g_preds_lrA1_w4096 \
+  python scripts/evaluate/classification_defrag_v2_nine_genome.py \
+      --v4-1-primary-preds .../9g_preds_lrA1_w8192 \
+      --v4-1-short-preds   .../short_bgc/9g_preds_lrA1_w4096 \
       --defrag-v2-preds-dir /data/muskliu/npmaster/data/phase4/defrag_v2_ms10_s099_preds_stride2048 \
       --antismash-dir /data/syh/benchmark/nine_genome/results/antismash \
       --bgc-annotations /data/muskliu/npmaster/data/bgc_annotations.csv \
       --agg max \
-      --out-json experiments/defrag_v2_classification_9genome.json
+      --out-json experiments/defrag_v2_classification_nine_genome.json
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ sys.path.insert(0, str(REPO_ROOT / "src"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "baselines"))
 
 from baselines.parse_antismash import parse_antismash_dir  # noqa: E402
-from eval_v41_classification_9genome import (  # noqa: E402
+from classification.per_type import (  # noqa: E402
     BGC_TYPES,
     build_product_to_type_map,
     iou_pair,
@@ -48,12 +48,12 @@ from eval_v41_classification_9genome import (  # noqa: E402
 # uses a different column order that we have to respect here.
 CNN_TYPE_ORDER = ["Polyketide", "NRP", "Terpene", "RiPP", "Saccharide", "Alkaloid", "Other"]
 from decoding.v4_1 import (  # noqa: E402
-    PRIMARY_OP as V41_PRIMARY_OP,
-    SHORT_OP as V41_SHORT_OP,
-    SHORT_LENGTH_CAP as V41_SHORT_LENGTH_CAP,
-    IOU_DEDUP as V41_IOU_DEDUP,
-    decode_dir as v41_decode_dir,
-    union_dedup as v41_union_dedup,
+    PRIMARY_OP as V4_1_PRIMARY_OP,
+    SHORT_OP as V4_1_SHORT_OP,
+    SHORT_LENGTH_CAP as V4_1_SHORT_LENGTH_CAP,
+    IOU_DEDUP as V4_1_IOU_DEDUP,
+    decode_dir as v4_1_decode_dir,
+    union_dedup as v4_1_union_dedup,
 )
 
 
@@ -85,8 +85,8 @@ def defrag_type_for_region(region, pred_df, agg="max"):
 
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--v41-primary-preds", type=Path, required=True)
-    p.add_argument("--v41-short-preds", type=Path, required=True)
+    p.add_argument("--v4-1-primary-preds", type=Path, required=True)
+    p.add_argument("--v4-1-short-preds", type=Path, required=True)
     p.add_argument("--defrag-v2-preds-dir", type=Path, required=True,
                    help="dir with {genome}_predictions.csv from ContextFullModel inference")
     p.add_argument("--antismash-dir", type=Path, required=True)
@@ -101,14 +101,14 @@ def main():
     print(f"  {len(prod_to_type)} unique products → 7-class", flush=True)
 
     print("[decode] v4.1 ensemble regions", flush=True)
-    primary = v41_decode_dir(args.v41_primary_preds, V41_PRIMARY_OP)
-    short = v41_decode_dir(args.v41_short_preds, V41_SHORT_OP)
-    short_filt = {g: [r for r in regs if (r[2] - r[1]) < V41_SHORT_LENGTH_CAP]
+    primary = v4_1_decode_dir(args.v4_1_primary_preds, V4_1_PRIMARY_OP)
+    short = v4_1_decode_dir(args.v4_1_short_preds, V4_1_SHORT_OP)
+    short_filt = {g: [r for r in regs if (r[2] - r[1]) < V4_1_SHORT_LENGTH_CAP]
                   for g, regs in short.items()}
     genomes = sorted(set(primary) | set(short_filt))
-    v41 = {g: v41_union_dedup(primary.get(g, []), short_filt.get(g, []), V41_IOU_DEDUP)
+    v4_1 = {g: v4_1_union_dedup(primary.get(g, []), short_filt.get(g, []), V4_1_IOU_DEDUP)
            for g in genomes}
-    print(f"  {sum(len(v) for v in v41.values())} ensemble regions", flush=True)
+    print(f"  {sum(len(v) for v in v4_1.values())} ensemble regions", flush=True)
 
     print("[load] antiSMASH 9-genome", flush=True)
     antis = parse_antismash_dir(args.antismash_dir, genome_ids=genomes)
@@ -124,7 +124,7 @@ def main():
         a_regs = [(r["contig_id"], int(r["start_bp"]), int(r["end_bp"]),
                    r["predicted_type"]) for r in antis.get(g, [])]
 
-        for vr in v41.get(g, []):
+        for vr in v4_1.get(g, []):
             best_iou = 0.0
             best_a = None
             for ar in a_regs:
@@ -142,8 +142,8 @@ def main():
             pairs.append({
                 "genome": g,
                 "contig": vr[0],
-                "v41_start": int(vr[1]),
-                "v41_end": int(vr[2]),
+                "v4_1_start": int(vr[1]),
+                "v4_1_end": int(vr[2]),
                 "antismash_products": best_a[3],
                 "antismash_types": a_types,
                 "antismash_primary_type": a_types[0],
