@@ -30,6 +30,10 @@ Note on #6: class-order bug fixed 2026-04-23 across all CNN inference scripts. S
 
 | # | Metric | Value |
 |---|---|---|
+### v4.1 hysteresis (frozen baseline, 2026-04-23)
+
+| # | Metric | Value |
+|---|---|---|
 | 9 | v4.1 regions detected | 254 (median 12.3 kb) |
 | 10 | v4.1 type distribution | Polyketide 150 · NRP 78 · Terpene 17 · RiPP 4 · Other 4 · Saccharide 1 |
 | 11 | defrag_v2 regions detected | 93 (median 26.6 kb) |
@@ -37,6 +41,26 @@ Note on #6: class-order bug fixed 2026-04-23 across all CNN inference scripts. S
 | 13 | Wet-lab candidates (both = Terpene or RiPP) | **18** |
 
 Artifacts: `experiments/OER004256/v41_regions_fully_typed.csv`, `experiments/OER004256/OER004256_wrap_up_report.json`.
+
+### v4.1-learned decoder (preferred, 2026-04-23)
+
+| # | Metric | Value |
+|---|---|---|
+| 14 | v4.1-learned regions detected (prim_thr=0.95, short_thr=0.98) | **1,230** (primary 531 + short 699) |
+| 15 | AS-recall on OER | **37%** (vs 12% hysteresis) |
+| 16 | 9g dedup F1 vs GT (learned multi-scale) | 0.461 (vs 0.541 hysteresis — regression accepted for metagenomic recall) |
+| 17 | 15 original novel candidates preserved | 15 / 15 |
+| 18 | Novel (antiSMASH-missed) candidates | **429** |
+| 19 | Novel passing HMM+MIBiG quality filter | 263 (61%) |
+| 20 | Top wet-lab cohort (STRONG × NOVEL/LIKELY_NOVEL) | **86** |
+| 21 | Inter-tool type agreement (v4.1 ∩ defrag_v2) | 80% (987 / 1,230) |
+| 22 | Original 15 — HMM STRONG verdict | 14 / 15 |
+| 23 | Original 15 — MIBiG novelty verdicts | 0 KNOWN · 3 LIKELY_NOVEL · 12 VARIANT |
+| 24 | Prior FDR on 9g (≥0.98 score, AS-missed) — P(GT-hit) | ≥ 0.53 (lower bound) |
+
+Decoder ckpt: `experiments/evo2_first_principles/decoder_v1/runs/c00_cnn3_h32_antismash_bce/decoder.pt` (server-side).
+Artifacts: `experiments/OER004256/v4_1_learned/regions_fully_typed.csv`, `experiments/OER004256/v4_1_learned/novel_triage/novel_triage_full.csv`.
+See: `docs/learned-decoder.md`, `docs/oer004256-novel-triage.md`.
 
 ## Known blind spot (do not attempt to "fix" as part of refactor)
 

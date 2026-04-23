@@ -32,6 +32,27 @@ Selected directly on 9-genome. Shows what the current model + decoder can achiev
 
 9-genome bench: **R = 0.5311, P = 0.2513, F1 = 0.3412** (n_pred = 975).
 
+## `v4_1_learned` — metagenomic recall-oriented (2026-04-23)
+
+Replaces the hand-tuned hysteresis decoder with a learned 1D CNN decoder (`src/decoding/learned.py`). Tuned to close the 7.8× antiSMASH:v4.1 recall gap on metagenomic short contigs that `min_support_windows=3` structurally rejects. See `docs/learned-decoder.md`.
+
+| field | value |
+|---|---|
+| decoder | `Decoder1DCNN(depth=3, hidden=32)` ckpt `c00_cnn3_h32_antismash_bce/decoder.pt` |
+| primary arm | w=8192 / s=2048 |
+| short arm | w=4096 / s=1024 |
+| primary threshold | 0.95 |
+| short threshold | 0.98 |
+| short length cap | 10,000 bp |
+| union-dedup IoU | 0.3 |
+
+9-genome dedup F1 vs GT: **0.461** (vs 0.541 hysteresis — traded -0.08 F1 for metagenomic recall).
+OER004256: **1,230 regions** (vs hysteresis 254), AS-recall **37%** (vs 12%), 15/15 original novel candidates preserved.
+
+Use this point for metagenomic applications (OER004256, environmental samples). For 9-genome benchmarking (paper tables), continue using `val_frozen_fused` / v4.1 multi-scale hysteresis.
+
+Entrypoint: `scripts/decode/v4_1_learned.py`.
+
 ## Reproducing
 
 ```bash

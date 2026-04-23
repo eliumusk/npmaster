@@ -1,20 +1,37 @@
 # NP-Master
 
-Biosynthetic Gene Cluster (BGC) detection and discovery on bacterial genomes. Frozen Evo2 7B embeddings + a light context model (dilated CNN + gated residual). Trained against antiSMASH annotations, formally evaluated on the 9-genome external benchmark.
+Biosynthetic Gene Cluster (BGC) detection and discovery on bacterial genomes and metagenomes. Frozen Evo2 7B embeddings + a light scorer (LR_A1 logistic regression) + a multi-scale decoder (primary w=8192 + short-arm w=4096, union-dedup at IoU=0.3).
+
+**Two decoders, two OPs** — pick by target:
+
+| target | operating point | decoder | headline metric | entrypoint |
+|---|---|---|---|---|
+| **9-genome benchmark** (paper results) | `v4.1 multi-scale hysteresis` | hand-tuned rule | dedup F1 = **0.4878** (9g) | `scripts/decode/v4_1.py`, `scripts/evaluate/v4_1_multiscale.py` |
+| **Metagenomes** (OER004256 + similar) | **`v4.1-learned`** (2026-04-23) | 1D CNN, trained | 1,230 OER regions (vs hysteresis 254), 37% AS-recall (vs 12%) | `scripts/decode/v4_1_learned.py` |
+
+The learned decoder closes the ~8× antiSMASH:v4.1 region-count gap that the hand-tuned `min_support_windows=3` rule opens on short metagenomic contigs, at a cost of 9g F1 0.461 vs 0.541. See [`docs/learned-decoder.md`](docs/learned-decoder.md).
+
+For BGC-type classification, `defrag_v2`'s CNN head (top-1 82.7% on 9g) is stronger than v4.1's Stage-2 LR (70.5%) — both type annotations are merged via the existing `scripts/classify/{v4_1,defrag_v2}_regions.py` scripts. defrag_v2 detection is **retired** (redundant vs v4.1-learned's 1,230 ≫ 93 regions); its CNN remains in the pipeline only as a second-opinion type labeler.
 
 ## Current Status (9-genome, bench mode)
 
-Current best candidates are from the Stage 3 hard-negative checkpoint trained on antiSMASH-derived labels. Decoder parameters were selected on the 5-genome dev split, then frozen and evaluated on the 4-genome lockbox. No lockbox retuning was done.
+**9-genome is the formal benchmark** (human-curated GT from BGC-Prophet paper, no 9g-derived tuning). Two families of NP-Master candidates are frozen in `configs/operating_points.yaml` — the Evo2-LR multi-scale ensemble (**v4.1**, mainline since 2026-04-22) and the Route-B context CNN (**defrag_v2**, retained for stronger type classification).
 
-Full 9-genome head-to-head:
+Full 9-genome head-to-head (honest readout, no 9g tuning for v4.1):
 
-| Tool / candidate | bench R | bench P | **bench F1** | dedup P | dedup F1 | n_pred | median pred len |
+| Tool / candidate | bench R | bench P | **bench F1** | dedup F1 | strict F1 | n_pred | median pred len |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| BGC-Prophet | 0.3475 | 0.4529 | 0.3933 | 0.4471 | 0.3911 | 170 | 22.7 kb |
-| **NP-Master `defrag_v2_ms10_s099`** | **0.4098** | 0.4714 | **0.4385** | 0.4714 | **0.4385** | 140 | 38.9 kb |
-| NP-Master `defrag_v2_ms10_s0995` | 0.3934 | **0.4851** | 0.4345 | **0.4851** | 0.4345 | 134 | 38.9 kb |
+| BGC-Prophet | 0.3475 | 0.4529 | 0.3933 | 0.3911 | 0.3018 | 170 | 22.7 kb |
+| **NP-Master `v4.1 multi-scale`** ⭐ | **0.4590** | **0.5976** | **0.5192** | **0.4878** | **0.4299** | 246 | — |
+| NP-Master `v4-single (w=8192)` | — | — | — | 0.4869 | — | — | — |
+| NP-Master `defrag_v2_ms10_s099` | 0.4098 | 0.4714 | 0.4385 | 0.4385 | 0.287 | 140 | 38.9 kb |
+| NP-Master `defrag_v2_ms10_s0995` | 0.3934 | 0.4851 | 0.4345 | 0.4345 | 0.292 | 134 | 38.9 kb |
 
-Lockbox-only check:
+**v4.1 is the mainline for benchmarking and reporting** (dedup F1 **0.488**, bench F1 **0.519**, strict F1 **0.430** — each the highest honest number we have on 9g). Point estimates with 95% bootstrap CIs in `experiments/evo2_first_principles/v4_1_final_readout.json`. Source: `docs/REGRESSION_LEDGER.md` lines 1-5.
+
+`defrag_v2_ms10_s099` remains the second-strongest detector and its CNN type classifier (top-1 82.7%) is stronger than v4.1's Stage-2 LR (70.5%); the OER004256 pipeline uses **v4.1 for detection** and **defrag_v2 for type labels** as a cross-validation signal.
+
+Lockbox-only check (defrag_v2, 4 held-out genomes, frozen OP):
 
 | Tool / candidate | bench R | bench P | **bench F1** | dedup F1 | n_pred |
 |---|---:|---:|---:|---:|---:|
@@ -46,9 +63,10 @@ Reading, without cherry-picking:
 
 **Honest caveats:**
 
-- `defrag_v2_ms10_s099` is now promoted to `configs/operating_points.yaml` because the frozen lockbox check held. `defrag_v2_ms10_s0995` remains a precision-oriented alternate, not the default, because it gives slightly lower recall/F1.
-- Boundary tightness is still the main weakness: although all-9 strict/IoU F1 is now slightly above BGC-Prophet, NP-Master regions remain wider (median ≈ 38.9 kb vs BGC-Prophet ≈ 22.7 kb) and dev strict/IoU was still slightly behind. Treat boundary refinement as the next quality target.
-- NP-Master misses `GCA_000154945.1` almost entirely (R ≈ 0.03) under every decoder setting, and BGC-Prophet misses it completely (R ≈ 0.03, F1 = 0). This genome is a shared model-domain blind spot, not a NP-Master-specific regression.
+- The 5-genome dev-split comparison above is an older (defrag_v2-era) snapshot kept for context and baseline reproducibility. The **all-9 table at the top is the live formal readout**; v4.1 multi-scale is the current promoted mainline.
+- `defrag_v2_ms10_s099` and `_s0995` remain frozen in `configs/operating_points.yaml` as precision-oriented alternates and as the source of the stronger type classifier (CNN top-1 82.7%).
+- Boundary tightness is still a known weakness across both families: NP-Master predictions are wider than BGC-Prophet's under strict/IoU. v4.1 improves all-9 strict F1 to 0.430 (vs 0.302 BGC-Prophet), narrowing this gap but not fully closing it.
+- NP-Master misses `GCA_000154945.1` almost entirely (R ≈ 0.03) under every decoder setting, and BGC-Prophet misses it completely (R ≈ 0.03, F1 = 0). This genome is a shared model-domain blind spot, not a NP-Master-specific regression. Root-cause: short (<5 kb) BGCs concentrated in one genome; needs native w=2048 training. Deferred per `docs/next-phase.md`.
 
 ### Boundary plots (dev split, longest contig per genome)
 
@@ -157,10 +175,47 @@ python scripts/evaluate/v4_1_multiscale.py \
     --out-json experiments/evo2_first_principles/v4_1_final_readout.json
 ```
 
-See `docs/REGRESSION_LEDGER.md` for all canonical reproduce commands.
+**v4.1-learned decoder on OER004256 (metagenomic):**
+
+```bash
+# (1) decode with learned decoder
+python scripts/decode/v4_1_learned.py \
+    --primary-preds experiments/OER004256/v41_primary_preds \
+    --short-preds   experiments/OER004256/v41_short_preds \
+    --decoder-ckpt  experiments/evo2_first_principles/decoder_v1/runs/c00_cnn3_h32_antismash_bce/decoder.pt \
+    --out-dir       experiments/OER004256/v4_1_learned
+
+# (2) add v4.1 + defrag_v2 per-type classification (chain)
+python scripts/classify/v4_1_regions.py     ...
+python scripts/classify/defrag_v2_regions.py ...
+
+# (3) triage antiSMASH-missed candidates (HMM biosynth + MIBiG novelty)
+python scripts/diagnose/oer_novel_candidates.py ...
+python scripts/classify/hmm_biosynth_scan.py
+python scripts/classify/mibig_novelty.py
+```
+
+See `docs/REGRESSION_LEDGER.md` for canonical numbers and reproduce commands. See `docs/learned-decoder.md` for learned-decoder motivation + training protocol, `docs/oer004256-novel-triage.md` for the three-layer in-silico filter that produced the 86-candidate wet-lab shortlist.
 
 External baseline directories are read-only inputs; all parsing logic lives in `scripts/baselines/`.
 
+## OER004256 metagenomic discovery (2026-04-23)
+
+v4.1-learned on 1.48 Gb assembly (7 samples, contigs ≥ 10 kb):
+
+| output | count | notes |
+|---|---:|---|
+| v4.1-learned regions | **1,230** | 531 primary + 699 short-rescue |
+| antiSMASH regions (same data) | 1,976 | same order of magnitude |
+| v4.1-learned ∩ antiSMASH | 801 | AS-recall 37% (hysteresis: 12%) |
+| antiSMASH-missed "novel" candidates | **429** | of which 86 pass STRONG biosynth × (NOVEL or LIKELY_NOVEL) filter |
+| v4.1 ∩ defrag_v2 type agreement | 80% | cross-validation signal |
+| Original 15 novel candidates | 15 / 15 preserved | unchanged by decoder upgrade |
+
+All 15 of the original novel-candidate cohort (from hysteresis) have STRONG or MODERATE biosynthetic HMM support and **0 are classified as KNOWN** (≥2 ORFs at ≥70% pident) against MIBiG 4.0. The 86-candidate expanded shortlist includes novel jamaicamide-, rifamycin-, and quinolidomicin-like scaffolds. Artifacts under `experiments/OER004256/v4_1_learned/`.
+
 ## Next Step
 
-Next work should move back to training/data: fix the `GCA_000154945.1` domain miss and reduce boundary overshoot under strict/IoU. See `docs/route-b-hardneg-v1.md` and `docs/next-phase.md`.
+1. **Wet-lab** — send the 86 STRONG × (NOVEL/LIKELY_NOVEL) candidates to experimental screening. Covers 4+ chemistry families (PKS, NRPS, NRPS-PKS hybrids, Terpene-NRPS, AurF N-oxidation).
+2. **Training-side improvements** — the learned decoder plateaus at ~42% AS-recall on OER; the remaining gap requires a retrained scorer (joint training + metagenomic augmentation). Deferred until wet-lab returns initial labels — enables active-learning retrain on real confirmations.
+3. **Legacy items** — `GCA_000154945.1` <5kb recall and boundary overshoot are still open (see `docs/route-b-hardneg-v1.md`, `docs/next-phase.md`) but lower priority than wet-lab confirmation loop.
