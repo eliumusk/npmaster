@@ -48,7 +48,8 @@ Artifacts: `experiments/OER004256/v41_regions_fully_typed.csv`, `experiments/OER
 |---|---|---|
 | 14 | v4.1-learned regions detected (prim_thr=0.95, short_thr=0.98) | **1,230** (primary 531 + short 699) |
 | 15 | AS-recall on OER | **37%** (vs 12% hysteresis) |
-| 16 | 9g dedup F1 vs GT (learned multi-scale) | 0.461 (vs 0.541 hysteresis — regression accepted for metagenomic recall) |
+| 16 | 9g dedup F1 vs GT (learned multi-scale, `full_pipeline_eval.py` metric) | 0.461 (vs 0.541 hysteresis — Δ=-0.08; same metric both sides) |
+| 16b | 9g dedup F1 vs GT (learned multi-scale, canonical bench-mode) | **0.332** (CI95 0.224–0.437, n_pred=363, bench_P=0.262, bench_R=0.528) — vs hysteresis **0.488** in the same metric → **Δ=-0.156**. Source: rerun 2026-04-24 via `benchmark/nine_genome.eval_regions`. The -0.08 "regression accepted" framing in `docs/learned-decoder.md` used `full_pipeline_eval.py`'s greedy-pairing F1, which is **not** the metric used for the published hysteresis number. See `memory/project_v41_learned_9g_metric_confusion.md`. |
 | 17 | 15 original novel candidates preserved | 15 / 15 |
 | 18 | Novel (antiSMASH-missed) candidates | **429** |
 | 19 | Novel passing HMM+MIBiG quality filter | 263 (61%) |
@@ -61,6 +62,25 @@ Artifacts: `experiments/OER004256/v41_regions_fully_typed.csv`, `experiments/OER
 Decoder ckpt: `experiments/evo2_first_principles/decoder_v1/runs/c00_cnn3_h32_antismash_bce/decoder.pt` (server-side).
 Artifacts: `experiments/OER004256/v4_1_learned/regions_fully_typed.csv`, `experiments/OER004256/v4_1_learned/novel_triage/novel_triage_full.csv`.
 See: `docs/learned-decoder.md`, `docs/oer004256-novel-triage.md`.
+
+### Per-token U-Net readouts (exploratory, 2026-04-26)
+
+These are exploratory readouts, not promoted regression gates. OER matching uses `scripts/evaluate/oer_per_token_compare.py` with asymmetric 50% antiSMASH-region overlap. 9-genome matching uses `scripts/evaluate/per_token_readout.py` and canonical `benchmark.nine_genome.eval_regions`.
+
+| # | Metric | Value |
+|---|---|---|
+| 25 | E10 U-Net thr=0.3 OER AS-recall | **0.3117** (616 / 1,976 antiSMASH regions; 1,377 predictions; 470 novel) |
+| 26 | E10 U-Net thr=0.4 OER AS-recall | 0.2687 (531 / 1,976; 1,271 predictions; 388 novel) |
+| 27 | E11 U-Net thr=0.3 OER AS-recall | 0.2738 (541 / 1,976; 1,154 predictions; 382 novel) |
+| 28 | Same-script v4.1-learned OER AS-recall for comparison | 0.2065 (408 / 1,976; 1,230 predictions; 429 novel) |
+| 29 | E10 U-Net thr=0.3 9g dedup_F1 | **0.4561** (CI95 0.3161–0.5621; bench_P=0.4444, bench_R=0.4984, strict_F1=0.4044, n_pred=333) |
+| 30 | E10 U-Net thr=0.4 9g dedup_F1 | **0.4664** (CI95 0.3240–0.5733; bench_P=0.4809, bench_R=0.4852, strict_F1=0.4136, n_pred=314) |
+| 31 | E10 U-Net thr=0.5 9g dedup_F1 | **0.4751** (CI95 0.3305–0.5833; bench_P=0.4983, bench_R=0.4852, strict_F1=0.4243, n_pred=303) |
+| 32 | E11 U-Net thr=0.3 / 0.4 / 0.5 9g dedup_F1 | 0.4470 / 0.4500 / 0.4544 |
+
+Current interpretation: E10 is the only promising per-token U-Net checkpoint. `thr=0.3` is the OER recall-first point, and `thr=0.4` is the OER conservative candidate-count tradeoff; neither threshold is selected from 9g. `thr=0.5` is a default-threshold reference. The checkpoint/config family came from a round2 grid that was later read out on 9g, so these are threshold-clean diagnostics but not yet fully pre-registered formal candidates.
+
+Artifacts: `experiments/step2_per_token/OER_UNET_READOUT.md`, `experiments/step2_per_token/round2/E10_h64_lr1e3_b32/9g_readouts/`, `experiments/step2_per_token/round2/E11_h64_lr1e3_b64/9g_readouts/`; OER raw outputs remain under `/data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/readouts/`.
 
 ## Known blind spot (do not attempt to "fix" as part of refactor)
 

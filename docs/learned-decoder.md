@@ -112,6 +112,8 @@ All 16 configs converged to val AP 0.79–0.82 in <2 min. `c00` (cnn3, hidden=32
 
 At `(0.95, 0.98)`: 9g F1 drops 0.08 from baseline (0.541 → 0.461) in exchange for **4.8× more OER regions** (254 → 1,230), **3× AS-recall** (12% → 37%), 0 loss of the 15 original novel candidates.
 
+> **⚠ Metric caveat added 2026-04-24**: the 0.541/0.461 numbers above come from `full_pipeline_eval.py`'s custom greedy-pairing `dedup_metrics`. Under the **canonical** `benchmark/nine_genome.eval_regions` metric (same one used for published v4.1-hysteresis=0.488), v4.1-learned scores **0.332** on 9g — a **0.156** drop from hysteresis, not 0.08. Both numbers are "correct" within their own metric; the mistake was mixing them across tables. For honest cross-comparison with v4.1-hysteresis (0.488), use 0.332. See `memory/project_v41_learned_9g_metric_confusion.md` and `experiments/eval_harness/baseline_table.md`.
+
 ## Production entrypoint
 
 ```bash
@@ -126,7 +128,7 @@ Add per-type classification with the existing `scripts/classify/v4_1_regions.py`
 
 ## Honest caveats
 
-- **9g F1 drops 0.08 vs hysteresis.** Acceptable in-context (we intentionally shifted precision for recall), but the overall pipeline precision is lower — not a free lunch.
+- **9g F1 drops 0.08 vs hysteresis** (under `full_pipeline_eval.py` metric). Under canonical bench-mode metric (`benchmark/nine_genome.eval_regions`), the drop is actually **0.156** (hysteresis 0.488 → learned 0.332, bench_P collapses from 0.60 to 0.26 — heavy over-prediction on 9g's long isolate contigs). Acceptable *only* if metagenomic recall is worth more than ~3× on the precision-honest 9g scoreboard.
 - **Short arm is the dominant contributor** (699 of 1,230 OER regions on short arm, 531 on primary). Short arm was trained on primary-arm scores — OOD transfer. Works but is the component most likely to surface false positives.
 - **AS-recall plateaus at ~42%** even at aggressive thresholds. The remaining ~1,100 antiSMASH regions the learned decoder cannot recover are where LR_A1 does not fire at all — a scorer-level limit, not a decoder-level one. Closing that gap needs a retrained scorer or joint training.
 - The 15 original novel candidates are preserved at every operating point tested. Downstream HMM + MIBiG filtering of the expanded 429-novel cohort produces **86 "STRONG biosynth × novel"** candidates (`experiments/OER004256/v4_1_learned/novel_triage/novel_triage_full.csv`); these include previously undiscovered jamaicamide-like, rifamycin-like, and quinolidomicin-like scaffolds.

@@ -121,6 +121,62 @@ def extract_mean_pool(evo2_model, sequences, layer_name, batch_size=1, forward_s
     return np.asarray(out, dtype=np.float32)
 
 
+def extract_mean_pool_multi(evo2_model, sequences, layer_names, batch_size=1, forward_s_accum=None):
+    """Extract mean-pooled embeddings for multiple Evo2 layers in ONE forward pass.
+
+    Returns dict {layer_name: (N, 4096) np.float32}. Same length-grouping and
+    batching as extract_mean_pool(), but the model forward returns a dict over
+    layer_names so we mean-pool each in turn without a second forward.
+    """
+    global _DEBUG_BATCH_SHAPE_PRINTED
+    import torch
+    batch_size = max(1, int(batch_size))
+    layer_names = list(layer_names)
+    out = {ln: [None] * len(sequences) for ln in layer_names}
+    by_len = defaultdict(list)
+    for i, seq in enumerate(sequences):
+        clean = clean_seq(seq)
+        if len(clean) < 10:
+            for ln in layer_names:
+                out[ln][i] = np.zeros(4096, dtype=np.float32)
+            continue
+        toks = evo2_model.tokenizer.tokenize(clean)
+        by_len[len(toks)].append((i, toks))
+
+    for _, items in sorted(by_len.items(), key=lambda kv: kv[0], reverse=True):
+        for start in range(0, len(items), batch_size):
+            chunk = items[start:start + batch_size]
+            input_ids = torch.tensor([t for _, t in chunk], dtype=torch.int).to("cuda")
+            if not _DEBUG_BATCH_SHAPE_PRINTED:
+                print(f"[debug] first multi-forward: input_ids.shape={tuple(input_ids.shape)} "
+                      f"layers={layer_names} (requested batch_size={batch_size})",
+                      flush=True)
+                _DEBUG_BATCH_SHAPE_PRINTED = True
+            if forward_s_accum is not None:
+                torch.cuda.synchronize()
+                t_fwd = time.time()
+            with torch.no_grad(), torch.amp.autocast("cuda", dtype=torch.bfloat16):
+                _, emb_dict = evo2_model(
+                    input_ids, return_embeddings=True, layer_names=layer_names,
+                )
+            if forward_s_accum is not None:
+                torch.cuda.synchronize()
+                forward_s_accum[0] += time.time() - t_fwd
+            for ln in layer_names:
+                h = emb_dict[ln].float()
+                if h.ndim != 3:
+                    raise RuntimeError(f"unexpected emb shape for {ln}: {tuple(h.shape)}")
+                pooled = h.mean(dim=1).cpu().numpy().astype(np.float32)
+                for (orig_i, _), emb in zip(chunk, pooled):
+                    out[ln][orig_i] = emb
+
+    for ln in layer_names:
+        missing = sum(v is None for v in out[ln])
+        if missing:
+            raise RuntimeError(f"internal error: {missing} embeddings missing for {ln}")
+    return {ln: np.asarray(out[ln], dtype=np.float32) for ln in layer_names}
+
+
 def truncate_blocks_to_layer(evo2_model, layer_name: str) -> dict:
     """Drop Evo2 blocks strictly after the block containing `layer_name`.
 

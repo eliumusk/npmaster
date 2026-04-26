@@ -1,0 +1,395 @@
+{
+  "_meta": {
+    "frozen_date": "2026-04-23",
+    "last_updated": "2026-04-26",
+    "description": "Baseline freeze for BGC-detection architecture comparison. Rows = methods, columns = datasets. Hand-consolidated from the source files listed in `_sources`. Do not edit numbers here without updating source artifacts and REGRESSION_LEDGER.md in lockstep.",
+    "_sources": {
+      "9g_v4_1_hysteresis": "experiments/evo2_first_principles/v4_1_final_readout.json (results['v4.1 ensemble'])",
+      "9g_v4_1_learned": "docs/REGRESSION_LEDGER.md row #16 + experiments/OER004256/v4_1_learned/README.md",
+      "oer_v4_1_hysteresis": "experiments/OER004256/OER004256_wrap_up_report.json",
+      "oer_v4_1_learned": "experiments/OER004256/v4_1_learned/README.md + regions_fully_typed.csv",
+      "oer_antismash": "experiments/OER004256/v4_1_learned/README.md (n=1976, headline table)",
+      "9g_per_token_unet_e10": "experiments/step2_per_token/round2/E10_h64_lr1e3_b32/9g_readouts/readout_thr0.{3,4,5}.json (server-promoted 2026-04-26)",
+      "9g_per_token_unet_e11": "experiments/step2_per_token/round2/E11_h64_lr1e3_b64/9g_readouts/readout_thr0.{3,4,5}.json (server-promoted 2026-04-26)",
+      "oer_per_token_unet_e10": "experiments/step2_per_token/OER_UNET_READOUT.md + server readouts/e10_thr{03,04}_compare.json",
+      "oer_per_token_unet_e11": "experiments/step2_per_token/OER_UNET_READOUT.md + server readouts/e11_thr03_compare.json"
+    },
+    "gates_for_future_candidates": {
+      "9g_dedup_f1_min": 0.458,
+      "oer_n_regions_min": 1400,
+      "oer_as_overlap_rate_min": 0.50,
+      "oer_all_7_types_required": true
+    },
+    "prior_null_result": "Zero-shot Evo2 LL (8 scoring variants, w=16384/s=8192) produces best 9g dedup_F1=0.1296 -- 3.8x worse than v4.1-mainline. Pure LL signal rejected. See experiments/evo2_first_principles/9g_eval_ll_zscore_pos/sweep_summary.json."
+  },
+
+  "v4_1_hysteresis": {
+    "method": "v4.1 multi-scale ensemble (hysteresis decoder, primary w=8192 + short w=4096, frozen OP)",
+    "nine_genome": {
+      "n_gt": 305,
+      "n_pred": 246,
+      "dedup_f1": 0.4878,
+      "dedup_f1_ci95_lo": 0.3451,
+      "dedup_f1_ci95_hi": 0.6090,
+      "bench_precision": 0.5976,
+      "bench_recall": 0.4590,
+      "bench_f1": 0.5192,
+      "strict_f1": 0.4299,
+      "strict_f1_ci95_lo": 0.2840,
+      "strict_f1_ci95_hi": 0.5641,
+      "bucket_recall": {
+        "<5kb": "7/48 (0.146)",
+        "5-10kb": "35/89 (0.393)",
+        "10-20kb": "37/85 (0.435)",
+        "20-50kb": "42/61 (0.689)",
+        ">=50kb": "19/22 (0.864)"
+      },
+      "source": "experiments/evo2_first_principles/v4_1_final_readout.json -> 'v4.1 ensemble'"
+    },
+    "oer004256_ge10kb": {
+      "n_regions": 254,
+      "median_len_bp": 12288,
+      "as_overlap_count": 239,
+      "as_overlap_rate": 0.12,
+      "_as_overlap_rate_note": "README headline reports AS-recall=12% (fraction of antiSMASH regions hit by v4.1). 'as_overlap_count' 239/254 is the inverse direction (v4.1 regions that overlap any antiSMASH). Both are preserved here; AS-recall is the comparable metric vs v4.1-learned.",
+      "n_as_missed": 15,
+      "per_type_count": {
+        "Polyketide": 150,
+        "NRP": 78,
+        "Terpene": 17,
+        "RiPP": 4,
+        "Saccharide": 1,
+        "Alkaloid": 0,
+        "Other": 4,
+        "_caveat": "antiSMASH coverage at time of wrap_up was partial (1 of 7 samples: OER00425669 part00+part01). Per-type count is from v4.1 internal typing, not from antiSMASH-matched subset."
+      }
+    }
+  },
+
+  "v4_1_learned": {
+    "method": "v4.1 multi-scale + learned 1D CNN decoder (c00 CNN-3L hidden=32 BCE, ~50K params; primary thr=0.95, short thr=0.98)",
+    "nine_genome": {
+      "n_gt": 305,
+      "n_pred": 363,
+      "dedup_f1": 0.3323,
+      "dedup_f1_ci95_lo": 0.2235,
+      "dedup_f1_ci95_hi": 0.4366,
+      "bench_precision": 0.2617,
+      "bench_recall": 0.5279,
+      "bench_f1": 0.3499,
+      "strict_f1": 0.2455,
+      "strict_f1_ci95_lo": 0.1548,
+      "strict_f1_ci95_hi": 0.3389,
+      "bucket_recall": {
+        "<5kb": "8/48 (0.167)",
+        "5-10kb": "43/89 (0.483)",
+        "10-20kb": "41/85 (0.482)",
+        "20-50kb": "48/61 (0.787)",
+        ">=50kb": "21/22 (0.955)"
+      },
+      "prior_0_461_note": "Earlier 0.461 number in docs/REGRESSION_LEDGER.md #16 / full_pipeline_report.md is from full_pipeline_eval.py's greedy 50%-either-side `dedup_metrics`, NOT comparable to v4.1-hysteresis' dedup_f1 (unique_gt_TP/n_pred via benchmark.nine_genome.eval_regions). This row reports the apples-to-apples dedup_f1 using the same metric code as src/decoding/v4_1.py. At (primary_thr=0.95, short_thr=0.98) with decoder c00, n_pred=363 agrees with full_pipeline_report.md; the F1 difference is purely metric definition. v4.1-learned's true dedup_f1 is 0.3323 -- ~0.15 BELOW v4.1-hysteresis (0.4878).",
+      "source": "/tmp/v4_1_learned_9g_full.json (reproduce via /tmp/v4_1_learned_readout.py on node7; inputs as in docs/REGRESSION_LEDGER.md #16 reproduce block)",
+      "config": {
+        "decoder_ckpt": "experiments/evo2_first_principles/decoder_v1/runs/c00_cnn3_h32_antismash_bce/decoder.pt",
+        "primary_threshold": 0.95,
+        "short_threshold": 0.98,
+        "short_length_cap": 10000,
+        "iou_dedup": 0.3
+      }
+    },
+    "oer004256_ge10kb": {
+      "n_regions": 1230,
+      "primary_short_split": "531 / 699",
+      "median_len_bp": 5974,
+      "mean_len_bp": 7596,
+      "as_overlap_count": 801,
+      "as_overlap_rate": 0.37,
+      "_as_overlap_rate_note": "AS-recall=37% (fraction of antiSMASH regions hit by v4.1-learned). 801/1230 = 65% of v4.1-learned regions also hit by antiSMASH in the reverse direction.",
+      "n_as_missed": 429,
+      "per_type_count": {
+        "Polyketide": 200,
+        "NRP": 125,
+        "Terpene": 752,
+        "RiPP": 74,
+        "Saccharide": 2,
+        "Alkaloid": 0,
+        "Other": 77,
+        "_source": "experiments/OER004256/v4_1_learned/regions_fully_typed.csv (v41_type column, 1230 rows)",
+        "_note": "Alkaloid=0; 6 of 7 types represented. Dominant Terpene count (752) is driven by short-arm recall on <=10kb regions."
+      }
+    }
+  },
+
+  "per_token_unet_e10_thr03": {
+    "method": "Per-token U-Net E10 (hidden=64, lr=1e-3, batch=32), OER threshold=0.3",
+    "nine_genome": {
+      "_selection_status": "threshold not selected on 9g; chosen as OER recall-first point. Checkpoint/config came from a round2 grid that was later read out on 9g, so this is threshold-clean but not yet a fully pre-registered formal candidate.",
+      "n_gt": 305,
+      "n_pred": 333,
+      "dedup_f1": 0.4561,
+      "dedup_f1_ci95_lo": 0.3161,
+      "dedup_f1_ci95_hi": 0.5621,
+      "bench_precision": 0.4444,
+      "bench_recall": 0.4984,
+      "bench_f1": 0.4699,
+      "strict_f1": 0.4044,
+      "dedup_precision": 0.4204,
+      "unique_gt_precision_tp": 140,
+      "duplicate_precision_tp": 8,
+      "max_preds_per_gt": 3,
+      "median_pred_len_bp": 12288,
+      "bucket_recall": {
+        "<5kb": "7/48 (0.146)",
+        "5-10kb": "42/89 (0.472)",
+        "10-20kb": "41/85 (0.482)",
+        "20-50kb": "44/61 (0.721)",
+        ">=50kb": "18/22 (0.818)"
+      },
+      "source": "experiments/step2_per_token/round2/E10_h64_lr1e3_b32/9g_readouts/readout_thr0.3.json"
+    },
+    "oer004256_ge10kb": {
+      "n_regions": 1377,
+      "median_len_bp": 9828,
+      "as_recall_50pct_asym": 0.3117,
+      "as_true_positive_count": 616,
+      "n_antismash_regions": 1976,
+      "n_as_missed": 470,
+      "pred_as_overlap_rate": 0.6587,
+      "_source": "experiments/step2_per_token/OER_UNET_READOUT.md; raw server JSON /data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/readouts/e10_thr03_compare.json",
+      "_note": "Exploratory OER readout paired with the 9g readout in this row. Matching rule is overlap / antiSMASH_region_len >= 0.5 as implemented by scripts/evaluate/oer_per_token_compare.py."
+    }
+  },
+
+  "per_token_unet_e10_thr04": {
+    "method": "Per-token U-Net E10 (hidden=64, lr=1e-3, batch=32), OER threshold=0.4",
+    "nine_genome": {
+      "_selection_status": "threshold not selected on 9g; chosen as OER conservative point. Checkpoint/config came from a round2 grid that was later read out on 9g, so this is threshold-clean but not yet a fully pre-registered formal candidate.",
+      "n_gt": 305,
+      "n_pred": 314,
+      "dedup_f1": 0.4664,
+      "dedup_f1_ci95_lo": 0.3240,
+      "dedup_f1_ci95_hi": 0.5733,
+      "bench_precision": 0.4809,
+      "bench_recall": 0.4852,
+      "bench_f1": 0.4831,
+      "strict_f1": 0.4136,
+      "dedup_precision": 0.4490,
+      "unique_gt_precision_tp": 141,
+      "duplicate_precision_tp": 10,
+      "max_preds_per_gt": 3,
+      "median_pred_len_bp": 12288,
+      "bucket_recall": {
+        "<5kb": "5/48 (0.104)",
+        "5-10kb": "42/89 (0.472)",
+        "10-20kb": "40/85 (0.471)",
+        "20-50kb": "43/61 (0.705)",
+        ">=50kb": "18/22 (0.818)"
+      },
+      "source": "experiments/step2_per_token/round2/E10_h64_lr1e3_b32/9g_readouts/readout_thr0.4.json"
+    },
+    "oer004256_ge10kb": {
+      "n_regions": 1271,
+      "median_len_bp": 9384,
+      "as_recall_50pct_asym": 0.2687,
+      "as_true_positive_count": 531,
+      "n_antismash_regions": 1976,
+      "n_as_missed": 388,
+      "pred_as_overlap_rate": 0.6947,
+      "_source": "experiments/step2_per_token/OER_UNET_READOUT.md; raw server JSON /data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/readouts/e10_thr04_compare.json",
+      "_note": "Conservative E10 tradeoff point: lower AS-recall than thr=0.3, fewer novel calls and higher reverse-direction antiSMASH-overlap rate."
+    }
+  },
+
+  "per_token_unet_e10_thr05": {
+    "method": "Per-token U-Net E10 (hidden=64, lr=1e-3, batch=32), default threshold=0.5",
+    "nine_genome": {
+      "_selection_status": "default threshold reference; do not present as threshold-free formal winner unless 0.5 is predeclared before the final protocol.",
+      "n_gt": 305,
+      "n_pred": 303,
+      "dedup_f1": 0.4751,
+      "dedup_f1_ci95_lo": 0.3305,
+      "dedup_f1_ci95_hi": 0.5833,
+      "bench_precision": 0.4983,
+      "bench_recall": 0.4852,
+      "bench_f1": 0.4917,
+      "strict_f1": 0.4243,
+      "dedup_precision": 0.4653,
+      "unique_gt_precision_tp": 141,
+      "duplicate_precision_tp": 10,
+      "max_preds_per_gt": 3,
+      "median_pred_len_bp": 12288,
+      "bucket_recall": {
+        "<5kb": "5/48 (0.104)",
+        "5-10kb": "42/89 (0.472)",
+        "10-20kb": "40/85 (0.471)",
+        "20-50kb": "43/61 (0.705)",
+        ">=50kb": "18/22 (0.818)"
+      },
+      "source": "experiments/step2_per_token/round2/E10_h64_lr1e3_b32/9g_readouts/readout_thr0.5.json"
+    },
+    "oer004256_ge10kb": {
+      "n_regions": 1194,
+      "median_len_bp": 8192,
+      "as_recall_50pct_asym": 0.2485,
+      "as_true_positive_count": 491,
+      "n_antismash_regions": 1976,
+      "n_as_missed": 325,
+      "pred_as_overlap_rate": 0.7278,
+      "_source": "experiments/step2_per_token/OER_UNET_READOUT.md; raw server JSON /data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/readouts/e10_thr05_compare.json",
+      "_note": "Default-threshold reference; lower OER recall than E10 thr=0.3/0.4 but higher reverse-direction antiSMASH-overlap rate."
+    }
+  },
+
+  "per_token_unet_e11_thr03": {
+    "method": "Per-token U-Net E11 (hidden=64, lr=1e-3, batch=64), OER threshold=0.3",
+    "nine_genome": {
+      "_selection_status": "same threshold comparison for E10; not a promoted candidate.",
+      "n_gt": 305,
+      "n_pred": 321,
+      "dedup_f1": 0.4470,
+      "dedup_f1_ci95_lo": 0.2997,
+      "dedup_f1_ci95_hi": 0.5525,
+      "bench_precision": 0.4424,
+      "bench_recall": 0.4852,
+      "bench_f1": 0.4628,
+      "strict_f1": 0.3898,
+      "dedup_precision": 0.4143,
+      "unique_gt_precision_tp": 133,
+      "duplicate_precision_tp": 9,
+      "max_preds_per_gt": 3,
+      "median_pred_len_bp": 12288,
+      "bucket_recall": {
+        "<5kb": "6/48 (0.125)",
+        "5-10kb": "40/89 (0.449)",
+        "10-20kb": "40/85 (0.471)",
+        "20-50kb": "44/61 (0.721)",
+        ">=50kb": "18/22 (0.818)"
+      },
+      "source": "experiments/step2_per_token/round2/E11_h64_lr1e3_b64/9g_readouts/readout_thr0.3.json"
+    },
+    "oer004256_ge10kb": {
+      "n_regions": 1154,
+      "median_len_bp": 10240,
+      "as_recall_50pct_asym": 0.2738,
+      "as_true_positive_count": 541,
+      "n_antismash_regions": 1976,
+      "n_as_missed": 382,
+      "pred_as_overlap_rate": 0.6690,
+      "_source": "experiments/step2_per_token/OER_UNET_READOUT.md; raw server JSON /data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/readouts/e11_thr03_compare.json",
+      "_note": "Weaker than E10 at the tested thresholds; keep as comparison, not a promoted candidate."
+    }
+  },
+
+  "per_token_unet_e11_thr04": {
+    "method": "Per-token U-Net E11 (hidden=64, lr=1e-3, batch=64), OER threshold=0.4",
+    "nine_genome": {
+      "_selection_status": "same threshold comparison for E10; not a promoted candidate.",
+      "n_gt": 305,
+      "n_pred": 308,
+      "dedup_f1": 0.4500,
+      "dedup_f1_ci95_lo": 0.3111,
+      "dedup_f1_ci95_hi": 0.5537,
+      "bench_precision": 0.4870,
+      "bench_recall": 0.4623,
+      "bench_f1": 0.4743,
+      "strict_f1": 0.3850,
+      "dedup_precision": 0.4383,
+      "unique_gt_precision_tp": 135,
+      "duplicate_precision_tp": 15,
+      "max_preds_per_gt": 4,
+      "median_pred_len_bp": 12288,
+      "bucket_recall": {
+        "<5kb": "6/48 (0.125)",
+        "5-10kb": "40/89 (0.449)",
+        "10-20kb": "35/85 (0.412)",
+        "20-50kb": "42/61 (0.689)",
+        ">=50kb": "18/22 (0.818)"
+      },
+      "source": "experiments/step2_per_token/round2/E11_h64_lr1e3_b64/9g_readouts/readout_thr0.4.json"
+    },
+    "oer004256_ge10kb": {
+      "n_regions": 1083,
+      "median_len_bp": 10033,
+      "as_recall_50pct_asym": 0.2389,
+      "as_true_positive_count": 472,
+      "n_antismash_regions": 1976,
+      "n_as_missed": 321,
+      "pred_as_overlap_rate": 0.7036,
+      "_source": "experiments/step2_per_token/OER_UNET_READOUT.md; raw server JSON /data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/readouts/e11_thr04_compare.json",
+      "_note": "Weaker than E10 at the tested thresholds; keep as comparison, not a promoted candidate."
+    }
+  },
+
+  "per_token_unet_e11_thr05": {
+    "method": "Per-token U-Net E11 (hidden=64, lr=1e-3, batch=64), default threshold=0.5",
+    "nine_genome": {
+      "_selection_status": "default threshold reference; not a promoted candidate.",
+      "n_gt": 305,
+      "n_pred": 298,
+      "dedup_f1": 0.4544,
+      "dedup_f1_ci95_lo": 0.3171,
+      "dedup_f1_ci95_hi": 0.5560,
+      "bench_precision": 0.5067,
+      "bench_recall": 0.4492,
+      "bench_f1": 0.4762,
+      "strict_f1": 0.3914,
+      "dedup_precision": 0.4597,
+      "unique_gt_precision_tp": 137,
+      "duplicate_precision_tp": 14,
+      "max_preds_per_gt": 3,
+      "median_pred_len_bp": 12284,
+      "bucket_recall": {
+        "<5kb": "6/48 (0.125)",
+        "5-10kb": "39/89 (0.438)",
+        "10-20kb": "34/85 (0.400)",
+        "20-50kb": "40/61 (0.656)",
+        ">=50kb": "18/22 (0.818)"
+      },
+      "source": "experiments/step2_per_token/round2/E11_h64_lr1e3_b64/9g_readouts/readout_thr0.5.json"
+    },
+    "oer004256_ge10kb": {
+      "n_regions": 1007,
+      "median_len_bp": 6182,
+      "as_recall_50pct_asym": 0.1690,
+      "as_true_positive_count": 334,
+      "n_antismash_regions": 1976,
+      "n_as_missed": 265,
+      "pred_as_overlap_rate": 0.7368,
+      "_source": "experiments/step2_per_token/OER_UNET_READOUT.md; raw server JSON /data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/readouts/e11_thr05_compare.json",
+      "_note": "Default-threshold comparison; weaker OER recall than E10 and E11 lower-threshold points."
+    }
+  },
+
+  "antismash": {
+    "method": "antiSMASH 7 (training-signal source; ceiling on 9g, independent on OER)",
+    "nine_genome": {
+      "_skip_reason": "antiSMASH is the training signal for v4.1 type classifier and a substantial share of detection labels -- reporting it on 9g is not a fair comparison and is intentionally omitted. See v4_1_learned/README.md footnote on dedup_F1 comparability."
+    },
+    "oer004256_ge10kb": {
+      "n_regions": 1976,
+      "median_len_bp": 13573,
+      "as_overlap_count": 1976,
+      "as_overlap_rate": 1.0,
+      "n_as_missed": 0,
+      "per_type_count": {
+        "Polyketide": 326,
+        "NRP": 215,
+        "Terpene": 802,
+        "RiPP": 351,
+        "Saccharide": 36,
+        "Alkaloid": 8,
+        "Other": 238,
+        "_source": "parsed 2026-04-23 from /data/muskliu/oer_bgc_scan/results/antismash/OER*.ge10000/*.json (all 7 samples, 1976 regions total). Multi-product regions collapsed to one type via priority order: Polyketide > NRP > RiPP > Terpene > Saccharide > Alkaloid > Other. Sum = 326+215+802+351+36+8+238 = 1976 (checks out).",
+        "_product_to_type_map": {
+          "Polyketide": ["T1PKS", "T2PKS", "T3PKS", "HR-T2PKS", "hglE-KS", "arylpolyene", "PKS-like", "resorcinol"],
+          "NRP": ["NRPS", "NRPS-like", "NRP-metallophore", "NAPAA", "thioamide-NRP", "lincosamides"],
+          "Terpene": ["terpene", "terpene-precursor"],
+          "RiPP": ["RiPP-like", "RRE-containing", "ranthipeptide", "lassopeptide", "crocagin", "triceptide", "linaridin", "thioamitides", "azole-containing-RiPP"],
+          "Saccharide": ["deazapurine", "cytokinin", "nucleoside"],
+          "Alkaloid": ["indole"],
+          "Other": ["phosphonate", "betalactone", "hydrogen-cyanide", "redox-cofactor", "ectoine", "hserlactone", "butyrolactone", "other"]
+        }
+      }
+    }
+  }
+}

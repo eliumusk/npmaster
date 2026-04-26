@@ -46,7 +46,7 @@ Replaces the hand-tuned hysteresis decoder with a learned 1D CNN decoder (`src/d
 | short length cap | 10,000 bp |
 | union-dedup IoU | 0.3 |
 
-9-genome dedup F1 vs GT: **0.461** (vs 0.541 hysteresis — traded -0.08 F1 for metagenomic recall).
+9-genome dedup F1 vs GT: **0.332** under the canonical `benchmark.nine_genome.eval_regions` metric (vs v4.1-hysteresis **0.488** — a -0.156 F1 trade for metagenomic recall). The older **0.461 vs 0.541** pair used `full_pipeline_eval.py`'s greedy-pairing metric and must not be compared to the formal 0.488 v4.1 number.
 OER004256: **1,230 regions** (vs hysteresis 254), AS-recall **37%** (vs 12%), 15/15 original novel candidates preserved.
 
 Use this point for metagenomic applications (OER004256, environmental samples). For 9-genome benchmarking (paper tables), continue using `val_frozen_fused` / v4.1 multi-scale hysteresis.

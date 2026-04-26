@@ -1,0 +1,53 @@
+{
+  "method": "E10_h64_lr1e3_b32_thr0.3",
+  "source_csv": "/data/muskliu/npmaster/experiments/step2_per_token/round2/E10_h64_lr1e3_b32/9g_regions/regions_thr0.3.csv",
+  "nine_genome": {
+    "summary": {
+      "bench": {
+        "recall": 0.49836065573770494,
+        "precision": 0.4444444444444444,
+        "f1": 0.4698608964451314,
+        "dedup_precision": 0.42042042042042044,
+        "dedup_f1": 0.456084701444554,
+        "tp_recall": 152,
+        "tp_precision": 148,
+        "n_gt": 305,
+        "n_pred": 333,
+        "unique_gt_precision_tp": 140,
+        "duplicate_precision_tp": 8,
+        "max_preds_per_gt": 3
+      },
+      "strict": {
+        "recall": 0.42295081967213116,
+        "precision": 0.38738738738738737,
+        "f1": 0.4043887147335423,
+        "dedup_precision": 0.38738738738738737,
+        "dedup_f1": 0.4043887147335423,
+        "tp_recall": 129,
+        "tp_precision": 129,
+        "n_gt": 305,
+        "n_pred": 333,
+        "unique_gt_precision_tp": 129,
+        "duplicate_precision_tp": 0,
+        "max_preds_per_gt": 1
+      }
+    },
+    "bucket_recall_bench": {
+      "<5kb": "7/48 (0.146)",
+      "5-10kb": "42/89 (0.472)",
+      "10-20kb": "41/85 (0.482)",
+      "20-50kb": "44/61 (0.721)",
+      ">=50kb": "18/22 (0.818)"
+    },
+    "dedup_f1_ci95_bench": [
+      0.316093886609725,
+      0.5620986521769812
+    ],
+    "length_stats": {
+      "n": 333,
+      "median": 12288,
+      "min": 2048,
+      "max": 167936
+    }
+  }
+}

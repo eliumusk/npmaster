@@ -9,7 +9,7 @@ Biosynthetic Gene Cluster (BGC) detection and discovery on bacterial genomes and
 | **9-genome benchmark** (paper results) | `v4.1 multi-scale hysteresis` | hand-tuned rule | dedup F1 = **0.4878** (9g) | `scripts/decode/v4_1.py`, `scripts/evaluate/v4_1_multiscale.py` |
 | **Metagenomes** (OER004256 + similar) | **`v4.1-learned`** (2026-04-23) | 1D CNN, trained | 1,230 OER regions (vs hysteresis 254), 37% AS-recall (vs 12%) | `scripts/decode/v4_1_learned.py` |
 
-The learned decoder closes the ~8× antiSMASH:v4.1 region-count gap that the hand-tuned `min_support_windows=3` rule opens on short metagenomic contigs, at a cost of 9g F1 0.461 vs 0.541. See [`docs/learned-decoder.md`](docs/learned-decoder.md).
+The learned decoder closes the ~8× antiSMASH:v4.1 region-count gap that the hand-tuned `min_support_windows=3` rule opens on short metagenomic contigs. Under the canonical 9g metric it is a metagenome-only tradeoff: 9g dedup_F1 drops from v4.1-hysteresis 0.488 to 0.332. The older 0.461 vs 0.541 numbers use a different greedy-pairing metric and are not comparable to the formal table. See [`docs/learned-decoder.md`](docs/learned-decoder.md).
 
 For BGC-type classification, `defrag_v2`'s CNN head (top-1 82.7% on 9g) is stronger than v4.1's Stage-2 LR (70.5%) — both type annotations are merged via the existing `scripts/classify/{v4_1,defrag_v2}_regions.py` scripts. defrag_v2 detection is **retired** (redundant vs v4.1-learned's 1,230 ≫ 93 regions); its CNN remains in the pipeline only as a second-opinion type labeler.
 
