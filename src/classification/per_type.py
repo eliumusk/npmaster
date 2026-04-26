@@ -1,9 +1,9 @@
 """Shared per-type classification helpers (v4.1 Stage-2 LR + region pairing).
 
 Used by:
-  - scripts/evaluate/classification_v4_1_nine_genome.py
+  - scripts/evaluate/classification_evo2_lr_nine_genome.py
   - scripts/evaluate/classification_defrag_v2_nine_genome.py
-  - scripts/classify/v4_1_regions.py
+  - scripts/classify/evo2_lr_regions.py
 """
 from __future__ import annotations
 

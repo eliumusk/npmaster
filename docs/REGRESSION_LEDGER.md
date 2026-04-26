@@ -1,134 +1,67 @@
 # Regression Ledger
 
-The numbers any refactor must NOT break. Frozen 2026-04-23 before the scripts/src reorganization.
+This ledger lists the active numbers after the 2026-04-26 mainline reset. Historical experiments live in `_archive/2026-04-26-mainline-reset/` and are not active claims.
 
-If a commit after this date reports a number outside the listed CI (or changes a point estimate by more than rounding), that is a regression — revert.
+## Formal 9-Genome Mainline
 
-## Primary detection metrics (9-genome)
+| Mainline | Metric | Value | Artifact | Reproduce |
+|---|---|---:|---|---|
+| `evo2_lr_multiscale` | dedup F1 | **0.4878** (CI95 0.345-0.609) | `experiments/evo2_lr_multiscale/nine_genome_readout.json` | `scripts/evaluate/evo2_lr_multiscale.py` |
+| `evo2_lr_multiscale` | bench precision | **0.5976** | same | same |
+| `evo2_lr_multiscale` | bench recall | **0.4590** | same | same |
+| `evo2_lr_multiscale` | bench F1 | **0.5192** | same | same |
+| `evo2_lr_multiscale` | strict F1 | **0.4299** (CI95 0.284-0.564) | same | same |
 
-| # | Metric | Value | Source artifact | Reproduce script |
-|---|---|---|---|---|
-| 1 | v4.1 multi-scale ensemble dedup_F1 | **0.4878** (CI95 0.345–0.609) | `experiments/evo2_first_principles/v4_1_final_readout.json` | `scripts/evaluate/v4_1_multiscale.py` |
-| 2 | v4.1 bench_F1 / precision / recall | 0.5192 / 0.5976 / 0.4590 | same | same |
-| 3 | v4.1 strict_F1 | 0.4299 (CI95 0.284–0.564) | same | same |
-| 4 | v4 single-scale (w=8192) dedup_F1 | 0.4869 (CI95 0.344–0.611) | `v4_1_final_readout.json` → `primary_only` block | `scripts/evaluate/honest_readout.py` |
-| 5 | defrag_v2_ms10_s099 dedup_F1 (w=8192/s=2048, start=0.99/extend=0.95/ms=10) | **0.4385** (precision 0.4714, n_pred 140) | `configs/operating_points.yaml` lines 58–79 | `scripts/evaluate/reproduce_defrag_v2_nine_genome.py` |
+Formal benchmark rule: no thresholds, operating points, model families, or hyperparameters may be selected on 9-genome.
 
-Frozen operating points: `configs/experiments/evo2_first_principles_v4_1_frozen.yaml`, `configs/operating_points.yaml`.
+## OER004256 Handoff
 
-## Classification metrics (9-genome vs antiSMASH, IoU ≥ 0.3)
+| Mainline | Metric | Value | Artifact |
+|---|---|---:|---|
+| `evo2_lr_learned_decoder` | detected regions | **1,230** | `experiments/evo2_lr_multiscale/oer004256_learned_decoder/regions.csv` |
+| `evo2_lr_learned_decoder` | antiSMASH-missed candidates | **429** | `experiments/evo2_lr_multiscale/oer004256_learned_decoder/novel_triage/novel_triage_full.csv` |
+| `evo2_lr_learned_decoder` | OER same-script AS-recall | **0.2065** (408 / 1,976) | `experiments/evo2_lr_multiscale/oer004256_learned_decoder/oer_compare.json` |
+| `evo2_lr_learned_decoder` | canonical 9g dedup F1 | **0.3323** | `experiments/evo2_lr_multiscale/learned_decoder_nine_genome_readout.json`; metagenome tradeoff, not formal 9g replacement |
 
-| # | Metric | Value | Source |
-|---|---|---|---|
-| 6 | defrag_v2 CNN per-type top-1 | **0.827** (top-any 0.971, n=139 pairs) | `experiments/nine_genome/defrag_v2_classification.json` |
-| 7 | v4.1 Stage-2 LR per-type top-1 | ~0.705 (top-any 0.827) | eval script output |
-| 8 | defrag_v2 per-type detail (top 4) | Terpene F1=0.973 · Polyketide 0.843 · RiPP 0.833 · NRP 0.78 | same as #6 |
+The older learned-decoder `0.461` number used a different greedy-pairing metric and must not be compared to the formal `0.4878` number.
 
-Note on #6: class-order bug fixed 2026-04-23 across all CNN inference scripts. See `memory/reference_cnn_class_order.md`.
+## Per-Token U-Net Diagnostic Branch
 
-## OER004256 handoff (wet-lab deliverable)
+| Candidate | Metric | Value | Artifact |
+|---|---|---:|---|
+| E10 threshold 0.3 | OER AS-recall | **0.3117** | `experiments/evo2_per_token_unet/oer004256/readouts/e10_thr03.json` |
+| E10 threshold 0.4 | OER AS-recall | 0.2687 | `experiments/evo2_per_token_unet/oer004256/readouts/e10_thr04.json` |
+| E10 threshold 0.5 | OER AS-recall | 0.2485 | `experiments/evo2_per_token_unet/oer004256/readouts/e10_thr05.json` |
+| E11 threshold 0.3 / 0.4 / 0.5 | OER AS-recall | 0.2738 / 0.2389 / 0.1690 | `experiments/evo2_per_token_unet/oer004256/readouts/` |
+| E10 threshold 0.3 | 9g dedup F1 | **0.4561** | `experiments/evo2_per_token_unet/nine_genome/E10_h64_lr1e3_b32/readouts/` |
+| E10 threshold 0.4 | 9g dedup F1 | **0.4664** | same |
+| E10 threshold 0.5 | 9g dedup F1 | **0.4751** | same |
+| E11 threshold 0.3 / 0.4 / 0.5 | 9g dedup F1 | 0.4470 / 0.4500 / 0.4544 | `experiments/evo2_per_token_unet/nine_genome/E11_h64_lr1e3_b64/readouts/` |
 
-| # | Metric | Value |
-|---|---|---|
-### v4.1 hysteresis (frozen baseline, 2026-04-23)
+Status: threshold-clean diagnostic, not a formal 9-genome claim. Thresholds 0.3 and 0.4 are OER-driven; threshold 0.5 is a default reference. The U-Net model family was advanced after 9-genome Round-1 readouts, so promotion requires a fresh pre-registered selection protocol.
 
-| # | Metric | Value |
-|---|---|---|
-| 9 | v4.1 regions detected | 254 (median 12.3 kb) |
-| 10 | v4.1 type distribution | Polyketide 150 · NRP 78 · Terpene 17 · RiPP 4 · Other 4 · Saccharide 1 |
-| 11 | defrag_v2 regions detected | 93 (median 26.6 kb) |
-| 12 | Inter-tool type agreement | 87.4% (222 / 254) |
-| 13 | Wet-lab candidates (both = Terpene or RiPP) | **18** |
+## Reproduce Commands
 
-Artifacts: `experiments/OER004256/v41_regions_fully_typed.csv`, `experiments/OER004256/OER004256_wrap_up_report.json`.
+```bash
+python scripts/evaluate/evo2_lr_multiscale.py \
+  --primary-preds <server-primary-preds-dir> \
+  --short-preds <server-short-preds-dir> \
+  --gt-json /data/syh/benchmark/nine_genome/ground_truth.json \
+  --out-json experiments/evo2_lr_multiscale/nine_genome_readout.json
+```
 
-### v4.1-learned decoder (preferred, 2026-04-23)
+```bash
+python scripts/evaluate/evo2_per_token_unet_nine_genome.py   --regions-csv <regions.csv>   --method-name evo2_per_token_unet_E10_thr0.3   --gt-json /data/syh/benchmark/nine_genome/ground_truth.json   --out-json <readout.json>
+```
 
-| # | Metric | Value |
-|---|---|---|
-| 14 | v4.1-learned regions detected (prim_thr=0.95, short_thr=0.98) | **1,230** (primary 531 + short 699) |
-| 15 | AS-recall on OER | **37%** (vs 12% hysteresis) |
-| 16 | 9g dedup F1 vs GT (learned multi-scale, `full_pipeline_eval.py` metric) | 0.461 (vs 0.541 hysteresis — Δ=-0.08; same metric both sides) |
-| 16b | 9g dedup F1 vs GT (learned multi-scale, canonical bench-mode) | **0.332** (CI95 0.224–0.437, n_pred=363, bench_P=0.262, bench_R=0.528) — vs hysteresis **0.488** in the same metric → **Δ=-0.156**. Source: rerun 2026-04-24 via `benchmark/nine_genome.eval_regions`. The -0.08 "regression accepted" framing in `docs/learned-decoder.md` used `full_pipeline_eval.py`'s greedy-pairing F1, which is **not** the metric used for the published hysteresis number. See `memory/project_v41_learned_9g_metric_confusion.md`. |
-| 17 | 15 original novel candidates preserved | 15 / 15 |
-| 18 | Novel (antiSMASH-missed) candidates | **429** |
-| 19 | Novel passing HMM+MIBiG quality filter | 263 (61%) |
-| 20 | Top wet-lab cohort (STRONG × NOVEL/LIKELY_NOVEL) | **86** |
-| 21 | Inter-tool type agreement (v4.1 ∩ defrag_v2) | 80% (987 / 1,230) |
-| 22 | Original 15 — HMM STRONG verdict | 14 / 15 |
-| 23 | Original 15 — MIBiG novelty verdicts | 0 KNOWN · 3 LIKELY_NOVEL · 12 VARIANT |
-| 24 | Prior FDR on 9g (≥0.98 score, AS-missed) — P(GT-hit) | ≥ 0.53 (lower bound) |
+The E10/E11 per-token region CSVs are server-side input caches. If absent after a cleanup,
+regenerate them from the promoted checkpoints/probability shards before rerunning this command.
 
-Decoder ckpt: `experiments/evo2_first_principles/decoder_v1/runs/c00_cnn3_h32_antismash_bce/decoder.pt` (server-side).
-Artifacts: `experiments/OER004256/v4_1_learned/regions_fully_typed.csv`, `experiments/OER004256/v4_1_learned/novel_triage/novel_triage_full.csv`.
-See: `docs/learned-decoder.md`, `docs/oer004256-novel-triage.md`.
+## Local Verification After Refactors
 
-### Per-token U-Net readouts (exploratory, 2026-04-26)
+```bash
+python -m py_compile $(git ls-files '*.py')
+python -m pytest tests/ -q
+```
 
-These are exploratory readouts, not promoted regression gates. OER matching uses `scripts/evaluate/oer_per_token_compare.py` with asymmetric 50% antiSMASH-region overlap. 9-genome matching uses `scripts/evaluate/per_token_readout.py` and canonical `benchmark.nine_genome.eval_regions`.
-
-| # | Metric | Value |
-|---|---|---|
-| 25 | E10 U-Net thr=0.3 OER AS-recall | **0.3117** (616 / 1,976 antiSMASH regions; 1,377 predictions; 470 novel) |
-| 26 | E10 U-Net thr=0.4 OER AS-recall | 0.2687 (531 / 1,976; 1,271 predictions; 388 novel) |
-| 27 | E11 U-Net thr=0.3 OER AS-recall | 0.2738 (541 / 1,976; 1,154 predictions; 382 novel) |
-| 28 | Same-script v4.1-learned OER AS-recall for comparison | 0.2065 (408 / 1,976; 1,230 predictions; 429 novel) |
-| 29 | E10 U-Net thr=0.3 9g dedup_F1 | **0.4561** (CI95 0.3161–0.5621; bench_P=0.4444, bench_R=0.4984, strict_F1=0.4044, n_pred=333) |
-| 30 | E10 U-Net thr=0.4 9g dedup_F1 | **0.4664** (CI95 0.3240–0.5733; bench_P=0.4809, bench_R=0.4852, strict_F1=0.4136, n_pred=314) |
-| 31 | E10 U-Net thr=0.5 9g dedup_F1 | **0.4751** (CI95 0.3305–0.5833; bench_P=0.4983, bench_R=0.4852, strict_F1=0.4243, n_pred=303) |
-| 32 | E11 U-Net thr=0.3 / 0.4 / 0.5 9g dedup_F1 | 0.4470 / 0.4500 / 0.4544 |
-
-Current interpretation: E10 is the only promising per-token U-Net checkpoint. `thr=0.3` is the OER recall-first point, and `thr=0.4` is the OER conservative candidate-count tradeoff; neither threshold is selected from 9g. `thr=0.5` is a default-threshold reference. The checkpoint/config family came from a round2 grid that was later read out on 9g, so these are threshold-clean diagnostics but not yet fully pre-registered formal candidates.
-
-Artifacts: `experiments/step2_per_token/OER_UNET_READOUT.md`, `experiments/step2_per_token/round2/E10_h64_lr1e3_b32/9g_readouts/`, `experiments/step2_per_token/round2/E11_h64_lr1e3_b64/9g_readouts/`; OER raw outputs remain under `/data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/readouts/`.
-
-## Known blind spot (do not attempt to "fix" as part of refactor)
-
-- GCA_000154945.1 <5 kb recall = 7/48 (0.146) across all models. Root-cause in `docs/reports/genome_154945_diagnostic.md`. Needs native w=2048 training (~20 A800-h), not an architecture change.
-
-## Baselines (for comparison context)
-
-- BGC-Prophet 9-genome: dedup_F1 0.3911 · strict_F1 0.3018 · bench_F1 0.3933
-- antiSMASH / DeepBGC / GECCO: live in `scripts/evaluate/baselines_nine_genome.py` outputs (server-side data).
-
-## Reproduce commands (post-refactor script paths will change; content must still produce these numbers)
-
-1. **v4.1 honest readout** → produces #1–3
-   ```
-   python scripts/evaluate/v4_1_multiscale.py \
-     --primary-preds experiments/evo2_first_principles/9g_preds_lrA1_w8192 \
-     --short-preds   experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
-     --gt-json /data/syh/benchmark/nine_genome/ground_truth.json \
-     --out-json experiments/evo2_first_principles/v4_1_final_readout.json
-   ```
-2. **defrag_v2 9-genome** → produces #5
-   ```
-   python scripts/evaluate/reproduce_defrag_v2_nine_genome.py \
-     --checkpoint /data/muskliu/npmaster/data/phase3/stage3_hardneg_v1/best/best_tk100-ms0-hnw4.pt \
-     --window 8192 --stride 2048 \
-     --start-threshold 0.99 --extend-threshold 0.95 --min-support-windows 10 \
-     --gt-json /data/syh/benchmark/nine_genome/ground_truth.json
-   ```
-3. **defrag_v2 classification** → produces #6, #8
-   ```
-   python scripts/evaluate/classification_defrag_v2_nine_genome.py \
-     --v4-1-primary-preds experiments/evo2_first_principles/9g_preds_lrA1_w8192 \
-     --v4-1-short-preds   experiments/evo2_first_principles/short_bgc/9g_preds_lrA1_w4096 \
-     --defrag-v2-preds-dir /data/muskliu/npmaster/data/phase4/defrag_v2_ms10_s099_preds_stride2048 \
-     --antismash-dir /data/syh/benchmark/nine_genome/results/antismash \
-     --bgc-annotations /data/muskliu/npmaster/data/bgc_annotations.csv \
-     --agg max
-   ```
-4. **v4.1 classification** → produces #7 (same flags as above, different script name).
-5. **OER004256 labeling** → produces #9–13 (both v4.1 and defrag_v2 label scripts; server-side FASTA).
-
-## Verification protocol after refactor
-
-Since #1–8 require server-side data, local verification after the reorganization is limited to:
-
-- `python -m py_compile` on every moved script → must succeed.
-- `--help` on each renamed entrypoint → must return without error.
-- `pytest tests/` (if tests exist) → must pass.
-- OER004256 CSV outputs (#9–13) are committed to the repo — diffable locally.
-
-Full-number regression is deferred to the next server session; any discrepancy there is a blocker.
+Full number reproduction requires server-side FASTA/features/checkpoints.

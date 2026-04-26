@@ -1,4 +1,4 @@
-"""Region decoder — wraps the hysteresis decoder from scripts/postprocess_v2.
+"""Region decoder wrapper around `decoding.postprocess`.
 
 Public API:
   WindowScore(contig, start, end, score)
@@ -7,13 +7,7 @@ Public API:
 """
 from __future__ import annotations
 
-import sys
-from dataclasses import dataclass
-from pathlib import Path
-
-_REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(_REPO_ROOT / "src"))
-from decoding.postprocess import WindowScore, decode_regions_hysteresis  # noqa: E402
+from decoding.postprocess import WindowScore, decode_regions_hysteresis
 
 
 def decode_regions(
@@ -25,7 +19,7 @@ def decode_regions(
 ) -> list[tuple[str, int, int, float]]:
     """Decode BGC regions from per-window scores under a hysteresis policy.
 
-    Parameters mirror `configs/experiments/evo2_first_principles_v4_frozen.yaml`.
+    Parameters mirror `configs/evo2_lr_multiscale.yaml`.
     Returns list of (contig, start, end, max_score_within_region).
     """
     raw = decode_regions_hysteresis(

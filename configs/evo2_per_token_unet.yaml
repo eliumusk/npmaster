@@ -1,0 +1,43 @@
+# Active exploratory branch: Evo2 per-token U-Net.
+
+name: evo2_per_token_unet
+status: exploratory_not_formal_9genome
+
+features:
+  layer: blocks.20.mlp.l3
+  projection_dim: 128
+  train_window: 16384
+  inference_window: 8192
+  inference_stride: 2048
+  latent_bp_per_token: 8
+
+model:
+  kind: unet_1d_per_token
+  hidden: 64
+  loss: dice_bce
+  current_checkpoint_label: E10_h64_lr1e3_b32
+
+recommended_thresholds:
+  oer_recall_first: 0.3
+  oer_conservative: 0.4
+  default_reference: 0.5
+
+status_note: >-
+  E10/E11 threshold labels are OER/default driven, not selected from 9-genome.
+  The model family has 9g-exposed Round-1 selection history, so current numbers
+  are diagnostic until a pre-registered checkpoint and threshold rule is run.
+
+metrics_snapshot:
+  e10_oer_thr_0_3_as_recall: 0.3117
+  e10_oer_thr_0_3_n_pred: 1377
+  e10_9genome_thr_0_3_dedup_f1: 0.4561
+  e10_9genome_thr_0_4_dedup_f1: 0.4664
+  e10_9genome_thr_0_5_dedup_f1: 0.4751
+
+artifacts:
+  readout: experiments/evo2_per_token_unet/OER_UNET_READOUT.md
+  nine_genome_e10: experiments/evo2_per_token_unet/nine_genome/E10_h64_lr1e3_b32/readouts/
+  nine_genome_e11: experiments/evo2_per_token_unet/nine_genome/E11_h64_lr1e3_b64/readouts/
+  server_round2_root: /data/muskliu/npmaster/experiments/step2_per_token/round2
+  server_oer_root: /data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048
+  server_9g_features: /data/muskliu/npmaster/experiments/step2_per_token/9g_w8192_s2048

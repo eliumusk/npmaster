@@ -8,10 +8,10 @@ defrag_v2's ContextFullModel natively emits 8-class per-window probabilities
 different order that turned out to be wrong, but the numeric values are correct).
 
 For each defrag_v2 region, we max-aggregate the 7 BGC-type probs across
-windows overlapping the region (same aggregation as scripts/classify/v4_1_regions.py
+windows overlapping the region (same aggregation as scripts/classify/evo2_lr_regions.py
 for fair apples-to-apples), then argmax to get dominant type.
 
-Output: copy of regions CSV with added columns v41-style:
+Output: copy of regions CSV with added columns Evo2-LR-style:
   defrag_v2_type, defrag_v2_type_score, defrag_v2_type_top2, defrag_v2_type_scores
 """
 from __future__ import annotations

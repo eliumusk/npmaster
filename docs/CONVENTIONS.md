@@ -1,64 +1,46 @@
 # npmaster Conventions
 
-Rules for this repo. Pick one way, stick to it. If you want to break a rule, change the rule first.
+Rules for the active tree after the 2026-04-26 mainline reset.
 
-## 1. Directory Responsibilities
+## Directory Responsibilities
 
 | Dir | Contains | Does NOT contain |
 |---|---|---|
-| `src/` | Importable library code: models, data loaders, decoders, evaluation math. Pure Python, no `argparse`, no `__main__` that does real work. | CLI entrypoints, output files, configs. |
-| `scripts/` | CLI entrypoints. One verb per file. Imports from `src/`. Never imports from another script. | Shared logic (lift to `src/`), outputs, configs. |
-| `experiments/` | Evaluation/inference OUTPUTS only (JSON, CSV, plots, per-target `README.md`). Organized by benchmark/target. | Code. Raw sweep trial debris. |
-| `configs/` | YAML/JSON parameterizing runs. | Code, credentials, absolute paths. |
-| `docs/` | Human-facing Markdown. | Auto-generated reports. |
-| `_backups/` | Local-only model checkpoint backups. Never deleted, never pushed to remote. | Anything else. |
-| `_archive/` | Retired code/results kept for provenance. Single folder at repo root. Gitignored. | Active work. |
+| `src/` | Importable library code for active pipelines. | CLI entrypoints, argparse dispatch, output files. |
+| `scripts/` | CLI entrypoints grouped by verb. | Shared logic that belongs in `src/`. |
+| `experiments/` | Promoted active JSON/CSV/MD/plots. | Code, raw sweep debris, retired outputs. |
+| `configs/` | Active YAML configs. | Code, credentials, stale experiment configs. |
+| `docs/` | Current human-facing docs. | Historical stage reports. |
+| `_archive/` | Retired local provenance, gitignored. | Active claims. |
 
-No `tmp/`, `misc/`, `scratch/` anywhere.
+## Naming
 
-## 2. Naming (non-negotiable)
+- Active original-v4.1 line is named `evo2_lr_multiscale`.
+- Active per-token U-Net line is named `evo2_per_token_unet`.
+- Use `nine_genome`, not `9genome`, in committed names.
+- Do not add committed iteration suffixes: `_FIXED`, `_v1`, `_v2`, `_tmp`, `_old`, `_new`, `_debug`, `_final`, `_final2`.
+- Hyperparameter tags may appear only in result subdirectories or config fields, not module paths.
 
-- **Version suffix: `v4_1`, not `v41`.** Matches `evo2_first_principles_v4_1_frozen.yaml`. `v4_10` vs `v41_0` is a trap we're avoiding.
-- **Benchmark: `nine_genome`, not `9genome`.** Python identifiers cannot start with a digit.
-- **Tool/model names:** bare name for the artifact family (`defrag_v2`), hyperparameter-tagged form (`defrag_v2_ms10_s099`) only in result filenames or config `run_name`s, never in module paths.
-- **Scripts: verb-first.** `extract_embeddings.py`, not `embedding_extractor.py`. Scripts are actions; `src/` holds the nouns.
-- **Forbidden suffixes in committed names:** `_FIXED`, `_v1`, `_v2` (for iteration), `_tmp`, `_old`, `_new`, `_debug`, `_final`, `_final2`. Iterate with git. If a file is wrong, rewrite it in place and commit.
+## Mainline Scope
 
-## 3. `scripts/` Subgroups
+Only two detection directions are active:
 
-Group by verb, not by model:
+- `evo2_lr_multiscale`: formal 9-genome mainline and OER learned-decoder handoff.
+- `evo2_per_token_unet`: exploratory candidate, not formal until a clean pre-registered selection rule is run.
 
-- `extract/` — produce embeddings/features from raw sequence.
-- `inference/` — run a trained model over inputs, emit raw scores.
-- `decode/` — turn scores into BGC region calls (postprocessing, tiling).
-- `classify/` — per-type classification (Stage 2 LR, CNN head).
-- `evaluate/` — score predictions against ground truth.
-- `train/` — fit models.
-- `baselines/` — third-party tool wrappers (antiSMASH, DeepBGC, etc.).
-- `plot/` — figure generation only.
-- `diagnose/` — one-off investigation scripts.
-- `utils/` — sync, snapshot, housekeeping.
+Everything else belongs in `_archive/2026-04-26-mainline-reset/` unless explicitly revived.
 
-**If a script doesn't fit a group, it goes in `utils/`, not the top level. Top-level `scripts/` has zero loose `.py` files.**
+## Scripts
 
-## 4. Hardcoded Paths
+- Group by verb: `extract/`, `inference/`, `decode/`, `classify/`, `evaluate/`, `train/`, `utils/`.
+- Scripts may insert `src/` onto `sys.path` once near the top.
+- Scripts must not import other scripts.
 
-- No absolute `/data/...`, `/root/...`, `/Users/...` in committed code.
-- Genome IDs, species names, sample lists live in `configs/` or get passed as `argparse` args.
-- Repo-relative paths: `pathlib.Path(__file__).resolve().parents[N]`. Never `os.getcwd()`.
-- Checkpoint paths: resolved via a config key, not string-concatenated in code.
+## Experiments
 
-## 5. `experiments/` Layout
+Active result directories:
 
-- Top level = one directory per active target: `nine_genome/`, `OER004256/`, `evo2_first_principles/`.
-- Sweep trial subdirs (100+ `*-trial-NNN`) go to `_archive/` once the sweep has a summary CSV + README.
-- Every results directory contains a `README.md` stating: what model, what config, what operating point, what the numbers mean. No orphan JSONs.
-- Frozen operating points (lockbox-validated) are committed; exploratory runs are gitignored unless promoted.
+- `experiments/evo2_lr_multiscale/`
+- `experiments/evo2_per_token_unet/`
 
-## 6. Anti-Patterns
-
-- `sys.path.insert(0, ...)` — fix the `src/` layout instead. Never patch paths at runtime.
-- Scripts importing scripts — shared logic belongs in `src/`.
-- Silent suffix mutation (`_FIXED`, `_v2`, `_final`) — rewrite in place, let git hold history.
-- Two directories with the same name and different roles. The `src/` copy keeps the name; `scripts/` sides become verb-based.
-- Committing `__pycache__/`.
+Every active result should be documented in `docs/REGRESSION_LEDGER.md` or a local README.

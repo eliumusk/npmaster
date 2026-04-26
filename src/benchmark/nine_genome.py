@@ -22,11 +22,9 @@ still work as overrides for ad hoc diagnostics.
 """
 from __future__ import annotations
 
-import argparse
 import csv
 import json
 import statistics
-import sys
 from collections import defaultdict
 from collections import Counter
 from collections.abc import Sequence
@@ -35,7 +33,6 @@ from pathlib import Path
 import yaml
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(REPO_ROOT / "src"))
 from decoding.postprocess import WindowScore, decode_regions_hysteresis  # noqa: E402
 
 DEFAULT_OPERATING_POINTS = REPO_ROOT / "configs" / "operating_points.yaml"
@@ -251,7 +248,7 @@ def eval_regions(
     }
 
 
-def resolve_params(args: argparse.Namespace) -> dict:
+def resolve_params(args: object) -> dict:
     """Merge CLI flags over a yaml operating point. CLI always wins when set."""
     params: dict = {
         "start_threshold": None,
@@ -432,59 +429,3 @@ def evaluate_results_dir(
         "per_genome": per_genome,
     }
 
-
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--base", default="/data/syh/benchmark/nine_genome")
-    parser.add_argument("--results-dir", default=None, help="Defaults to <base>/results/npmaster")
-    parser.add_argument(
-        "--genome-ids",
-        default=None,
-        help="Optional comma-separated subset of genome IDs (without .fna) to score.",
-    )
-    parser.add_argument(
-        "--operating-point",
-        default=None,
-        help="Name of a frozen operating point in operating_points.yaml "
-        "(e.g. val_frozen_fused, tuned_v2).",
-    )
-    parser.add_argument(
-        "--operating-points-file",
-        default=str(DEFAULT_OPERATING_POINTS),
-        help="Path to operating_points.yaml (defaults to configs/operating_points.yaml).",
-    )
-    parser.add_argument("--threshold", type=float, default=None,
-                        help="Legacy single-threshold shortcut (sets both start and extend).")
-    parser.add_argument("--start-threshold", type=float, default=None)
-    parser.add_argument("--extend-threshold", type=float, default=None)
-    parser.add_argument("--max-gap", type=int, default=None)
-    parser.add_argument("--length-cap", type=int, default=None)
-    parser.add_argument("--min-support-windows", type=int, default=None)
-    parser.add_argument("--valley-threshold", type=float, default=None)
-    parser.add_argument("--valley-min-windows", type=int, default=None)
-    parser.add_argument(
-        "--score",
-        choices=("max_type", "bgc_score", "fused", "1_minus_isneg"),
-        default=None,
-        help="Optional score-family override for diagnostic, not-yet-promoted points.",
-    )
-    parser.add_argument("--out", default=None)
-    args = parser.parse_args()
-
-    params = resolve_params(args)
-
-    base = Path(args.base)
-    results_dir = Path(args.results_dir) if args.results_dir else base / "results" / "npmaster"
-    genome_ids = select_genome_ids(args.genome_ids)
-    out = evaluate_results_dir(base, results_dir, genome_ids, params)
-
-    if args.out:
-        out_path = Path(args.out)
-        out_path.parent.mkdir(parents=True, exist_ok=True)
-        with out_path.open("w") as f:
-            json.dump(out, f, indent=2)
-    print(json.dumps(out, indent=2))
-
-
-if __name__ == "__main__":
-    main()

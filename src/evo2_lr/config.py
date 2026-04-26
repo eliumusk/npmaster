@@ -7,7 +7,7 @@ a new OP here, they must document why it is prior-fixed.
 
 Two public recipes:
   - v4 single-scale (PRIMARY_OP / ALT_OP) — baseline
-  - v4.1 multi-scale ensemble (V4_1_SCALES) — mainline (+0.011 strict over v4)
+  - evo2_lr_multiscale (V4_1_SCALES) — formal mainline
 """
 from __future__ import annotations
 
@@ -41,10 +41,10 @@ DEFAULT_GEOMETRY = {"window": 8192, "stride": 2048}
 DEFAULT_LAYER = "blocks.20.mlp.l3"
 
 
-# --- v4.1 multi-scale ensemble (mainline) -------------------------------------
+# --- evo2_lr_multiscale mainline -------------------------------------
 # Primary scale = v4 alt OP at w=8192. Short rescue scale = w=4096 with ms=5
 # (natural min region = 8 kb) + length cap 10 kb (biological cutoff).
-# See plan §13 and `configs/experiments/evo2_first_principles_v4_1_frozen.yaml`.
+# See plan §13 and `configs/evo2_lr_multiscale.yaml`.
 
 V4_1_SCALES = {
     "primary": {
@@ -76,7 +76,7 @@ class ScaleConfig:
 
 @dataclass(frozen=True)
 class FrozenConfig:
-    """Loads `configs/experiments/evo2_first_principles_v4_1_frozen.yaml`."""
+    """Loads `configs/evo2_lr_multiscale.yaml`."""
     lr_weights_path: Path
     layer: str
     scales: dict  # {"primary": ScaleConfig, "short_rescue": ScaleConfig}
@@ -130,8 +130,8 @@ class FrozenConfig:
 
 
 def load_frozen_config(path: Path | str | None = None) -> FrozenConfig:
-    """Load the v4.1 frozen config yaml. Defaults to the repo-relative file."""
+    """Load the active evo2_lr_multiscale config yaml."""
     if path is None:
         repo_root = Path(__file__).resolve().parents[2]
-        path = repo_root / "configs" / "experiments" / "evo2_first_principles_v4_1_frozen.yaml"
+        path = repo_root / "configs" / "evo2_lr_multiscale.yaml"
     return FrozenConfig.from_yaml(Path(path))
