@@ -22,6 +22,10 @@ Formal benchmark rule: no thresholds, operating points, model families, or hyper
 | `evo2_lr_learned_decoder` | antiSMASH-missed candidates | **429** | `experiments/evo2_lr_multiscale/oer004256_learned_decoder/novel_triage/novel_triage_full.csv` |
 | `evo2_lr_learned_decoder` | OER same-script AS-recall | **0.2065** (408 / 1,976) | `experiments/evo2_lr_multiscale/oer004256_learned_decoder/oer_compare.json` |
 | `evo2_lr_learned_decoder` | canonical 9g dedup F1 | **0.3323** | `experiments/evo2_lr_multiscale/learned_decoder_nine_genome_readout.json`; metagenome tradeoff, not formal 9g replacement |
+| `evo2_per_token_unet` weak-negative BCE `thr0.50/min2kb` | detected regions | **2,199** | `experiments/evo2_per_token_unet/oer004256/weakneg_bce_w05_full/thr050_min2000/regions_typed.csv` |
+| `evo2_per_token_unet` weak-negative BCE `thr0.50/min2kb` | OER same-script AS-recall | **0.5703** | `experiments/evo2_per_token_unet/oer004256/weakneg_bce_w05_full/thr050_min2000/oer_compare.json` |
+| `evo2_per_token_unet` weak-negative BCE `thr0.50/min2kb` | antiSMASH-missed candidates | **579** | `experiments/evo2_per_token_unet/oer004256/weakneg_bce_w05_full/thr050_min2000/novel_triage/candidates_novel.csv` |
+| `evo2_per_token_unet` weak-negative BCE `thr0.50/min2kb` | first-pass wet-lab PASS after HMM/MIBiG | **171** | `experiments/evo2_per_token_unet/oer004256/weakneg_bce_w05_full/thr050_min2000/novel_triage/novel_triage_full.csv` |
 
 The older learned-decoder `0.461` number used a different greedy-pairing metric and must not be compared to the formal `0.4878` number.
 
@@ -37,8 +41,10 @@ The older learned-decoder `0.461` number used a different greedy-pairing metric 
 | E10 threshold 0.4 | 9g dedup F1 | **0.4664** | same |
 | E10 threshold 0.5 | 9g dedup F1 | **0.4751** | same |
 | E11 threshold 0.3 / 0.4 / 0.5 | 9g dedup F1 | 0.4470 / 0.4500 / 0.4544 | `experiments/evo2_per_token_unet/nine_genome/E11_h64_lr1e3_b64/readouts/` |
+| weak-negative BCE `thr0.70/min8kb` | 9g dedup F1 | **0.5094** | `experiments/evo2_per_token_unet/train_runs/full_weakneg_bce_w05_ddp4_gb64_seed0/9g_readouts/readout_thr070_min8000.json` |
+| weak-negative BCE `thr0.70/min8kb` | 9g bench precision / recall | 0.6199 / 0.4492 | same |
 
-Status: threshold-clean diagnostic, not a formal 9-genome claim. Thresholds 0.3 and 0.4 are OER-driven; threshold 0.5 is a default reference. The U-Net model family was advanced after 9-genome Round-1 readouts, so promotion requires a fresh pre-registered selection protocol.
+Status: diagnostic, not a formal 9-genome claim. E10/E11 thresholds 0.3 and 0.4 are OER-driven; threshold 0.5 is a default reference. The weak-negative model is the current OER handoff model, but its `thr0.70/min8kb` 9-genome point was selected diagnostically after 9-genome evaluation. Formal promotion still requires a fresh pre-registered selection protocol.
 
 ## Reproduce Commands
 

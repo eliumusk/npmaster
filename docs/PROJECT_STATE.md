@@ -12,9 +12,11 @@ This is the renamed original v4.1 line. It uses frozen Evo2 mean-pooled embeddin
 
 ## 2. `evo2_per_token_unet`
 
-This is the per-token U-Net candidate branch. It is useful for short metagenomic contigs and currently has promising OER readouts, but it is not a formal 9-genome claim because the model-family selection history saw 9-genome results.
+This is the per-token U-Net candidate branch. It is useful for short metagenomic contigs and currently has a weak-negative BCE wet-lab handoff on OER004256. It is not a formal 9-genome claim because the model-family selection history saw 9-genome results and the current diagnostic operating points were not pre-registered.
 
 - Readout: `experiments/evo2_per_token_unet/OER_UNET_READOUT.md`
+- Current handoff: `experiments/evo2_per_token_unet/WEAKNEG_OER_READOUT.md`
+- Wet-lab top candidates: `experiments/evo2_per_token_unet/oer004256/weakneg_bce_w05_full/thr050_min2000/novel_triage/wetlab_candidates_top75.csv`
 - Config: `configs/evo2_per_token_unet.yaml`
 - Status: diagnostic until a clean pre-registered checkpoint and threshold rule is executed.
 

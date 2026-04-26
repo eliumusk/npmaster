@@ -5,15 +5,14 @@
     "antiSMASH",
     "BGC-Prophet",
     "DeepBGC",
-    "Evo2-LR short-arm",
     "WeakNeg U-Net t0.70 min8kb"
   ],
   "contigs": [
     "KK037233.1",
     "KK037235.1",
+    "KK037236.1",
     "KK037244.1",
     "KK037234.1",
-    "KK037236.1",
     "KK037238.1",
     "KK037240.1",
     "KK037245.1",
@@ -24,7 +23,6 @@
     "antiSMASH": 30,
     "BGC-Prophet": 16,
     "DeepBGC": 87,
-    "Evo2-LR short-arm": 31,
     "WeakNeg U-Net t0.70 min8kb": 21
   }
 }

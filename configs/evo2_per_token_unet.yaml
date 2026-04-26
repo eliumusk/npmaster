@@ -14,28 +14,34 @@ features:
 model:
   kind: unet_1d_per_token
   hidden: 64
-  loss: dice_bce
-  current_checkpoint_label: E10_h64_lr1e3_b32
+  loss: weak_negative_bce
+  current_checkpoint_label: full_weakneg_bce_w05_ddp4_gb64_seed0
 
 recommended_thresholds:
-  oer_recall_first: 0.3
-  oer_conservative: 0.4
-  default_reference: 0.5
+  oer_discovery:
+    threshold: 0.50
+    min_len_bp: 2000
+  nine_genome_qc:
+    threshold: 0.70
+    min_len_bp: 8000
 
 status_note: >-
-  E10/E11 threshold labels are OER/default driven, not selected from 9-genome.
-  The model family has 9g-exposed Round-1 selection history, so current numbers
-  are diagnostic until a pre-registered checkpoint and threshold rule is run.
+  The weak-negative BCE model is the current OER wet-lab handoff model. Its
+  OER discovery operating point is recall-first and must be followed by
+  HMM/MIBiG triage. Its 9-genome operating point is diagnostic only; formal
+  promotion requires a pre-registered checkpoint and threshold rule.
 
 metrics_snapshot:
-  e10_oer_thr_0_3_as_recall: 0.3117
-  e10_oer_thr_0_3_n_pred: 1377
-  e10_9genome_thr_0_3_dedup_f1: 0.4561
-  e10_9genome_thr_0_4_dedup_f1: 0.4664
-  e10_9genome_thr_0_5_dedup_f1: 0.4751
+  weakneg_oer_thr_0_50_min2kb_as_recall: 0.5703
+  weakneg_oer_thr_0_50_min2kb_n_pred: 2199
+  weakneg_oer_thr_0_50_min2kb_antismash_missed: 579
+  weakneg_oer_thr_0_50_min2kb_wetlab_pass: 171
+  weakneg_9genome_thr_0_70_min8kb_dedup_f1: 0.5094
 
 artifacts:
   readout: experiments/evo2_per_token_unet/OER_UNET_READOUT.md
+  weakneg_readout: experiments/evo2_per_token_unet/WEAKNEG_OER_READOUT.md
+  wetlab_top75: experiments/evo2_per_token_unet/oer004256/weakneg_bce_w05_full/thr050_min2000/novel_triage/wetlab_candidates_top75.csv
   nine_genome_e10: experiments/evo2_per_token_unet/nine_genome/E10_h64_lr1e3_b32/readouts/
   nine_genome_e11: experiments/evo2_per_token_unet/nine_genome/E11_h64_lr1e3_b64/readouts/
   server_round2_root: /data/muskliu/npmaster/experiments/step2_per_token/round2

@@ -5,7 +5,6 @@
     "antiSMASH",
     "BGC-Prophet",
     "DeepBGC",
-    "Evo2-LR short-arm",
     "WeakNeg U-Net t0.70 min8kb"
   ],
   "contigs": [
@@ -17,7 +16,6 @@
     "antiSMASH": 43,
     "BGC-Prophet": 30,
     "DeepBGC": 155,
-    "Evo2-LR short-arm": 64,
     "WeakNeg U-Net t0.70 min8kb": 39
   }
 }
