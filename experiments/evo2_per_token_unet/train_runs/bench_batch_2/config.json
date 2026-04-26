@@ -1,0 +1,33 @@
+{
+  "prepared_dir": "/dev/shm/per_token_data",
+  "out_dir": "experiments/evo2_per_token_unet/train_runs/bench_batch_2",
+  "d_reduced": 128,
+  "hidden": 64,
+  "dilations": [
+    1,
+    2,
+    4
+  ],
+  "model": "unet",
+  "loss": "dice_bce",
+  "lr": 0.001,
+  "batch": 2,
+  "epochs": 1,
+  "pos_weight": 3.0,
+  "patience": 10,
+  "num_workers": 2,
+  "seed": 0,
+  "subsample_train": 4096,
+  "subsample_val": 512,
+  "max_wall_minutes": 10.0,
+  "model_type": "unet",
+  "param_count": 321281,
+  "n_train_windows": 4096,
+  "n_val_windows": 512,
+  "t_latent": 2048,
+  "downsample_k": 8,
+  "world_size": 1,
+  "per_rank_batch": 2,
+  "global_batch": 2,
+  "data_loading": "np.load(..., mmap_mode='r')"
+}

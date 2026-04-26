@@ -1,0 +1,33 @@
+{
+  "prepared_dir": "/dev/shm/per_token_data",
+  "out_dir": "experiments/evo2_per_token_unet/train_runs/ddp_smoke_2node",
+  "d_reduced": 128,
+  "hidden": 64,
+  "dilations": [
+    1,
+    2,
+    4
+  ],
+  "model": "unet",
+  "loss": "dice_bce",
+  "lr": 0.001,
+  "batch": 4,
+  "epochs": 1,
+  "pos_weight": 3.0,
+  "patience": 10,
+  "num_workers": 0,
+  "seed": 0,
+  "subsample_train": 128,
+  "subsample_val": 64,
+  "max_wall_minutes": 15.0,
+  "model_type": "unet",
+  "param_count": 321281,
+  "n_train_windows": 128,
+  "n_val_windows": 64,
+  "t_latent": 2048,
+  "downsample_k": 8,
+  "world_size": 2,
+  "per_rank_batch": 4,
+  "global_batch": 8,
+  "data_loading": "np.load(..., mmap_mode='r')"
+}

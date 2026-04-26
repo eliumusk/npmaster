@@ -194,9 +194,69 @@ def dice_bce_loss(
     return dice + bce_weight * bce
 
 
+def focal_bce_loss(
+    logits: torch.Tensor,
+    labels: torch.Tensor,
+    gamma: float = 2.0,
+    alpha: float = 0.25,
+) -> torch.Tensor:
+    """Masked focal BCE for dense labels."""
+    mask = (labels >= 0).float()
+    y = labels.clamp(min=0).float()
+    bce = F.binary_cross_entropy_with_logits(logits, y, reduction="none")
+    p = torch.sigmoid(logits)
+    pt = torch.where(y == 1, p, 1.0 - p)
+    alpha_t = torch.where(y == 1, torch.full_like(y, alpha), torch.full_like(y, 1.0 - alpha))
+    loss = alpha_t * (1.0 - pt).pow(gamma) * bce
+    return (loss * mask).sum() / mask.sum().clamp(min=1.0)
+
+
+def tversky_bce_loss(
+    logits: torch.Tensor,
+    labels: torch.Tensor,
+    alpha: float = 0.3,
+    beta: float = 0.7,
+    bce_weight: float = 0.5,
+) -> torch.Tensor:
+    """Tversky + BCE, weighting false negatives more than false positives by default."""
+    mask = (labels >= 0).float()
+    y = labels.clamp(min=0).float()
+    p = torch.sigmoid(logits) * mask
+    ym = y * mask
+    tp = (p * ym).sum()
+    fp = (p * (1.0 - ym) * mask).sum()
+    fn = ((1.0 - p) * ym).sum()
+    tversky = 1.0 - tp / (tp + alpha * fp + beta * fn + 1e-6)
+    bce = F.binary_cross_entropy_with_logits(logits, y, reduction="none")
+    bce = (bce * mask).sum() / mask.sum().clamp(min=1.0)
+    return tversky + bce_weight * bce
+
+
+def weak_negative_bce_loss(
+    logits: torch.Tensor,
+    labels: torch.Tensor,
+    neg_weight: float = 0.2,
+    pos_weight: float = 1.0,
+) -> torch.Tensor:
+    """PU-style weak-negative BCE.
+
+    antiSMASH positives stay fully positive; unlabeled/background tokens are
+    treated as weak negatives rather than certain negatives.
+    """
+    mask = (labels >= 0).float()
+    y = labels.clamp(min=0).float()
+    weights = torch.where(y == 1, torch.full_like(y, pos_weight), torch.full_like(y, neg_weight))
+    loss = F.binary_cross_entropy_with_logits(logits, y, reduction="none")
+    denom = (weights * mask).sum().clamp(min=1.0)
+    return (loss * weights * mask).sum() / denom
+
+
 LOSS_REGISTRY: dict[str, callable] = {
     "bce": masked_bce_loss,
     "dice_bce": dice_bce_loss,
+    "focal_bce": focal_bce_loss,
+    "tversky_bce": tversky_bce_loss,
+    "weak_negative_bce": weak_negative_bce_loss,
 }
 
 

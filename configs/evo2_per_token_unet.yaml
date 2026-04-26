@@ -39,5 +39,5 @@ artifacts:
   nine_genome_e10: experiments/evo2_per_token_unet/nine_genome/E10_h64_lr1e3_b32/readouts/
   nine_genome_e11: experiments/evo2_per_token_unet/nine_genome/E11_h64_lr1e3_b64/readouts/
   server_round2_root: /data/muskliu/npmaster/experiments/step2_per_token/round2
-  server_oer_root: /data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048
+  server_oer_features: /data/muskliu/npmaster/data/evo2_per_token_unet/oer_w8192_s2048
   server_9g_features: /data/muskliu/npmaster/experiments/step2_per_token/9g_w8192_s2048

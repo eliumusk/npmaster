@@ -17,6 +17,33 @@ from pathlib import Path
 import numpy as np
 
 
+def truncate_blocks_to_layer(evo2_model, layer_name: str) -> dict:
+    """Drop Evo2 blocks strictly after the block containing `layer_name`."""
+    import re
+    import torch.nn as nn
+
+    m = re.match(r"blocks\.(\d+)\.", layer_name)
+    if not m:
+        return {"truncated": False, "reason": f"layer_name '{layer_name}' not of 'blocks.N.*' form"}
+    target_block = int(m.group(1))
+    inner = getattr(evo2_model, "model", None)
+    if inner is None or not hasattr(inner, "blocks"):
+        return {"truncated": False, "reason": "model has no .model.blocks attribute"}
+    blocks = inner.blocks
+    if not isinstance(blocks, nn.ModuleList):
+        return {"truncated": False, "reason": f"blocks is {type(blocks).__name__}, not ModuleList"}
+    n_before = len(blocks)
+    if target_block + 1 >= n_before:
+        return {"truncated": False, "reason": f"target block {target_block} is last block"}
+    inner.blocks = blocks[:target_block + 1]
+    return {
+        "truncated": True,
+        "kept_blocks": target_block + 1,
+        "dropped_blocks": n_before - (target_block + 1),
+        "total_blocks": n_before,
+    }
+
+
 def read_fna(path: Path | str) -> list[tuple[str, str]]:
     path = Path(path)
     opener = gzip.open if path.suffix == ".gz" else open

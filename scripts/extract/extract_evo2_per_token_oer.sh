@@ -25,7 +25,7 @@ set -euo pipefail
 REPO=/data/muskliu/npmaster
 SHARD_DIR=${SHARD_DIR:-$REPO/data/OER004256/shards_gt10kb_16}
 SHARD_PREFIX=${SHARD_PREFIX:-OER004256_shard}
-OUT_DIR=$REPO/experiments/evo2_per_token_unet/oer_w8192_s2048
+OUT_DIR=$REPO/data/evo2_per_token_unet/oer_w8192_s2048
 LOG_DIR=$OUT_DIR/logs
 
 # ── defaults ──────────────────────────────────────────────────────────

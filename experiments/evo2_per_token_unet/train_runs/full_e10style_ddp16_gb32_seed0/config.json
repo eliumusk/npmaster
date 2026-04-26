@@ -1,0 +1,33 @@
+{
+  "prepared_dir": "/dev/shm/per_token_data",
+  "out_dir": "experiments/evo2_per_token_unet/train_runs/full_e10style_ddp16_gb32_seed0",
+  "d_reduced": 128,
+  "hidden": 64,
+  "dilations": [
+    1,
+    2,
+    4
+  ],
+  "model": "unet",
+  "loss": "dice_bce",
+  "lr": 0.001,
+  "batch": 2,
+  "epochs": 30,
+  "pos_weight": 3.0,
+  "patience": 10,
+  "num_workers": 2,
+  "seed": 0,
+  "subsample_train": 0,
+  "subsample_val": 0,
+  "max_wall_minutes": 720.0,
+  "model_type": "unet",
+  "param_count": 321281,
+  "n_train_windows": 608721,
+  "n_val_windows": 92351,
+  "t_latent": 2048,
+  "downsample_k": 8,
+  "world_size": 16,
+  "per_rank_batch": 2,
+  "global_batch": 32,
+  "data_loading": "np.load(..., mmap_mode='r')"
+}

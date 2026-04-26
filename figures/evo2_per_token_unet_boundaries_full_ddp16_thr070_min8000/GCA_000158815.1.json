@@ -1,0 +1,16 @@
+{
+  "genome_id": "GCA_000158815.1",
+  "tracks": [
+    "GT",
+    "antiSMASH",
+    "Full-data U-Net t0.70 min8kb"
+  ],
+  "contigs": [
+    "GG657738.1"
+  ],
+  "region_counts": {
+    "GT": 27,
+    "antiSMASH": 27,
+    "Full-data U-Net t0.70 min8kb": 23
+  }
+}

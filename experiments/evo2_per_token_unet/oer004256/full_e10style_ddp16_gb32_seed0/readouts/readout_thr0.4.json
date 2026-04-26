@@ -1,0 +1,72 @@
+{
+  "antismash": {
+    "n_regions": 1976,
+    "median_length": 13573,
+    "min_length": 5207,
+    "max_length": 57456
+  },
+  "methods": {
+    "per-token": {
+      "method": "per-token",
+      "n_pred": 2893,
+      "n_as": 1976,
+      "tp": 1272,
+      "as_recall": 0.6437246963562753,
+      "novel": 1223,
+      "pred_median_len": 8192,
+      "pred_min_len": 2000,
+      "pred_max_len": 38912,
+      "bucket_recall": {
+        "10-20kb": {
+          "n_as": 1150,
+          "tp": 841,
+          "as_recall": 0.731304347826087,
+          "label": "841/1150 (0.731)"
+        },
+        "20-50kb": {
+          "n_as": 621,
+          "tp": 346,
+          "as_recall": 0.5571658615136876,
+          "label": "346/621 (0.557)"
+        },
+        ">=50kb": {
+          "n_as": 205,
+          "tp": 85,
+          "as_recall": 0.4146341463414634,
+          "label": "85/205 (0.415)"
+        }
+      }
+    },
+    "evo2_lr_learned_decoder": {
+      "method": "evo2_lr_learned_decoder",
+      "n_pred": 1230,
+      "n_as": 1976,
+      "tp": 408,
+      "as_recall": 0.20647773279352227,
+      "novel": 429,
+      "pred_median_len": 5973,
+      "pred_min_len": 245,
+      "pred_max_len": 32768,
+      "bucket_recall": {
+        "10-20kb": {
+          "n_as": 1150,
+          "tp": 299,
+          "as_recall": 0.26,
+          "label": "299/1150 (0.260)"
+        },
+        "20-50kb": {
+          "n_as": 621,
+          "tp": 89,
+          "as_recall": 0.143317230273752,
+          "label": "89/621 (0.143)"
+        },
+        ">=50kb": {
+          "n_as": 205,
+          "tp": 20,
+          "as_recall": 0.0975609756097561,
+          "label": "20/205 (0.098)"
+        }
+      }
+    }
+  }
+}

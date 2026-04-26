@@ -99,12 +99,12 @@ Interpretation: E10 is close to v4.1 on 9-genome without choosing thresholds fro
 Remote server (`Voc_gpu_node7_a800`):
 
 - Round-2 checkpoints and 9g regions: `/data/muskliu/npmaster/experiments/step2_per_token/round2/`
-- Feature manifests and parts: `/data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/OER004256_shard*.manifest.json`
-- E10 probabilities: `/data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/e10_probs/`
-- E11 probabilities: `/data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/e11_probs/`
-- Decoded regions: `/data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/e{10,11}_regions_thr{03,04,05}.csv`
-- Readout JSONs: `/data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/readouts/e{10,11}_thr{03,04,05}_compare.json`
-- Logs: `/data/muskliu/npmaster/experiments/step2_per_token/oer_w8192_s2048/logs/`
+- Feature manifests and parts: `/data/muskliu/npmaster/data/evo2_per_token_unet/oer_w8192_s2048/OER004256_shard*.manifest.json`
+- E10 probabilities: `/data/muskliu/npmaster/data/evo2_per_token_unet/oer_w8192_s2048/e10_probs/`
+- E11 probabilities: `/data/muskliu/npmaster/data/evo2_per_token_unet/oer_w8192_s2048/e11_probs/`
+- Decoded regions: `/data/muskliu/npmaster/data/evo2_per_token_unet/oer_w8192_s2048/e{10,11}_regions_thr{03,04,05}.csv`
+- Readout JSONs: `/data/muskliu/npmaster/data/evo2_per_token_unet/oer_w8192_s2048/readouts/e{10,11}_thr{03,04,05}_compare.json`
+- Logs: `/data/muskliu/npmaster/data/evo2_per_token_unet/oer_w8192_s2048/logs/`
 
 Local repo:
 

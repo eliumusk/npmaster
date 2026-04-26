@@ -233,6 +233,7 @@ def main() -> None:
     parser.add_argument("--evo2-lr-multiscale-csv", type=Path, default=None)
     parser.add_argument("--evo2-lr-learned-csv", type=Path, default=None)
     parser.add_argument("--unet-regions-csv", type=Path, required=True)
+    parser.add_argument("--unet-label", default="E10 U-Net")
     parser.add_argument("--out-dir", type=Path, required=True)
     parser.add_argument("--genome-ids", default=None,
                         help="Comma-separated subset; default: all genomes in GT")
@@ -271,11 +272,14 @@ def main() -> None:
     for genome in genomes:
         tracks = [
             ("GT", gt.get(genome, [])),
-            ("antiSMASH", antismash.get(genome, [])),
-            ("BGC-Prophet", bgc_prophet.get(genome, [])),
-            ("DeepBGC", deepbgc.get(genome, [])),
-            ("E10 U-Net", unet.get(genome, [])),
         ]
+        if antismash:
+            tracks.append(("antiSMASH", antismash.get(genome, [])))
+        if bgc_prophet:
+            tracks.append(("BGC-Prophet", bgc_prophet.get(genome, [])))
+        if deepbgc:
+            tracks.append(("DeepBGC", deepbgc.get(genome, [])))
+        tracks.append((args.unet_label, unet.get(genome, [])))
         if evo2_lr_multiscale:
             tracks.insert(4, ("Evo2-LR multiscale", evo2_lr_multiscale.get(genome, [])))
         elif evo2_lr:

@@ -40,10 +40,8 @@ from pathlib import Path
 
 import numpy as np
 
-# Re-use truncate_blocks_to_layer from the mean-pool extractor (per CLAUDE.md:
-# we must NOT modify src/evo2_lr/, only import from it).
-REPO = Path(__file__).resolve().parents[3]
-sys.path.insert(0, str(REPO))
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT / "src"))
 
 
 def read_fna(fna_path):
@@ -199,7 +197,7 @@ def main():
     t0 = time.time()
     import torch
     from evo2 import Evo2
-    from src.evo2_lr.extract_batch import truncate_blocks_to_layer
+    from evo2_lr.extract import truncate_blocks_to_layer
     model = Evo2("evo2_7b")
     load_s = time.time() - t0
     log(f"Evo2 loaded in {load_s:.1f}s; truncating blocks...")

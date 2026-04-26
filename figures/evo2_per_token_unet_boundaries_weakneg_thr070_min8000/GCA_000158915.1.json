@@ -1,0 +1,23 @@
+{
+  "genome_id": "GCA_000158915.1",
+  "tracks": [
+    "GT",
+    "antiSMASH",
+    "BGC-Prophet",
+    "DeepBGC",
+    "Evo2-LR short-arm",
+    "WeakNeg U-Net t0.70 min8kb"
+  ],
+  "contigs": [
+    "GG657754.1",
+    "GG657755.1"
+  ],
+  "region_counts": {
+    "GT": 47,
+    "antiSMASH": 43,
+    "BGC-Prophet": 30,
+    "DeepBGC": 155,
+    "Evo2-LR short-arm": 64,
+    "WeakNeg U-Net t0.70 min8kb": 39
+  }
+}
