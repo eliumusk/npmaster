@@ -25,6 +25,12 @@ See `docs/REGRESSION_LEDGER.md` for the current claims and caveats. Headline act
 - `evo2_lr_learned_decoder` on OER004256: 1,230 regions, 429 antiSMASH-missed candidates in the committed handoff artifact.
 - `evo2_per_token_unet` E10 on OER004256: AS-recall `0.3117` at threshold `0.3`; diagnostic only until a clean pre-registered selection rule is run.
 
+## Qualitative Boundaries
+
+The current E10 U-Net conservative point (`threshold=0.4`) has per-genome 9-genome boundary plots in `figures/evo2_per_token_unet_boundaries/`.
+
+![Evo2 per-token U-Net 9-genome boundaries](figures/evo2_per_token_unet_boundaries/overview_3x3.png)
+
 ## Layout
 
 - `configs/`: active YAML configs only.

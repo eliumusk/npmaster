@@ -1,0 +1,23 @@
+{
+  "genome_id": "GCA_000156435.1",
+  "tracks": [
+    "GT",
+    "antiSMASH",
+    "BGC-Prophet",
+    "DeepBGC",
+    "Evo2-LR primary",
+    "E10 U-Net"
+  ],
+  "contigs": [
+    "DS999641.1",
+    "DS999642.1"
+  ],
+  "region_counts": {
+    "GT": 35,
+    "antiSMASH": 30,
+    "BGC-Prophet": 23,
+    "DeepBGC": 123,
+    "Evo2-LR primary": 22,
+    "E10 U-Net": 39
+  }
+}
