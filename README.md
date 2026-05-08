@@ -1,47 +1,49 @@
 # NP-Master
 
-NP-Master is a BGC region detection and discovery pipeline for bacterial genomes and metagenomes. It is not a generative model: given DNA sequences, it predicts genomic intervals that look like biosynthetic gene clusters, then optionally adds BGC type labels and novelty triage metadata.
+NP-Master 是面向细菌基因组和宏基因组的 BGC 区域检测与发现流程。它不是生成式模型：给定 DNA 序列后，它会预测看起来像生物合成基因簇的基因组区间，并可选地添加 BGC 类型标签与新颖性初筛元数据。
 
-## System I/O
+## 系统输入输出
 
-Input: one or more DNA contigs/genomes, usually FASTA. The server-side pipeline extracts frozen Evo2 7B `blocks.20.mlp.l3` features.
+输入：一个或多个 DNA contig/基因组，通常为 FASTA。服务端流程会提取冻结的 Evo2 7B `blocks.20.mlp.l3` 特征。
 
-Output: BGC region calls with `genome`, `contig`, `start`, `end`, score/source fields, and optional type/novelty annotations.
+输出：BGC 区域调用结果，包含 `genome`、`contig`、`start`、`end`、分数/来源字段，以及可选的类型与新颖性注释。
 
-## Active Mainlines
+## 活跃主线
 
-| Mainline | Purpose | Status | Key entrypoints | Results |
-|---|---|---|---|---|
-| `evo2_lr_multiscale` | Original v4.1 line renamed: Evo2 mean-pool embeddings + LR scorer + multi-scale decoder. | Formal 9-genome mainline. OER learned-decoder variant is metagenome-focused. | `scripts/decode/evo2_lr_multiscale.py`, `scripts/evaluate/evo2_lr_multiscale.py`, `scripts/decode/evo2_lr_learned_decoder.py` | `experiments/evo2_lr_multiscale/` |
-| `evo2_per_token_unet` | Per-token Evo2 features + U-Net decoder for short metagenomic contigs. | Exploratory discovery candidate. Current wet-lab handoff uses the weak-negative BCE model; 9-genome numbers remain diagnostic, not formal claims. | `scripts/train/evo2_per_token_unet/`, `scripts/inference/evo2_per_token/`, `scripts/decode/evo2_per_token_regions.py` | `experiments/evo2_per_token_unet/` |
 
-`defrag_v2` detection and other probes are retired from active development. Historical files were moved to `_archive/2026-04-26-mainline-reset/` and are intentionally ignored by git.
+| 主线                    | 用途                                            | 状态                                                                          | 关键入口                                                                                                                          | 结果                                 |
+| --------------------- | --------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `evo2_lr_multiscale`  | Evo2 mean-pool embedding + LR 评分器 + 多尺度解码器。   | OER learned-decoder 变体面向宏基因组。                                               | `scripts/decode/evo2_lr_multiscale.py`, `scripts/evaluate/evo2_lr_multiscale.py`, `scripts/decode/evo2_lr_learned_decoder.py` | `experiments/evo2_lr_multiscale/`  |
+| `evo2_per_token_unet` | per-token Evo2 特征 + U-Net 解码器，用于短宏基因组 contig。 | 当前主线。当前 wet-lab handoff 使用 weak-negative BCE 模型；9-genome 数字仍为诊断性结果，不作为正式主张。 | `scripts/train/evo2_per_token_unet/`, `scripts/inference/evo2_per_token/`, `scripts/decode/evo2_per_token_regions.py`         | `experiments/evo2_per_token_unet/` |
 
-## Canonical Numbers
 
-See `docs/REGRESSION_LEDGER.md` for the current claims and caveats. Headline active numbers:
+其他历史史文件已移动到 `_archive/2026-04-26-mainline-reset/`，并且有意不被 git 跟踪。
 
-- `evo2_lr_multiscale` on 9-genome: dedup F1 `0.4878`, bench precision `0.5976`, bench recall `0.4590`.
-- `evo2_lr_learned_decoder` on OER004256: 1,230 regions, 429 antiSMASH-missed candidates in the committed handoff artifact.
-- `evo2_per_token_unet` weak-negative BCE on OER004256: AS-recall `0.5703` at `thr0.50/min2kb`, 579 antiSMASH-missed candidates, 171 first-pass wet-lab PASS after HMM/MIBiG triage.
-- `evo2_per_token_unet` weak-negative BCE on 9-genome: diagnostic dedup F1 `0.5094` at `thr0.70/min8kb`; not a formal benchmark claim.
+## 标准结果数字
 
-## Qualitative Boundaries
+当前主张与注意事项见 `docs/REGRESSION_LEDGER.md`。活跃主线的核心数字如下：
 
-The current weak-negative U-Net 9-genome diagnostic point (`threshold=0.70`, `min_len=8kb`) has per-genome boundary plots in `figures/evo2_per_token_unet_boundaries_weakneg_thr070_min8000/`.
+- `evo2_per_token_unet` weak-negative BCE 在 OER004256 上：`thr0.50/min2kb` 下 AS-recall 为 `0.5703`，579 个 antiSMASH 漏检候选，经过 HMM/MIBiG triage 后有 171 个 first-pass wet-lab PASS。
+- `evo2_per_token_unet` weak-negative BCE 在 9-genome 上：`thr0.70/min8kb` 下诊断性 dedup F1 为 `0.5094`
+- `evo2_lr_multiscale` 在 9-genome 上：dedup F1 `0.4878`，bench precision `0.5976`，bench recall `0.4590`。
+- `evo2_lr_learned_decoder` 在 OER004256 上：已提交的 handoff artifact 中包含 1,230 个区域，其中 429 个为 antiSMASH 漏检候选。
 
-![Weak-negative Evo2 per-token U-Net 9-genome boundaries](figures/evo2_per_token_unet_boundaries_weakneg_thr070_min8000/overview_3x3.png)
+## 定性边界
 
-## Layout
+当前 weak-negative U-Net 的 9-genome 诊断点（`threshold=0.70`，`min_len=8kb`）在 `figures/evo2_per_token_unet_boundaries_weakneg_thr070_min8000/` 中包含逐基因组的边界图。
 
-- `configs/`: active YAML configs only.
-- `src/`: importable library code for active mainlines.
-- `scripts/`: CLI entrypoints grouped by verb.
-- `experiments/`: promoted active outputs only.
-- `docs/`: current conventions, evaluation protocol, and regression ledger.
-- `_archive/`: retired local provenance; not tracked.
+Weak-negative Evo2 per-token U-Net 9-genome 边界
 
-## Quick Commands
+## 目录结构
+
+- `configs/`：仅包含活跃 YAML 配置。
+- `src/`：活跃主线的可导入库代码。
+- `scripts/`：按动词分组的 CLI 入口。
+- `experiments/`：仅包含已提升的活跃输出。
+- `docs/`：当前约定、评估协议和回归台账。
+- `_archive/`：已退休的本地溯源文件；不被跟踪。
+
+## 快速命令
 
 ```bash
 python scripts/evaluate/evo2_lr_multiscale.py \
@@ -57,3 +59,4 @@ python scripts/decode/evo2_per_token_regions.py \
   --out-regions-csv <regions.csv> \
   --threshold 0.3
 ```
+

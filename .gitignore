@@ -1,6 +1,9 @@
 # Claude Code internal state
 .claude/
 
+# Local git worktrees
+.worktrees/
+
 # Retired code/results kept locally for provenance only
 _archive/
 
