@@ -11,10 +11,10 @@ NP-Master 是面向细菌基因组和宏基因组的 BGC 区域检测与发现�
 ## 活跃主线
 
 
-| 主线                    | 用途                                            | 状态                                                                          | 关键入口                                                                                                                          | 结果                                 |
-| --------------------- | --------------------------------------------- | --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
-| `evo2_lr_multiscale`  | Evo2 mean-pool embedding + LR 评分器 + 多尺度解码器。   | OER learned-decoder 变体面向宏基因组。                                               | `scripts/decode/evo2_lr_multiscale.py`, `scripts/evaluate/evo2_lr_multiscale.py`, `scripts/decode/evo2_lr_learned_decoder.py` | `experiments/evo2_lr_multiscale/`  |
-| `evo2_per_token_unet` | per-token Evo2 特征 + U-Net 解码器，用于短宏基因组 contig。 | 当前主线。当前 wet-lab handoff 使用 weak-negative BCE 模型；9-genome 数字仍为诊断性结果，不作为正式主张。 | `scripts/train/evo2_per_token_unet/`, `scripts/inference/evo2_per_token/`, `scripts/decode/evo2_per_token_regions.py`         | `experiments/evo2_per_token_unet/` |
+| 主线                    | 用途                                            | 状态                                              | 关键入口                                                                                                                          | 结果                                 |
+| --------------------- | --------------------------------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| `evo2_lr_multiscale`  | Evo2 mean-pool embedding + LR 评分器 + 多尺度解码器。   | OER learned-decoder 变体面向宏基因组。                   | `scripts/decode/evo2_lr_multiscale.py`, `scripts/evaluate/evo2_lr_multiscale.py`, `scripts/decode/evo2_lr_learned_decoder.py` | `experiments/evo2_lr_multiscale/`  |
+| `evo2_per_token_unet` | per-token Evo2 特征 + U-Net 解码器，用于短宏基因组 contig。 | 当前主线。当前 wet-lab handoff 使用 weak-negative BCE 模型 | `scripts/train/evo2_per_token_unet/`, `scripts/inference/evo2_per_token/`, `scripts/decode/evo2_per_token_regions.py`         | `experiments/evo2_per_token_unet/` |
 
 
 其他历史史文件已移动到 `_archive/2026-04-26-mainline-reset/`，并且有意不被 git 跟踪。
