@@ -1,0 +1,15 @@
+{
+  "bundle": "/tmp/mibig_local/bundle_alk.json",
+  "mmseqs_tsv": "/tmp/mibig_local/families_cluster.tsv",
+  "out_dir": "experiments/evo2_mibig_type/run_full",
+  "min_domain_count": 3,
+  "binary_features": false,
+  "n_estimators": 400,
+  "max_depth": null,
+  "fractions": [
+    0.8,
+    0.1,
+    0.1
+  ],
+  "seed": 0
+}
