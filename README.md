@@ -1,59 +1,71 @@
 # NP-Master
 
-NP-Master is a BGC region detection and discovery pipeline for bacterial genomes and metagenomes. It is not a generative model: given DNA sequences, it predicts genomic intervals that look like biosynthetic gene clusters, then optionally adds BGC type labels and novelty triage metadata.
+NP-Master 是面向细菌基因组和宏基因组的 BGC 区域检测与发现流程。它不是生成式模型：给定 DNA 序列后，系统预测看起来像生物合成基因簇的基因组区间，并可选地添加 BGC 类型标签与新颖性初筛元数据。
 
-## System I/O
+## 系统输入输出
 
-Input: one or more DNA contigs/genomes, usually FASTA. The server-side pipeline extracts frozen Evo2 7B `blocks.20.mlp.l3` features.
+输入：一个或多个 DNA contig/基因组，通常为 FASTA。服务端流程会清洗序列并提取冻结的 Evo2 7B `blocks.20.mlp.l3` per-token 特征。
 
-Output: BGC region calls with `genome`, `contig`, `start`, `end`, score/source fields, and optional type/novelty annotations.
+输出：BGC 区域调用结果，包含 `genome`、`contig`、`start`、`end`、分数/来源字段，以及可选的类型与新颖性注释。
 
-## Active Mainlines
+## 当前模型结构
 
-| Mainline | Purpose | Status | Key entrypoints | Results |
-|---|---|---|---|---|
-| `evo2_lr_multiscale` | Original v4.1 line renamed: Evo2 mean-pool embeddings + LR scorer + multi-scale decoder. | Formal 9-genome mainline. OER learned-decoder variant is metagenome-focused. | `scripts/decode/evo2_lr_multiscale.py`, `scripts/evaluate/evo2_lr_multiscale.py`, `scripts/decode/evo2_lr_learned_decoder.py` | `experiments/evo2_lr_multiscale/` |
-| `evo2_per_token_unet` | Per-token Evo2 features + U-Net decoder for short metagenomic contigs. | Exploratory discovery candidate. Current wet-lab handoff uses the weak-negative BCE model; 9-genome numbers remain diagnostic, not formal claims. | `scripts/train/evo2_per_token_unet/`, `scripts/inference/evo2_per_token/`, `scripts/decode/evo2_per_token_regions.py` | `experiments/evo2_per_token_unet/` |
+当前流程分成三个层次：
 
-`defrag_v2` detection and other probes are retired from active development. Historical files were moved to `_archive/2026-04-26-mainline-reset/` and are intentionally ignored by git.
+1. **Evo2 特征层**：冻结 Evo2 7B backbone，抽取 `blocks.20.mlp.l3` hidden states。原始 4096 维 base-level 表征先投影到 128 维，再按 8 bp pooling 成 latent tokens。
+2. **区域检测层**：`evo2_per_token_unet` 使用轻量 1D U-Net 分割头，把 Evo2 latent token 序列映射成 BGC probability track。训练时使用 16,384 bp windows；推理时使用 8,192 bp windows 和 2,048 bp stride，对重叠窗口概率做 genome-coordinate averaging，再从连续高置信区间解码出候选 BGC regions。
+3. **注释与 triage 层**：`evo2_mibig_type` 是独立的 product-type annotation head。它对候选 region 预测 ORFs，扫描 Pfam domains，并用 MIBiG 训练的 RandomForest 多标签分类器输出 `Alkaloid`、`Terpene`、`NRP`、`Polyketide`、`RiPP`、`Saccharide`、`Other` 类型概率。类型注释和 HMM/MIBiG evidence 用于 wet-lab triage，不参与区域检测本身。
 
-## Canonical Numbers
+| 模块 | 作用 | 关键入口 | 主要结果 |
+| --- | --- | --- | --- |
+| `evo2_per_token_unet` | 从 DNA contigs 检测 BGC 区域坐标 | `scripts/train/evo2_per_token_unet/`, `scripts/inference/evo2_per_token/`, `scripts/decode/evo2_per_token_regions.py` | `experiments/evo2_per_token_unet/` |
+| `evo2_mibig_type` | 对已检测 region 添加 BGC product-type 标签 | `scripts/prepare/mibig_domains.py`, `scripts/train/type_head/train.py`, `scripts/classify/antismash_regions_type.py` | `experiments/evo2_mibig_type/` |
 
-See `docs/REGRESSION_LEDGER.md` for the current claims and caveats. Headline active numbers:
+其他历史史文件已移动到 `_archive/2026-04-26-mainline-reset/`，并且有意不被 git 跟踪。
 
-- `evo2_lr_multiscale` on 9-genome: dedup F1 `0.4878`, bench precision `0.5976`, bench recall `0.4590`.
-- `evo2_lr_learned_decoder` on OER004256: 1,230 regions, 429 antiSMASH-missed candidates in the committed handoff artifact.
-- `evo2_per_token_unet` weak-negative BCE on OER004256: AS-recall `0.5703` at `thr0.50/min2kb`, 579 antiSMASH-missed candidates, 171 first-pass wet-lab PASS after HMM/MIBiG triage.
-- `evo2_per_token_unet` weak-negative BCE on 9-genome: diagnostic dedup F1 `0.5094` at `thr0.70/min8kb`; not a formal benchmark claim.
+## 标准结果数字
 
-## Qualitative Boundaries
+当前主张与注意事项见 `docs/REGRESSION_LEDGER.md`。当前 U-Net 检测器的核心数字如下：
 
-The current weak-negative U-Net 9-genome diagnostic point (`threshold=0.70`, `min_len=8kb`) has per-genome boundary plots in `figures/evo2_per_token_unet_boundaries_weakneg_thr070_min8000/`.
+- `evo2_per_token_unet` weak-negative BCE 在 OER004256 上：`thr0.50/min2kb` 下 AS-recall 为 `0.5703`，579 个 antiSMASH 漏检候选，经过 HMM/MIBiG triage 后有 171 个 first-pass wet-lab PASS。
+- `evo2_per_token_unet` weak-negative BCE 在 9-genome 上：`thr0.70/min8kb` 下诊断性 dedup F1 为 `0.5094`，raw bench F1 为 `0.521`。
+- `evo2_mibig_type` RandomForest type head 在 MIBiG family-disjoint test split 上：macro-F1 `0.6715`，micro-F1 `0.8789`，macro-AUROC `0.9442`。
 
-![Weak-negative Evo2 per-token U-Net 9-genome boundaries](figures/evo2_per_token_unet_boundaries_weakneg_thr070_min8000/overview_3x3.png)
+注意：当前 U-Net 的 9-genome 数字是 diagnostic/exploratory，因为该模型族有 9-genome-exposed selection history。正式 9-genome claim 需要预注册 checkpoint 和 threshold rule。
 
-## Layout
+## 定性边界
 
-- `configs/`: active YAML configs only.
-- `src/`: importable library code for active mainlines.
-- `scripts/`: CLI entrypoints grouped by verb.
-- `experiments/`: promoted active outputs only.
-- `docs/`: current conventions, evaluation protocol, and regression ledger.
-- `_archive/`: retired local provenance; not tracked.
+当前 weak-negative U-Net 的 9-genome 诊断点（`threshold=0.70`，`min_len=8kb`）在 `figures/evo2_per_token_unet_boundaries_weakneg_thr070_min8000/` 中包含逐基因组的边界图。
 
-## Quick Commands
+## 目录结构
+
+- `configs/`：仅包含活跃 YAML 配置。
+- `src/`：活跃主线的可导入库代码。
+- `scripts/`：按动词分组的 CLI 入口。
+- `experiments/`：仅包含已提升的活跃输出。
+- `docs/`：当前约定、评估协议和回归台账。
+- `_archive/`：已退休的本地溯源文件；不被跟踪。
+
+## 快速命令
 
 ```bash
-python scripts/evaluate/evo2_lr_multiscale.py \
-  --primary-preds <server-primary-preds-dir> \
-  --short-preds <server-short-preds-dir> \
-  --gt-json /data/syh/benchmark/nine_genome/ground_truth.json \
-  --out-json experiments/evo2_lr_multiscale/nine_genome_readout.json
+python scripts/inference/evo2_per_token/infer_shards.py \
+  --features-dir <per-token-features-dir> \
+  --ckpt experiments/evo2_per_token_unet/train_runs/full_weakneg_bce_w05_ddp4_gb64_seed0/best.pt \
+  --out-dir <per-token-probs-dir>
 ```
 
 ```bash
 python scripts/decode/evo2_per_token_regions.py \
   --probs-dir <per-token-probs-dir> \
   --out-regions-csv <regions.csv> \
-  --threshold 0.3
+  --threshold 0.50 \
+  --min-len-bp 2000
+```
+
+```bash
+python scripts/train/type_head/train.py \
+  --bundle experiments/evo2_mibig_type/mibig_domains.json \
+  --mmseqs-tsv experiments/evo2_mibig_type/families_cluster.tsv \
+  --out-dir experiments/evo2_mibig_type/run_full
 ```

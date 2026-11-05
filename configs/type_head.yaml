@@ -1,0 +1,38 @@
+# Domain-based BGC product-type classifier (mainline: evo2_mibig_type).
+#
+# Replaces the abandoned per-type LR / defrag_v2 CNN heads (which classified on
+# Evo2 mean-pool features and systematically called PKS → NRP). Type is decided
+# by protein-domain content, not nucleotide embeddings.
+
+mainline: evo2_mibig_type
+
+classes: [Alkaloid, Terpene, NRP, Polyketide, RiPP, Saccharide, Other]
+
+data:
+  # Server-side paths (node7). MIBiG dir holds {accession}.gbk + {accession}.json.
+  mibig_dir: /data/muskliu/npmaster/data/mibig_4.0
+  hmm_db:    /data/muskliu/npmaster/data/pfam/Pfam-A.hmm
+  bundle:    experiments/evo2_mibig_type/mibig_domains.json
+  # mmseqs2 easy-cluster TSV over MIBiG proteins → family-disjoint split.
+  mmseqs_tsv: experiments/evo2_mibig_type/families_cluster.tsv
+
+features:
+  bit_cutoffs: gathering   # Pfam GA thresholds; 'none' → use e_value
+  e_value: 1.0e-5
+  min_domain_count: 3      # keep domains seen in >= N training clusters
+  binary_features: false   # false = counts (captures repeated PKS modules)
+
+model:
+  backend: random_forest   # sklearn RF (GECCO/SanntiS-style); lightgbm optional
+  n_estimators: 400
+  max_depth: null
+  class_weight: balanced
+
+split:
+  fractions: [0.8, 0.1, 0.1]
+  seed: 0
+
+eval:
+  threshold: 0.5
+  # 9-genome is REPORT-ONLY — never tune on it.
+  # Regression smoke test: the 7 manually-verified T1PKS clusters must predict Polyketide.
