@@ -117,14 +117,14 @@ class EvalNineGenomeOperatingPointTests(unittest.TestCase):
 
     def test_operating_point_loader_reads_yaml(self):
         op = self.eval_mod.load_operating_point(
-            "val_frozen_fused", self.eval_mod.DEFAULT_OPERATING_POINTS
+            "evo2_lr_multiscale", self.eval_mod.DEFAULT_OPERATING_POINTS
         )
-        self.assertEqual(op["start_threshold"], 0.98)
-        self.assertEqual(op["extend_threshold"], 0.95)
+        self.assertEqual(op["start_threshold"], 0.95)
+        self.assertEqual(op["extend_threshold"], 0.80)
         self.assertEqual(op["max_gap"], 0)
-        self.assertEqual(op["length_cap"], 50000)
-        self.assertEqual(op["min_support_windows"], 1)
-        self.assertEqual(op["score"], "fused")
+        self.assertIsNone(op.get("length_cap"))
+        self.assertEqual(op["min_support_windows"], 3)
+        self.assertEqual(op["score"], "bgc_score")
 
     def test_resolve_params_accepts_score_override_without_operating_point(self):
         args = SimpleNamespace(
@@ -150,41 +150,6 @@ class EvalNineGenomeOperatingPointTests(unittest.TestCase):
         selected = self.eval_mod.select_genome_ids("GCA_000154945.1,GCA_000158915.1")
         self.assertEqual(selected, ["GCA_000158915.1", "GCA_000154945.1"])
 
-
-class NineGenomeStrideInferenceTests(unittest.TestCase):
-    def setUp(self):
-        self.infer_mod = load_module(
-            "scripts/inference/stride.py",
-            "inference_stride",
-        )
-
-    def test_make_windows_supports_overlap_stride(self):
-        windows = self.infer_mod.make_windows("A" * 20000, window=16384, stride=8192)
-        starts = [w[0] for w in windows]
-        ends = [w[1] for w in windows]
-        seq_lens = [len(w[2]) for w in windows]
-
-        self.assertEqual(starts, [0, 8192, 16384])
-        self.assertEqual(ends, [16384, 20000, 20000])
-        self.assertEqual(seq_lens, [16384, 16384, 16384])
-
-    def test_resolve_src_dir_accepts_explicit_path(self):
-        with tempfile.TemporaryDirectory() as tmpdir:
-            src = Path(tmpdir) / "src"
-            model_dir = src / "model"
-            model_dir.mkdir(parents=True)
-            (model_dir / "context_full_model.py").write_text("# stub\n", encoding="utf-8")
-
-            resolved = self.infer_mod.resolve_src_dir(str(src))
-            self.assertEqual(resolved, src.resolve())
-
-    def test_parse_genome_subset_argument(self):
-        selected = {
-            part.strip()
-            for part in "GCA_000154945.1,GCA_000158915.1".split(",")
-            if part.strip()
-        }
-        self.assertEqual(selected, {"GCA_000154945.1", "GCA_000158915.1"})
 
 
 class PostprocessV2Tests(unittest.TestCase):
@@ -261,60 +226,6 @@ class PostprocessV2Tests(unittest.TestCase):
         )
         self.assertEqual(regions, [("c1", 0, 200), ("c1", 200, 400)])
 
-
-class RouteBHardNegativeTests(unittest.TestCase):
-    def setUp(self):
-        self.train_mod = load_module(
-            "src/train.py",
-            "train_for_tests",
-        )
-        self.mine_mod = load_module(
-            "scripts/train/mine_hard_negatives.py",
-            "mine_hard_negatives",
-        )
-
-    def test_apply_hard_negative_weights_upweights_only_flagged_positions(self):
-        per_pos_loss = self.train_mod.torch.tensor([[1.0, 2.0, 3.0]])
-        loss_mask = self.train_mod.torch.tensor([[True, True, False]])
-        hard_neg_mask = self.train_mod.torch.tensor([[False, True, True]])
-
-        loss, n_hard = self.train_mod.apply_hard_negative_weights(
-            per_pos_loss,
-            loss_mask,
-            hard_neg_mask,
-            hard_neg_weight=4.0,
-        )
-
-        self.assertEqual(n_hard, 1)
-        self.assertAlmostEqual(loss.item(), (1.0 + 2.0 * 4.0) / 5.0)
-
-    def test_select_hard_negative_indices_filters_to_train_negatives(self):
-        split = self.mine_mod.np.asarray(["train", "train", "val", "train"])
-        label = self.mine_mod.np.asarray(["negative", "positive", "negative", "negative"])
-        scores = self.mine_mod.np.asarray([0.97, 0.99, 0.98, 0.96])
-
-        picked = self.mine_mod.select_hard_negative_indices(
-            split=split,
-            label=label,
-            scores=scores,
-            top_k=2,
-            min_score=0.95,
-        )
-
-        self.assertEqual(picked.tolist(), [0, 3])
-
-    def test_patch_meta_arrays_writes_binary_flag(self):
-        meta = {
-            "label": self.mine_mod.np.asarray(["negative", "negative", "positive"]),
-            "split": self.mine_mod.np.asarray(["train", "train", "train"]),
-        }
-        patched = self.mine_mod.patch_meta_arrays(meta, self.mine_mod.np.asarray([1]))
-        self.assertEqual(patched["hard_negative"].tolist(), [0, 1, 0])
-
-    def test_score_fn_from_probs_supports_fused(self):
-        probs = self.mine_mod.np.asarray([[0.2, 0.4, 0.1, 0.3, 0, 0, 0, 0.8]])
-        fused = self.mine_mod.score_fn_from_probs(probs, "fused")
-        self.assertAlmostEqual(float(fused[0]), 0.5 * 0.4 + 0.5 * 0.2)
 
 
 if __name__ == "__main__":

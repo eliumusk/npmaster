@@ -1,0 +1,42 @@
+{
+  "antismash": {
+    "n_regions": 1976,
+    "median_length": 13573,
+    "min_length": 5207,
+    "max_length": 57456
+  },
+  "methods": {
+    "per-token": {
+      "method": "per-token",
+      "n_pred": 1007,
+      "n_as": 1976,
+      "tp": 334,
+      "as_recall": 0.16902834008097167,
+      "novel": 265,
+      "pred_median_len": 6182,
+      "pred_min_len": 2000,
+      "pred_max_len": 26624,
+      "bucket_recall": {
+        "10-20kb": {
+          "n_as": 0,
+          "tp": 0,
+          "as_recall": 0.0,
+          "label": "0/0 (0.000)"
+        },
+        "20-50kb": {
+          "n_as": 0,
+          "tp": 0,
+          "as_recall": 0.0,
+          "label": "0/0 (0.000)"
+        },
+        ">=50kb": {
+          "n_as": 0,
+          "tp": 0,
+          "as_recall": 0.0,
+          "label": "0/0 (0.000)"
+        },
+        "_unknown_contig_len": 1976
+      }
+    }
+  }
+}

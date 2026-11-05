@@ -1,78 +1,41 @@
-# Frozen operating points for 9-genome region-level evaluation.
-# All points assume checkpoint: best_route_b_s0 under stride=8192 inference
-# (Phase 3 Route B context model, seed 0). Only seed 0 has stride-8192 CSVs
-# on disk today; s1/s2 regeneration is pending.
-#
-# Two points are deliberately kept:
-#   - val_frozen_fused: selected on internal val (generalization-safe), used for formal reporting
-#   - tuned_v2: selected directly on 9-genome (diagnostic upper bound), NOT for formal claims
-#
-# Metric definition (applies to `metrics` below):
-#   mode = bench (non-symmetric 50% overlap)
-#     recall TP    : overlap / gt_len   >= 0.5  (how well a pred covers the GT)
-#     precision TP : overlap / pred_len >= 0.5  (how well a pred stays inside GT)
-#   This matches muskliu/run_nine_genome_eval.sh. The older syh evaluate.py
-#   used any-overlap precision and is known to be too permissive; do not use.
-#
-# Score family note: the per-window CSV has `bgc_score` (=max_type) plus
-# `non_bgc_score`, so `fused = 0.5*bgc_score + 0.5*(1 - non_bgc_score)` can be
-# derived at eval time from the same CSV — no re-inference required when
-# switching between max_type and fused.
+# Active operating point index.
 
-val_frozen_fused:
-  description: "internal val tuned, generalization-safe — use for formal reporting"
-  checkpoint: best_route_b_s0
-  stride: 8192
-  score: fused          # fused = 0.5 * max_type + 0.5 * (1 - is_negative)
-  start_threshold: 0.98
-  extend_threshold: 0.95
-  max_gap: 0
-  length_cap: 50000
-  min_support_windows: 1
-  valley_threshold: null
-  valley_min_windows: 1
-  # Reference metrics (50% overlap aggregate across 9 genomes). Treat as expected
-  # values for reproduction; regenerate from a clean run before paper-level claims.
-  metrics:
-    recall: 0.5934
-    precision: 0.1649
-    f1: 0.2580
-
-tuned_v2:
-  description: "9-genome tuned, diagnostic upper bound only — NOT for formal claims"
-  checkpoint: best_route_b_s0
-  stride: 8192
-  score: max_type       # max_type = max(probs[:7])
+evo2_lr_multiscale:
+  description: formal 9-genome mainline
+  config: configs/evo2_lr_multiscale.yaml
+  window: 8192
+  stride: 2048
+  score: bgc_score
   start_threshold: 0.95
-  extend_threshold: 0.95
+  extend_threshold: 0.80
   max_gap: 0
-  length_cap: 30000
+  length_cap: null
   min_support_windows: 3
   valley_threshold: null
   valley_min_windows: 1
   metrics:
-    recall: 0.5311
-    precision: 0.2513
-    f1: 0.3412
+    dedup_f1: 0.4878
+    bench_precision: 0.5976
+    bench_recall: 0.4590
+    bench_f1: 0.5192
+    strict_f1: 0.4299
+    n_pred: 246
 
-defrag_v2_ms10_s099:
-  description: "dev-selected and lockbox-validated Stage3 hard-negative operating point"
-  checkpoint: best_tk100-ms0-hnw4
-  checkpoint_path: /data/muskliu/npmaster/data/phase3/stage3_hardneg_v1/best/best_tk100-ms0-hnw4.pt
-  window: 8192
-  stride: 2048
-  score: fused
-  start_threshold: 0.99
-  extend_threshold: 0.95
-  max_gap: 0
-  length_cap: null
-  min_support_windows: 10
-  valley_threshold: null
-  valley_min_windows: 1
-  metrics:
-    recall: 0.4098
-    precision: 0.4714
-    f1: 0.4385
-    dedup_precision: 0.4714
-    dedup_f1: 0.4385
-    n_pred: 140
+evo2_lr_learned_decoder:
+  description: OER004256 metagenome handoff decoder over Evo2-LR scores
+  base_config: configs/evo2_lr_multiscale.yaml
+  score: bgc_score
+  primary_threshold: 0.95
+  short_threshold: 0.98
+  short_length_cap: 10000
+  iou_dedup: 0.3
+  source_artifact: experiments/evo2_lr_multiscale/oer004256_learned_decoder/
+
+evo2_per_token_unet_e10:
+  description: exploratory U-Net candidate; not formal 9-genome
+  config: configs/evo2_per_token_unet.yaml
+  score: per_token_probability
+  threshold_policy:
+    0.3: oer_recall_first
+    0.4: oer_conservative
+    0.5: default_reference

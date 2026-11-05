@@ -1,6 +1,9 @@
 # Claude Code internal state
 .claude/
 
+# Local git worktrees
+.worktrees/
+
 # Retired code/results kept locally for provenance only
 _archive/
 
@@ -12,15 +15,29 @@ _archive/
 /analysis/
 tmp/
 *.pt
+*.joblib
 *.npy
 *.npz
 *.pkl
 *.fna
 *.fna.gz
+*.faa
 *.gbk
 *.7z
 *.tar.gz
 *.zip
+*.coords.csv
+*_windows.csv
+windows_metadata*.csv
+
+# Local service handoff and scratch artifacts
+.env.example.tmp/
+.nohup
+*.nohup
+bgcmaster/
+experiments/evo2_per_token_unet/auto_weak_pilot*/
+experiments/evo2_per_token_unet/internal_val_selection/
+experiments/evo2_per_token_unet/true_8kb_simple/
 
 # External tools / binaries
 BGC-Prophet/

@@ -1,0 +1,53 @@
+{
+  "method": "sweep",
+  "source_csv": "experiments/evo2_per_token_unet/nine_genome/full_e10style_ddp16_gb32_seed0/sweep/regions_t0.75_m5000.csv",
+  "nine_genome": {
+    "summary": {
+      "bench": {
+        "recall": 0.4557377049180328,
+        "precision": 0.5387323943661971,
+        "f1": 0.4937718391938798,
+        "dedup_precision": 0.5035211267605634,
+        "dedup_f1": 0.47843930148872926,
+        "tp_recall": 139,
+        "tp_precision": 153,
+        "n_gt": 305,
+        "n_pred": 284,
+        "unique_gt_precision_tp": 143,
+        "duplicate_precision_tp": 10,
+        "max_preds_per_gt": 3
+      },
+      "strict": {
+        "recall": 0.4131147540983607,
+        "precision": 0.44366197183098594,
+        "f1": 0.4278438030560272,
+        "dedup_precision": 0.44366197183098594,
+        "dedup_f1": 0.4278438030560272,
+        "tp_recall": 126,
+        "tp_precision": 126,
+        "n_gt": 305,
+        "n_pred": 284,
+        "unique_gt_precision_tp": 126,
+        "duplicate_precision_tp": 0,
+        "max_preds_per_gt": 1
+      }
+    },
+    "bucket_recall_bench": {
+      "<5kb": "6/48 (0.125)",
+      "5-10kb": "42/89 (0.472)",
+      "10-20kb": "34/85 (0.400)",
+      "20-50kb": "41/61 (0.672)",
+      ">=50kb": "16/22 (0.727)"
+    },
+    "dedup_f1_ci95_bench": [
+      0.37621159328476406,
+      0.5855698849773441
+    ],
+    "length_stats": {
+      "n": 284,
+      "median": 10240,
+      "min": 5576,
+      "max": 153600
+    }
+  }
+}

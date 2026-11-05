@@ -1,0 +1,20 @@
+{
+  "genome_id": "GCA_000156475.1",
+  "tracks": [
+    "GT",
+    "antiSMASH",
+    "BGC-Prophet",
+    "DeepBGC",
+    "WeakNeg U-Net t0.70 min8kb"
+  ],
+  "contigs": [
+    "DS999645.1"
+  ],
+  "region_counts": {
+    "GT": 26,
+    "antiSMASH": 24,
+    "BGC-Prophet": 10,
+    "DeepBGC": 76,
+    "WeakNeg U-Net t0.70 min8kb": 20
+  }
+}

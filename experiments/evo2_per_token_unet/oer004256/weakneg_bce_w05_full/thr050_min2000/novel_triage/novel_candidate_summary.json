@@ -1,0 +1,14 @@
+{
+  "regions_total": 2199,
+  "antismash_regions_total": 1976,
+  "overlapping": 1620,
+  "novel": 579,
+  "type_counts": {
+    "RiPP": 200,
+    "Polyketide": 38,
+    "Other": 183,
+    "Terpene": 137,
+    "NRP": 18,
+    "Saccharide": 3
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "n_candidates": 579,
+  "hmm_verdict_counts": {
+    "STRONG: multiple biosynthetic domains": 357,
+    "LIKELY_FP: no informative HMM hits": 95,
+    "MODERATE: some biosynthetic content": 78,
+    "WEAK: Pfam-only, no biosynth markers": 49
+  },
+  "mibig_verdict_counts": {
+    "VARIANT": 275,
+    "LIKELY_NOVEL": 170,
+    "NOVEL": 134
+  },
+  "pass_for_wetlab": 171,
+  "type_counts_all": {
+    "RiPP": 200,
+    "Other": 183,
+    "Terpene": 137,
+    "Polyketide": 38,
+    "NRP": 18,
+    "Saccharide": 3
+  },
+  "type_counts_pass": {
+    "RiPP": 65,
+    "Other": 52,
+    "Terpene": 28,
+    "Polyketide": 20,
+    "NRP": 6
+  }
+}

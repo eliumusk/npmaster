@@ -1,0 +1,1 @@
+{"epoch": 0, "train_loss": 1.0517905447632074, "val_loss": 0.9871668592095375, "val_token_precision": 0.8302521008403362, "val_token_recall": 0.08076184248171006, "val_token_f1": 0.14720452937013448, "elapsed_s": 3.557276487350464, "wall_min_total": 0.05929267406463623}

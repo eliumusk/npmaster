@@ -13,7 +13,7 @@ antiSMASH-called OER regions our hysteresis missed). A learned decoder over
 the window-score sequence adapts to the real score distribution without
 hard-coded length assumptions.
 
-See `docs/learned-decoder.md` for training protocol + OP selection.
+See `docs/PROJECT_STATE.md` for training protocol + OP selection.
 """
 from __future__ import annotations
 
@@ -114,7 +114,7 @@ def decode_dir(
 
     Each CSV: columns ``contig, start, end, bgc_score``.
     Returns ``{genome: [(contig, start, end, max_score), ...]}`` (identical to
-    :func:`decoding.v4_1.decode_dir` schema, swap-in compatible).
+    :func:`decoding.evo2_lr_multiscale.decode_dir` schema, swap-in compatible).
     """
     import pandas as pd  # local import to keep cold-start cheap
 

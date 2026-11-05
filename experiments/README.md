@@ -1,15 +1,10 @@
 # experiments/
 
-Evaluation/inference OUTPUTS only. No code. Organized by target:
+Promoted active outputs only. Historical experiments were moved to `_archive/2026-04-26-mainline-reset/`.
 
-| Dir | What it contains |
+| Directory | Status |
 |---|---|
-| `nine_genome/` | 9-genome benchmark results — the "held-out test" numbers. Includes sweep summaries, OP winners, and classification eval against antiSMASH. |
-| `evo2_first_principles/` | First-principles design campaign (2026-04-21 → 2026-04-22) that produced v4.1. Stage 0 ablations + v4.1 frozen readout. |
-| `OER004256/` | Production handoff for the biology advisor. 254 v4.1 regions + 93 defrag_v2 regions on 7 metagenomic samples. See `OER004256/README_HANDOFF.md`. |
+| `evo2_lr_multiscale/` | Formal 9-genome mainline plus OER learned-decoder handoff. |
+| `evo2_per_token_unet/` | Exploratory per-token U-Net branch; diagnostic until clean pre-registration. |
 
-Trial-level sweep debris (`*-trial-NNN` directories) retire to `_archive/experiments/` once the sweep has a summary CSV. Current working tree contains only promoted artifacts.
-
-Frozen operating points are codified in `configs/operating_points.yaml` and `configs/experiments/evo2_first_principles_v4_1_frozen.yaml`.
-
-For the numbers anyone is claiming, see `docs/REGRESSION_LEDGER.md`.
+No code belongs here. Each active result directory should contain either a README or be referenced from `docs/REGRESSION_LEDGER.md`.

@@ -1,0 +1,35 @@
+{
+  "windows": {
+    "n_total": 1064568,
+    "by_split": {
+      "test_id": 180566,
+      "test_ood": 162302,
+      "train": 626449,
+      "val": 95251
+    },
+    "by_label": {
+      "ambiguous": 62985,
+      "negative": 933236,
+      "positive": 68347
+    },
+    "by_length_bucket": {
+      "4-8kb": 46057,
+      "8-16kb": 20629,
+      "<4kb": 49520,
+      ">=16kb": 948362
+    },
+    "n_genomes": 1996
+  },
+  "bgc_annotations": {
+    "n_regions": 19762,
+    "n_genomes": 1965
+  },
+  "nine_genome_overlap": {
+    "window_count": 0,
+    "genome_ids": []
+  },
+  "provenance": {
+    "antismash_mode": "unknown",
+    "note": "Verify antiSMASH version and strict/relaxed settings on the server run manifest."
+  }
+}

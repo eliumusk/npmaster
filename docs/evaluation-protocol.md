@@ -1,67 +1,36 @@
 # Evaluation Protocol
 
-This doc fixes the evaluation contract across internal val and the 9-genome benchmark. Parameters for the two frozen operating points live in `configs/operating_points.yaml`; this doc is about the rules those parameters are chosen under.
+## Task
 
-## 1. Window-Level Score
+Input DNA contigs are converted to BGC region predictions. The model does not generate new DNA or chemical structures.
 
-Per-window BGC probability vector is `probs ∈ ℝ⁸` (7 BGC types + 1 non-BGC). Three score families are defined:
+## 9-Genome Benchmark
 
-- `max_type = max(probs[:7])`
-- `1_minus_isneg = 1 - probs[7]`
-- `fused = 0.5 * max_type + 0.5 * (1 - probs[7])`
+9-genome is held out for formal reporting. Do not tune thresholds, model families, hyperparameters, or operating points on it.
 
-Per-window CSV writes `bgc_score = max_type` and `non_bgc_score = probs[7]`, so any family can be recomputed at eval time without re-inference.
+Primary metrics:
 
-`fused` is the default formal family because it has the best AUROC on both internal val and the 9-genome benchmark (diagnosis in git history, doc archived).
+- `dedup_f1`
+- `bench_precision`
+- `bench_recall`
 
-## 2. Threshold Selection Policy
+`bench` is asymmetric 50% overlap:
 
-- **Split**: internal val only. Test sets are never used for threshold selection.
-- **Ambiguous windows**: excluded before threshold fitting.
-- **Ground truth**: binary `is_bgc = 1` iff `label == "positive"`.
-- **Objective**: F1 via `sklearn.metrics.precision_recall_curve(y_true, scores)` → pick `threshold = argmax(F1)`.
+- Recall TP: `overlap / gt_len >= 0.5`
+- Precision TP: `overlap / pred_len >= 0.5`
 
-## 3. Region Decoder (v2)
+Dedup F1 is mandatory because raw precision can be inflated by fragmenting one GT region into many short predictions.
 
-Regions are produced by `src/decoding/postprocess.py::decode_regions_hysteresis`:
+## OER / Metagenome Readouts
 
-- dual-threshold hysteresis (`start_threshold ≥ extend_threshold`)
-- optional `min_support_windows`
-- optional `length_cap`
-- optional valley-based splitting on sustained weak bridges
+OER004256 does not have manually curated full ground truth. AntiSMASH overlap is a proxy readout:
 
-Every region is traceable back to concrete window spans — no smoothing, no spline, no coordinate fiction.
+- AS-recall: fraction of antiSMASH regions covered by a prediction under asymmetric 50% overlap.
+- Novel candidates: predictions that do not overlap antiSMASH on the same contig.
 
-## 4. 9-Genome Region-Level Metric (`bench`)
+Novel here means antiSMASH-missed candidate, not validated new chemistry.
 
-For the 9-genome benchmark the matching rule is **asymmetric 50% overlap**:
+## Formal vs Diagnostic
 
-- **Recall TP**: a GT BGC is TP if any predicted region satisfies `overlap / gt_len ≥ 0.5`.
-- **Precision TP**: a predicted region is TP if any GT BGC satisfies `overlap / pred_len ≥ 0.5`.
-
-This is the `bench` mode in `scripts/evaluate/nine_genome.py`. The old `/data/syh/benchmark/nine_genome/evaluate.py` precision (any overlap > 0) is **deprecated** — too permissive, produces misleadingly high precision on long predictions.
-
-For reviewer-facing tables, `bench` is the only precision number quoted. `loose / strict / iou` modes are also computed by the script but are for internal diagnosis.
-
-### 4.1 Fragmentation Diagnostics
-
-`bench` precision can be inflated if one true BGC is split into many short predictions. Therefore `scripts/evaluate/nine_genome.py` also reports a diagnostic `fragmentation` block:
-
-- `unique_gt_precision_tp`: number of unique GT BGCs covered by precision-TP predictions
-- `duplicate_precision_tp`: extra precision TPs caused by multiple predictions hitting the same GT
-- `max_preds_per_gt`: worst-case number of precision-TP predictions assigned to one GT
-- `dedup_precision = unique_gt_precision_tp / n_pred`
-- `dedup_f1`: F1 using normal recall and `dedup_precision`
-
-These diagnostics are not a replacement for the published `bench` metric, but any decoder/model sweep must report them. A configuration that improves raw precision while lowering `dedup_f1` is treated as fragmentation, not a real boundary-quality improvement.
-
-Operational rule (2026-04-19): decoder sweeps must rank by `dedup_f1` (primary) with `bench_f1` as a tiebreaker, and the sweep CSV must include `dedup_precision`, `dedup_f1`, `unique_gt_precision_tp`, `duplicate_precision_tp`, `max_preds_per_gt`, and `median_pred_len`. Sweep CSVs must additionally honor `ranking.min_recall` / `ranking.max_n_pred` gates in their sort order (eligible trials first, ineligible follow). See `scripts/run_precision_constrained_decoder_sweep.py` for the reference implementation. Gating candidate operating points by `dedup_p / bench_p >= 0.75` catches the short-core hack; candidates that fail this gate are diagnostic upper bounds only, never formal operating points.
-
-## 5. Evaluation Flow
-
-1. Train on internal training split.
-2. Select threshold and decoder params on internal val (4 knobs: `score_family`, `start/extend_threshold`, `max_gap`, `length_cap`, `min_support_windows`).
-3. Freeze into `configs/operating_points.yaml`.
-4. Apply frozen point to 9-genome → report `bench` R / P / F1 + `#pred` + per-genome.
-
-Do **not** tune thresholds directly on the 9-genome report set. Points selected on 9-genome are diagnostic upper bounds only (see `operating-points.md::tuned_v2`).
+- `evo2_lr_multiscale` is the current formal 9-genome mainline.
+- `evo2_per_token_unet` is diagnostic until checkpoint and threshold selection are pre-registered without inspecting 9-genome.
