@@ -48,11 +48,11 @@ NP-Master 是面向细菌基因组和宏基因组的 BGC 区域检测与发现�
 
 ## 生产部署资产
 
-- GPU 环境：`environment.yml`，使用 `conda env create -f environment.yml` 创建。
-- U-Net 权重已包含在仓库：`experiments/evo2_per_token_unet/train_runs/full_weakneg_bce_w05_ddp4_gb64_seed0/best.pt`。
-- 类型分类模型已包含在仓库：`experiments/evo2_mibig_type/run_full/type_head.joblib`。
-- Evo2-7B 基础模型缓存约 13 GB，不包含在 Git 中；部署时从旧服务器复制，或从 `arcinstitute/evo2_7b` 下载。
-- 完整网站自托管步骤见主仓库 `NP-Master-web` 的 `docs/handover.md`。
+- GPU 环境：[environment.yml](environment.yml)，使用 `conda env create -f environment.yml` 创建。
+- U-Net 权重（约 1.3 MB）：[best.pt](experiments/evo2_per_token_unet/train_runs/full_weakneg_bce_w05_ddp4_gb64_seed0/best.pt)。
+- 类型分类模型（约 96.6 MiB）：[type_head.joblib](experiments/evo2_mibig_type/run_full/type_head.joblib)。
+- Evo2-7B 基础模型缓存约 13 GB，不包含在 Git 中；部署时从旧服务器复制，或从 [arcinstitute/evo2_7b](https://huggingface.co/arcinstitute/evo2_7b) 下载。
+- 完整网站自托管步骤见主仓库的 [docs/handover.md](https://github.com/eliumusk/NP-Master-web/blob/main/docs/handover.md)。
 
 ## 快速命令
 
