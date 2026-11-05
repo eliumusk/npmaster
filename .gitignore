@@ -15,6 +15,7 @@ _archive/
 /analysis/
 tmp/
 *.pt
+!experiments/evo2_per_token_unet/train_runs/full_weakneg_bce_w05_ddp4_gb64_seed0/best.pt
 *.joblib
 *.npy
 *.npz
